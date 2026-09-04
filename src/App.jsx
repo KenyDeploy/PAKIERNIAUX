@@ -249,34 +249,41 @@ export default function App() {
     thigh: "",
   });
   const loadCloudData = async (userId) => {
-    const { data, error } = await supabase.from("user_data").select("data").eq("user_id", userId).maybeSingle();
-    if (!error && data?.data) {
-      const saved = data.data;
-      if (typeof saved.water === "number") setWater(saved.water);
-      if (Array.isArray(saved.waterLog)) setWaterLog(saved.waterLog);
-      if (Array.isArray(saved.completedDays)) setCompletedDays(saved.completedDays);
-      if (Array.isArray(saved.plans)) setPlans(saved.plans);
-      if (Array.isArray(saved.exercises)) setExercises(saved.exercises);
-      if (Array.isArray(saved.measurements)) setMeasurements(saved.measurements);
+    try {
+      const request = supabase.from("user_data").select("data").eq("user_id", userId).maybeSingle();
+      const result = await Promise.race([request, new Promise((resolve) => setTimeout(() => resolve({ data: null, error: new Error("Supabase timeout") }), 8000))]);
+      if (!result.error && result.data?.data) {
+        const saved = result.data.data;
+        if (typeof saved.water === "number") setWater(saved.water);
+        if (Array.isArray(saved.waterLog)) setWaterLog(saved.waterLog);
+        if (Array.isArray(saved.completedDays)) setCompletedDays(saved.completedDays);
+        if (Array.isArray(saved.plans)) setPlans(saved.plans);
+        if (Array.isArray(saved.exercises)) setExercises(saved.exercises);
+        if (Array.isArray(saved.measurements)) setMeasurements(saved.measurements);
+      }
+    } catch (error) {
+      console.error("Supabase profile load failed", error);
+    } finally {
+      setCloudHydrated(true);
+      setAuthLoading(false);
     }
-    setCloudHydrated(true);
-    setAuthLoading(false);
   };
   useEffect(() => {
     if (!supabase) return undefined;
     let mounted = true;
+    const sessionTimeout = setTimeout(() => setAuthLoading(false), 8000);
     supabase.auth.getSession().then(({ data }) => {
       if (!mounted) return;
       setAuthUser(data.session?.user ?? null);
       if (data.session?.user) loadCloudData(data.session.user.id);
       else setAuthLoading(false);
-    });
+    }).catch((error) => { console.error("Supabase session load failed", error); setAuthLoading(false); }).finally(() => clearTimeout(sessionTimeout));
     const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
       setAuthUser(session?.user ?? null);
       if (session?.user) loadCloudData(session.user.id);
       else { setCloudHydrated(false); setAuthLoading(false); }
     });
-    return () => { mounted = false; listener.subscription.unsubscribe(); };
+    return () => { mounted = false; clearTimeout(sessionTimeout); listener.subscription.unsubscribe(); };
   }, []);
   const filteredExercises = useMemo(
     () =>
