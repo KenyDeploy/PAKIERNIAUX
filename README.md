@@ -37,7 +37,7 @@ Utwórz `.env.local` w katalogu projektu:
 VITE_SUPABASE_URL=https://twoj-projekt.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
-Następnie uruchom `supabase/schema.sql` w SQL Editorze, włącz Email provider w Authentication > Providers i zrestartuj Vite. RLS ogranicza odczyt i zapis tabeli `user_data` do `auth.uid()` aktualnie zalogowanej osoby.
+Następnie uruchom `supabase/schema.sql` w SQL Editorze, włącz Email provider w Authentication > Providers i zrestartuj Vite. Schemat zawiera osobne tabele na profile, ćwiczenia, plany, sesje treningowe, serie, pomiary, wodę, dni treningowe i odznaki, wszystkie zabezpieczone RLS per `auth.uid()`. Obecna wersja klienta zapisuje kompatybilny snapshot stanu w `user_data`; tabele szczegółowej historii są przygotowane pod kolejny krok migracji zapisu serii i wyników.
 
 ## Co zostało poprawione
 - ekran startowy z logo i animacją,
