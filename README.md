@@ -29,10 +29,15 @@ npm run build
 3. Włącz Email provider w Authentication > Providers.
 4. Lokalna konfiguracja jest w `.env.local` (nie commituj tego pliku).
 
-Aplikacja synchronizuje treningi, plany, pomiary, ustawienia i ręczne oznaczenia z kontem użytkownika. Zdjęcia pomiarowe są przechowywane razem z pomiarami i automatycznie ograniczane do trzech najnowszych.
+Aplikacja używa Supabase Auth oraz tabeli `user_data`. Po zalogowaniu plany, ćwiczenia, nawodnienie, kalendarz treningów i pomiary są ładowane oraz zapisywane dla konkretnego użytkownika. `localStorage` pozostaje lokalnym cache i trybem awaryjnym, gdy zmienne Supabase nie są ustawione.
 
-## Ważne
-Ta wersja zachowuje dane w `localStorage`, podobnie jak obecna aplikacja. Supabase nie jest jeszcze podłączony celowo — najpierw stabilizujemy UI/UX. Następny etap może przenieść dane do Supabase i dodać logowanie/synchronizację.
+## Konfiguracja Supabase
+Utwórz `.env.local` w katalogu projektu:
+```env
+VITE_SUPABASE_URL=https://twoj-projekt.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
+Następnie uruchom `supabase/schema.sql` w SQL Editorze, włącz Email provider w Authentication > Providers i zrestartuj Vite. RLS ogranicza odczyt i zapis tabeli `user_data` do `auth.uid()` aktualnie zalogowanej osoby.
 
 ## Co zostało poprawione
 - ekran startowy z logo i animacją,
