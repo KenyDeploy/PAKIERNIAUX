@@ -2,6 +2,8 @@
 
 Prywatny dziennik treningowy: plany z bazy ćwiczeń, zapisywanie serii, historia i statystyki na rzeczywistych danych, pomiary sylwetki i konta Supabase.
 
+Baza zawiera 72 polskie ćwiczenia w 7 grupach, z filtrami partii i sprzętu oraz realistycznymi wizualizacjami AI. Pochodzenie zdjęć: [EXERCISE_IMAGES.md](EXERCISE_IMAGES.md). Ręczne oznaczenia w kalendarzu liczą się do frekwencji i historii, a serie i objętość pochodzą tylko z zapisanych wyników. Zakończenie treningu pozwala sprawdzić serie, świadomie zatwierdzić wypełnione pola lub odrzucić pustą sesję.
+
 ## Uruchomienie
 
 Node.js 22.12+ (produkcja Vercel używa Node 24).
@@ -36,3 +38,5 @@ CHROMIUM_PATH=/usr/bin/chromium node tests/browser.mjs
 ```
 
 Wymaga modułu `playwright` (lub `PLAYWRIGHT_MODULE` wskazującego jego plik wejściowy) i działającego serwera lokalnego bez konfiguracji Supabase. Scenariusz korzysta z osobnego, pustego kontekstu przeglądarki. Obejmuje własny plan, cele serii, zapis i wznowienie treningu oraz przerw, historię, wykres, pomiary, 36 kombinacji zakładek i szerokości oraz 4 szerokości modalu planu. To symulacja telefonu w Chromium, nie test Safari ani fizycznego iPhone’a.
+
+Po `npm run build` uruchom `npm run preview`; dla tego adresu można dodatkowo wykonać `node tests/pwa.mjs` z tymi samymi zmiennymi `APP_URL`, `CHROMIUM_PATH` i `PLAYWRIGHT_MODULE`. Ten test sprawdza instalację service workera, cache zdjęć, odświeżenie offline, wznowienie i zapis lokalnego treningu. Dotyczy trybu urządzenia bez Supabase; pełny offline kont wymaga dalszego rozwoju.

@@ -15,6 +15,7 @@ import {
   ListPlus,
   Plus,
   Search,
+  Square,
   Settings2,
   Target,
   Trophy,
@@ -33,77 +34,16 @@ import {
 } from "lucide-react";
 import "./styles.css";
 import { supabase } from "./supabase";
-import { catalog } from "./catalog";
+import { catalog, starterExercises } from "./catalog";
 import { useTrainingData } from "./useTrainingData";
-import { dateKey, number, volume, lastExercise, createSession, completeSession, weekDates, currentStreak as calculateStreak } from "./training";
+import { dateKey, number, volume, lastExercise, createSession, completeSession, validSet, trainingAttendance, planName, weekDates, currentStreak as calculateStreak } from "./training";
 import { BodyProgress, ExerciseVisual, TrendChart } from "./Visuals";
+import { exercisePhotoStyle } from "./exercisePhotos";
 
-const starterExercises = [
-  {
-    id: 1,
-    name: "Wyciskanie hantli na skosie",
-    category: "Klatka",
-    equipment: "Hantle",
-    sets: 3,
-    reps: 8,
-    rest: 120,
-    color: "lime",
-  },
-  {
-    id: 2,
-    name: "Ściąganie drążka wyciągu",
-    category: "Plecy",
-    equipment: "Wyciąg",
-    sets: 3,
-    reps: 10,
-    rest: 120,
-    color: "blue",
-  },
-  {
-    id: 3,
-    name: "Przysiad ze sztangą",
-    category: "Nogi",
-    equipment: "Sztanga",
-    sets: 4,
-    reps: 6,
-    rest: 150,
-    color: "orange",
-  },
-  {
-    id: 4,
-    name: "Wyciskanie żołnierskie",
-    category: "Barki",
-    equipment: "Sztanga",
-    sets: 3,
-    reps: 8,
-    rest: 120,
-    color: "violet",
-  },
-  {
-    id: 5,
-    name: "Uginanie przedramion z hantlami",
-    category: "Biceps",
-    equipment: "Hantle",
-    sets: 3,
-    reps: 12,
-    rest: 60,
-    color: "yellow",
-  },
-  {
-    id: 6,
-    name: "Prostowanie ramion na wyciągu",
-    category: "Triceps",
-    equipment: "Wyciąg",
-    sets: 3,
-    reps: 12,
-    rest: 60,
-    color: "red",
-  },
-];
 const initialPlans = [
   {
     id: 1,
-    name: "Upper Body Power",
+      name: "Góra ciała — siła",
     days: "Pon · Czw",
     duration: "45 min",
     exercises: [1, 2, 4, 5],
@@ -111,7 +51,7 @@ const initialPlans = [
   },
   {
     id: 2,
-    name: "Lower Body Strength",
+      name: "Dół ciała — siła",
     days: "Wt · Pt",
     duration: "50 min",
     exercises: [3, 6],
@@ -134,9 +74,6 @@ function IconButton({ children, label, onClick }) {
     </button>
   );
 }
-function MoreDots() {
-  return <span className="more-dots">•••</span>;
-}
 function ProgressRing({ value }) {
   return (
     <div
@@ -153,7 +90,7 @@ function formatDuration(totalSeconds) {
 }
 export default function App() {
   const [tab, setTab] = useState("home");
-  const { data, update, authUser, authLoading, cloudHydrated, syncStatus, retrySync, signOut } = useTrainingData(defaultData);
+  const { data, update, updateData, authUser, authLoading, cloudHydrated, syncStatus, retrySync, signOut } = useTrainingData(defaultData);
   const { plans, exercises, measurements, workouts, completedDays, waterByDate, activeSession } = data;
   const setPlans = value => update("plans", value);
   const setExercises = value => update("exercises", value);
@@ -177,6 +114,7 @@ export default function App() {
   const [exerciseEditor, setExerciseEditor] = useState(null);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Wszystkie");
+  const [equipment, setEquipment] = useState("Wszystkie");
   const [modal, setModal] = useState(null);
   const [newExercise, setNewExercise] = useState({
     name: "",
@@ -184,6 +122,10 @@ export default function App() {
     equipment: "Hantle",
   });
   const activeExerciseIndex = activeSession?.index || 0;
+  useEffect(() => {
+    if (tab !== "workout") return;
+    document.querySelector(".workout-header")?.scrollIntoView?.({ block: "start", behavior: "auto" });
+  }, [activeExerciseIndex, activeSession?.id, tab]);
   const setActiveExerciseIndex = value => update("activeSession", current => ({ ...current, index: typeof value === "function" ? value(current.index) : value }));
   const [clockNow, setClockNow] = useState(Date.now);
   const restSeconds = Math.max(0, Math.ceil(((activeSession?.restUntil || 0) - clockNow) / 1000));
@@ -198,9 +140,10 @@ export default function App() {
           `${exercise.name} ${exercise.category} ${exercise.equipment}`
             .toLowerCase()
             .includes(query.toLowerCase()) &&
-          (category === "Wszystkie" || exercise.category === category),
+          (category === "Wszystkie" || exercise.category === category) &&
+          (equipment === "Wszystkie" || exercise.equipment === equipment),
       ),
-    [exercises, query, category],
+    [exercises, query, category, equipment],
   );
   const openWorkout = (plan = activePlan) => {
     if (activeSession) { setTab("workout"); return; }
@@ -322,14 +265,19 @@ export default function App() {
   };
   const toggleTrainingDay = day => {
     const key = dateKey(new Date(new Date().getFullYear(), new Date().getMonth(), day));
+    if (workouts.some(w => dateKey(w.completedAt) === key)) {
+      setNotice("Ten dzień zawiera zapisany trening z seriami. Zmiana kalendarza nie usuwa historii treningów."); return;
+    }
     setCompletedDays(current => current.includes(key) ? current.filter(item => item !== key) : [...current, key]);
   };
-  const finishWorkout = () => {
-    const result = activeSession && completeSession(activeSession);
+  const finishWorkout = (includeFilled = false) => {
+    const session = activeSession && (includeFilled ? { ...activeSession, exercises: activeSession.exercises.map(e => ({ ...e, sets: e.sets.map(s => ({ ...s, completed: s.completed || validSet(s) })) })) } : activeSession);
+    const result = session && completeSession(session);
     if (!result) { setNotice("Zatwierdź przynajmniej jedną serię przed zakończeniem."); return; }
-    update("workouts", current => [result, ...current]);
-    setCompletedDays(current => [...new Set([...current, dateKey(result.completedAt)])]);
-    update("activeSession", null); setSummary(result); setTab("history"); setNotice("");
+    updateData(current => ({ ...current,
+      workouts: current.workouts.some(w => w.id === result.id) ? current.workouts : [result, ...current.workouts],
+      completedDays: [...new Set([...current.completedDays, dateKey(result.completedAt)])], activeSession: null }));
+    setModal(null); setSummary(result); setTab("history"); setNotice("");
   };
   const deleteExercise = (exerciseId) => {
     setExercises((current) => current.filter((exercise) => exercise.id !== exerciseId));
@@ -349,7 +297,9 @@ export default function App() {
   const calendarDays = [...Array(calendarLeadingDays).fill(null), ...Array.from({ length: new Date(calendarNow.getFullYear(), calendarNow.getMonth() + 1, 0).getDate() }, (_, i) => i + 1)];
   const calendarKey = day => dateKey(new Date(calendarNow.getFullYear(), calendarNow.getMonth(), day));
   const week = weekDates();
-  const trainingDates = [...new Set([...completedDays, ...workouts.map(w => dateKey(w.completedAt))])];
+  const { dates: trainingDates, manualDays, count: trainingCount } = trainingAttendance(workouts, completedDays);
+  const completedSetCount = activeSession?.exercises.reduce((sum,e) => sum + e.sets.filter(s => s.completed && validSet(s)).length, 0) || 0;
+  const filledSetCount = activeSession?.exercises.reduce((sum,e) => sum + e.sets.filter(validSet).length, 0) || 0;
   const currentWeekCompletion = week.map(day => trainingDates.includes(day));
   const currentStreak = calculateStreak(trainingDates);
   const streakMessage = currentStreak ? `${currentStreak} dni bez przerwy` : "Każdy trening się liczy. Zadbaj też o odpoczynek.";
@@ -360,7 +310,8 @@ export default function App() {
   const last7Volume = last7.reduce((sum, w) => sum + w.volume, 0);
   const priorVolume = prior7.reduce((sum, w) => sum + w.volume, 0);
   const weekChange = priorVolume > 0 ? `${displayNumber((last7Volume / priorVolume - 1) * 100)}% vs poprzednie 7 dni` : "Brak poprzedniego okresu do porównania";
-  const history = workouts.map(w => ({ ...w, date: displayDate(w.completedAt), duration: `${Math.floor(w.durationSeconds / 60)} min`, name: w.plan.name, volume: `${displayNumber(w.volume)} kg`, exercises: `${w.exercises.length} ćwiczeń` }));
+  const history = [...workouts.map(w => ({ ...w, day: dateKey(w.completedAt), date: displayDate(w.completedAt), duration: `${Math.floor(w.durationSeconds / 60)} min`, name: planName(w.plan.name), volume: `${displayNumber(w.volume)} kg`, exercises: `${w.exercises.length} ćwiczeń` })),
+    ...manualDays.map(day => ({ id: `manual-${day}`, day, date: displayDate(day), name: "Trening oznaczony ręcznie", manual: true }))].sort((a,b) => b.day.localeCompare(a.day) || (b.completedAt || 0) - (a.completedAt || 0));
   const monthVolume = workouts.filter(w => dateKey(w.completedAt).slice(0,7) === today.slice(0,7)).reduce((sum,w) => sum + w.volume, 0);
   const records = [...new Map(workouts.flatMap(w => w.exercises.map(e => [e.id, { id: e.id, name: e.name }]))).values()].map(e => ({ ...e, weight: Math.max(0, ...workouts.flatMap(w => w.exercises.filter(x => x.id === e.id).flatMap(x => x.sets.map(s => number(s.weight))))) }));
   const chartExerciseId = statsExercise || String(records[0]?.id || "");
@@ -370,7 +321,7 @@ export default function App() {
   if (supabase && !authUser) return <div className="auth-screen"><form className="auth-card" onSubmit={submitAuth}><span className="brand-mark"><Zap size={20} fill="currentColor" /></span><span className="eyebrow">PAKIERNIA U MATIEGO</span><h1>{authMode === "login" ? "Wróć do swojego progresu" : "Załóż konto"}</h1><p>{authMode === "login" ? "Zaloguj się, aby mieć swoje plany, wyniki i odznaki na każdym urządzeniu." : "Twoje treningi i pomiary będą prywatne i zsynchronizowane."}</p><label>Email<input type="email" value={authForm.email} onChange={(event) => setAuthForm({ ...authForm, email: event.target.value })} required /></label><label>Hasło<input type="password" minLength={6} value={authForm.password} onChange={(event) => setAuthForm({ ...authForm, password: event.target.value })} required /></label>{authError && <div className="auth-error">{authError}</div>}<button className="primary-cta" type="submit">{authMode === "login" ? "Zaloguj się" : "Utwórz konto"}</button><button className="auth-switch" type="button" onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthError(""); }}>{authMode === "login" ? "Nie mam jeszcze konta" : "Mam już konto"}</button></form></div>;
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${tab === "workout" ? " is-workout" : ""}`}>
       <header className="topbar">
         <button className="brand" onClick={() => setTab("home")}>
           <span className="brand-mark">
@@ -408,14 +359,14 @@ export default function App() {
                 <span>
                   TRENINGI
                   <br />
-                  <b>{workouts.length}</b>
+                  <b data-testid="training-count">{trainingCount}</b>
                 </span>
               </div>
             </section>
             <section className="section-heading">
               <div>
                 <span className="eyebrow">DZISIAJ NA PLANIE</span>
-                <h2>{activePlan.name}</h2>
+                <h2>{planName(activePlan.name)}</h2>
               </div>
               <button className="text-button" onClick={() => setTab("plans")}>
                 Zmień plan <ChevronRight size={16} />
@@ -522,7 +473,7 @@ export default function App() {
             <section className="card workout-calendar">
               <div className="card-head"><div><span className="eyebrow">KALENDARZ TRENINGÓW</span><h2>{calendarMonthName}</h2></div><CalendarDays size={20} /></div>
               <div className="calendar-week-labels">{["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"].map((day) => <span key={day}>{day}</span>)}</div>
-              <div className="calendar-month-grid">{calendarDays.map((day, index) => day === null ? <span className="calendar-day-empty" key={`empty-${index}`} /> : <button type="button" className={trainingDates.includes(calendarKey(day)) ? "calendar-day done" : "calendar-day"} key={day} onClick={() => toggleTrainingDay(day)}><b>{day}</b>{trainingDates.includes(calendarKey(day)) && <Check size={12} />}</button>)}</div>
+              <div className="calendar-month-grid">{calendarDays.map((day, index) => day === null ? <span className="calendar-day-empty" key={`empty-${index}`} /> : <button type="button" aria-label={`Trening ${calendarKey(day)}`} aria-pressed={trainingDates.includes(calendarKey(day))} className={trainingDates.includes(calendarKey(day)) ? "calendar-day done" : "calendar-day"} key={day} onClick={() => toggleTrainingDay(day)}><b>{day}</b>{trainingDates.includes(calendarKey(day)) && <Check size={12} />}</button>)}</div>
               <div className="calendar-caption"><span><i className="calendar-dot done" /> kliknij dzień, aby oznaczyć trening</span><strong>{trainingDates.filter(d => d.slice(0,7) === today.slice(0,7)).length} dni wykonanych</strong></div>
             </section>
             <section className="achievement-banner">
@@ -532,7 +483,7 @@ export default function App() {
               <div>
                 <span className="eyebrow">NASTĘPNE OSIĄGNIĘCIE</span>
                 <b>Pierwsze 5 treningów</b>
-                <small>{workouts.length < 5 ? `Jeszcze ${5 - workouts.length} treningów do 5 sesji` : "Pierwsze 5 treningów ukończone"}</small>
+                <small>{trainingCount < 5 ? `Jeszcze ${5 - trainingCount} treningów do 5 sesji` : "Pierwsze 5 treningów ukończone"}</small>
               </div>
               <Target size={20} />
             </section>
@@ -566,7 +517,7 @@ export default function App() {
                       <Settings2 size={16} />
                     </IconButton>
                   </div>
-                  <h2>{plan.name}</h2>
+                  <h2>{planName(plan.name)}</h2>
                   <p>
                     {planExercises.length} ćwiczenia <span>·</span>{" "}
                     {plan.duration}
@@ -600,16 +551,17 @@ export default function App() {
               <div>
                 <span className="eyebrow">TWOJA BAZA</span>
                 <h1>Ćwiczenia</h1>
-                <p>{exercises.length} ćwiczeń gotowych do użycia.</p>
+                <p>{exercises.length} ćwiczeń · maszyny i wolne ciężary</p>
               </div>
               <button
                 className="round-add"
+                aria-label="Dodaj własne ćwiczenie"
                 onClick={() => setModal("exercise")}
               >
                 <Plus size={20} />
               </button>
             </div>
-            <button type="button" className="secondary-cta" onClick={() => { setExercises(current => [...current, ...catalog.filter(item => !current.some(e => e.id === item.id || e.name === item.name))]); setNotice("Baza uzupełniona o brakujące ćwiczenia."); }}>Uzupełnij bazę ćwiczeń</button>
+            <details className="catalog-tools"><summary>Własne ćwiczenia i uzupełnianie bazy</summary><p>Użyj +, aby dodać własne ćwiczenie. Możesz też przywrócić usunięte pozycje z bazy startowej.</p><button type="button" className="secondary-cta" onClick={() => { setExercises(current => [...current, ...defaultData.exercises.filter(item => !current.some(e => e.id === item.id || e.name === item.name))]); setNotice("Baza uzupełniona o brakujące ćwiczenia."); }}>Uzupełnij bazę ćwiczeń</button></details>
             <div className="search-box">
               <Search size={18} />
               <input
@@ -618,11 +570,13 @@ export default function App() {
                 onChange={(event) => setQuery(event.target.value)}
               />
             </div>
-            <div className="category-scroll">
+            <div className="catalog-filters"><label>Sprzęt<select aria-label="Filtr sprzętu" value={equipment} onChange={event => setEquipment(event.target.value)}><option value="Wszystkie">Każdy sprzęt</option>{[...new Set(exercises.map(e => e.equipment))].sort((a,b) => a.localeCompare(b,"pl")).map(item => <option key={item}>{item}</option>)}</select></label><span>{filteredExercises.length} wyników</span></div>
+            <div className="category-scroll" aria-label="Partie mięśniowe">
               {["Wszystkie", ...new Set(exercises.map(e => e.category))].map(
                 (item) => (
                   <button
                     key={item}
+                    aria-pressed={category === item}
                     className={category === item ? "selected" : ""}
                     onClick={() => setCategory(item)}
                   >
@@ -632,17 +586,15 @@ export default function App() {
               )}
             </div>
             <div className="exercise-list">
-              {filteredExercises.map((exercise) => (
+              {[...new Set(filteredExercises.map(e => e.category))].map(group => <section className="exercise-group" key={group}><div className="exercise-group-heading"><h2>{group === "Klatka" ? "Klatka piersiowa" : group}</h2><span>{filteredExercises.filter(e => e.category === group).length} ćwiczeń</span></div>{filteredExercises.filter(e => e.category === group).map((exercise) => (
                 <section
                   className="exercise-row"
                   key={exercise.id}
                   onClick={() => setModal(`rest-${exercise.id}`)}
                 >
-                  <span className={`exercise-icon ${exercise.color}`}>
-                    <Dumbbell size={18} />
-                  </span>
+                  {exercisePhotoStyle(exercise) ? <span className="exercise-photo-thumb" role="img" aria-label={exercise.name} style={exercisePhotoStyle(exercise)} /> : <span className={`exercise-icon ${exercise.color}`}><Dumbbell size={18} /></span>}
                   <div>
-                    <b>{exercise.name}</b>
+                    <button type="button" className="exercise-open" onClick={event => { event.stopPropagation(); setModal(`rest-${exercise.id}`); }}>{exercise.name}</button>
                     <small>
                       {exercise.category} · {exercise.equipment} ·{" "}
                       {exercise.sets} serie × {exercise.reps} · przerwa{" "}
@@ -655,7 +607,7 @@ export default function App() {
                     <button type="button" aria-label="Usuń ćwiczenie" onClick={(event) => { event.stopPropagation(); deleteExercise(exercise.id); }}><Trash2 size={15} /></button>
                   </div>
                 </section>
-              ))}
+              ))}</section>)}
               {filteredExercises.length === 0 && (
                 <div className="empty-state">Nie znaleziono ćwiczeń.</div>
               )}
@@ -663,7 +615,7 @@ export default function App() {
           </>
         )}
         {tab === "workout" && currentExercise && (
-          <>
+          <div className="workout-screen">
             <div className="workout-header">
               <button className="back-link" onClick={() => setTab("home")}><X size={18} /> Zwiń</button>
               <div>
@@ -671,7 +623,8 @@ export default function App() {
                   ĆWICZENIE {activeExerciseIndex + 1} /{" "}
                   {activePlan.exercises.length}
                 </span>
-                <h1>{activePlan.name}</h1>
+                <h1>{currentExercise.name}</h1>
+                <small>{planName(activePlan.name)}</small>
               </div>
               <span className="timer">
                 <Clock3 size={15} /> {formatDuration(elapsedWorkoutSeconds)}
@@ -688,12 +641,7 @@ export default function App() {
                 ćwiczeń
               </small>
             </div>
-            {previousExercise ? <section className="last-result-card">
-              <span className="eyebrow">OSTATNI TRENING · {displayDate(previousExercise.date)}</span>
-              <h2>{currentExercise.name}</h2>
-              <p>{previousSets.map((s, i) => `${i + 1}. ${s.weight} kg × ${s.reps}`).join(" · ")}</p>
-              <small className="last-result-note">Opcjonalny cel: przy tym samym ciężarze spróbuj dodać 1 powtórzenie w jednej serii, jeśli zachowasz technikę. Poprzednia objętość: {displayNumber(volume(previousSets))} kg.</small>
-            </section> : <section className="card"><p>Pierwszy zapis tego ćwiczenia — ustal wynik wyjściowy.</p></section>}
+            <label className="exercise-jump">Przejdź do ćwiczenia<select aria-label="Przejdź do ćwiczenia" value={activeExerciseIndex} onChange={event => setActiveExerciseIndex(Number(event.target.value))}>{activeSession.exercises.map((e,i) => <option key={e.id} value={i}>{i + 1}. {e.name}</option>)}</select></label>
             <ExerciseVisual exercise={currentExercise} />
             <section className="workout-exercise current-exercise card">
               <div className="exercise-title">
@@ -701,30 +649,36 @@ export default function App() {
                   <Dumbbell size={17} />
                 </span>
                 <div>
-                  <h2>{currentExercise.name}</h2>
+                  <h2>Twoje serie</h2>
                   <small>
                     {currentExercise.category} · cel {currentExercise.reps}{" "}
                     powtórzeń · przerwa {Math.floor(currentExercise.rest / 60)}:
                     {String(currentExercise.rest % 60).padStart(2, "0")}
                   </small>
                 </div>
-                <MoreDots />
               </div>
+              <p className="set-help">Wpisz ciężar i powtórzenia, potem zaznacz puste pole po prawej. Zielony ✓ oznacza wykonaną serię.</p>
               <div className="set-labels">
                 <span>SERIA</span>
                 <span>KG</span>
-                <span>POWT.</span>
                 <span />
+                <span>POWT.</span>
+                <span>GOTOWE</span>
               </div>
               {currentExercise.sets.map((row, setIndex) => <div className={`set-row ${row.completed ? "completed" : ""}`} key={`${currentExercise.id}-${setIndex}`}>
                 <b>{setIndex + 1}</b>
                 <input aria-label={`Ciężar serii ${setIndex + 1}`} inputMode="decimal" type="text" value={row.weight} onChange={e => updateSet(setIndex, "weight", e.target.value)} placeholder="0" />
                 <span>kg</span>
                 <input aria-label={`Powtórzenia serii ${setIndex + 1}`} inputMode="numeric" type="text" value={row.reps} onChange={e => updateSet(setIndex, "reps", e.target.value)} />
-                <button type="button" aria-label={`Zatwierdź serię ${setIndex + 1}`} aria-pressed={row.completed} onClick={() => toggleSet(setIndex)}>{row.completed ? <Check size={18} /> : "✓"}</button>
+                <button type="button" aria-label={`Zatwierdź serię ${setIndex + 1}`} aria-pressed={row.completed} onClick={() => toggleSet(setIndex)}>{row.completed ? <Check size={18} /> : <Square size={18} />}</button>
               </div>)}
               <button type="button" className="add-set" onClick={addSet}><Plus size={15} /> Dodaj serię</button>
             </section>
+            {previousExercise ? <section className="last-result-card">
+              <span className="eyebrow">OSTATNI TRENING · {displayDate(previousExercise.date)}</span>
+              <p>{previousSets.map((s, i) => `${i + 1}. ${s.weight} kg × ${s.reps}`).join(" · ")}</p>
+              <small className="last-result-note">Opcjonalny cel: przy tym samym ciężarze spróbuj dodać 1 powtórzenie w jednej serii, jeśli zachowasz technikę. Poprzednia objętość: {displayNumber(volume(previousSets))} kg.</small>
+            </section> : <section className="card first-result"><p>Pierwszy zapis tego ćwiczenia — ustal wynik wyjściowy.</p></section>}
             {isResting && (
               <section className="rest-card">
                 <span className="eyebrow">
@@ -745,6 +699,7 @@ export default function App() {
               </section>
             )}
             <button type="button" className="back-link" onClick={() => { if (window.confirm("Usunąć rozpoczęty trening i wpisane w nim serie?")) { update("activeSession", null); setTab("home"); } }}>Anuluj rozpoczęty trening</button>
+            {activeExerciseIndex < activePlan.exercises.length - 1 && <button type="button" className="secondary-cta" onClick={() => setModal("finish")}>Zakończ trening</button>}
             <div className="workout-navigation">
               <button
                 className="secondary-cta"
@@ -765,13 +720,13 @@ export default function App() {
               ) : (
                 <button
                   className="finish-button"
-                  onClick={finishWorkout}
+                  onClick={() => setModal("finish")}
                 >
                   Zakończ <Check size={17} />
                 </button>
               )}
             </div>
-          </>
+          </div>
         )}
         {tab === "history" && (
           <>
@@ -783,8 +738,8 @@ export default function App() {
             <div className="history-summary">
               <div>
                 <span className="eyebrow">TRENINGI</span>
-                <b>{workouts.length}</b>
-                <small>łącznie</small>
+                <b data-testid="history-training-count">{trainingCount}</b>
+                <small>łącznie, w tym {manualDays.length} ręcznie</small>
               </div>
               <div>
                 <span className="eyebrow">OBJĘTOŚĆ</span>
@@ -793,10 +748,11 @@ export default function App() {
               </div>
               <div>
                 <span className="eyebrow">ŚREDNIA</span>
-                <b>{workouts.length ? Math.round(workouts.reduce((sum, w) => sum + w.durationSeconds, 0) / workouts.length / 60) : 0}m</b>
-                <small>czas treningu</small>
+                <b>{workouts.length ? `${Math.round(workouts.reduce((sum, w) => sum + w.durationSeconds, 0) / workouts.length / 60)} min` : "—"}</b>
+                <small>tylko sesje z pomiarem czasu</small>
               </div>
             </div>
+            <p className="history-data-note">Ręczne wpisy z kalendarza liczą się jako odbyte treningi. Czas, serie i objętość obliczamy tylko z sesji, w których zapisano te dane.</p>
             {summary && <section className="card workout-summary"><span className="eyebrow">TRENING ZAPISANY</span><h2>Dobra robota!</h2><p>{displayNumber(summary.volume)} kg · {summary.exercises.reduce((sum,e) => sum + e.sets.length, 0)} serii · {Math.floor(summary.durationSeconds / 60)} min</p><button type="button" className="back-link" onClick={() => setSummary(null)}>Zamknij podsumowanie</button></section>}
             {!history.length && <div className="empty-state">Ukończ pierwszy trening, aby zobaczyć prawdziwe wyniki.</div>}
             <div className="history-list">
@@ -808,12 +764,12 @@ export default function App() {
                   </div>
                   <div>
                     <h2>{item.name}</h2>
-                    <p>
+                    {item.manual ? <p>Wpis z kalendarza · bez danych o seriach, czasie i objętości</p> : <p>
                       {item.exercises} <span>·</span> {item.duration}
-                    </p>
+                    </p>}
                   </div>
-                  <strong>{item.volume}</strong>
-                  <details className="session-details"><summary>Serie</summary>{item.exercises && workouts.find(w => w.id === item.id)?.exercises.map(e => <div key={e.id}><b>{e.name}</b><p>{e.sets.map(s => `${s.weight} kg × ${s.reps}`).join(" · ")}</p></div>)}</details>
+                  {!item.manual && <><strong>{item.volume}</strong>
+                  <details className="session-details"><summary>Serie</summary>{item.exercises && workouts.find(w => w.id === item.id)?.exercises.map(e => <div key={e.id}><b>{e.name}</b><p>{e.sets.map(s => `${s.weight} kg × ${s.reps}`).join(" · ")}</p></div>)}</details></>}
                 </section>
               ))}
             </div>
@@ -844,13 +800,13 @@ export default function App() {
               </div>
               <div className="badges">
                 {[
-                  { icon: Flame, label: "Pierwszy trening", done: workouts.length >= 1 },
-                  { icon: Zap, label: "5 treningów", done: workouts.length >= 5 },
-                  { icon: Target, label: "10 treningów", done: workouts.length >= 10 },
+                  { icon: Flame, label: "Pierwszy trening", done: trainingCount >= 1 },
+                  { icon: Zap, label: "5 treningów", done: trainingCount >= 5 },
+                  { icon: Target, label: "10 treningów", done: trainingCount >= 10 },
                   {
                     icon: Activity,
                     label: "25 treningów",
-                    done: workouts.length >= 25,
+                    done: trainingCount >= 25,
                   },
                 ].map(({ icon: BadgeIcon, label, done }) => (
                   <div
@@ -947,7 +903,7 @@ export default function App() {
         )}
         </>}
       </main>
-      <nav className="bottom-nav">
+      {tab !== "workout" && <nav className="bottom-nav">
         {nav.map(({ id, label, icon: NavIcon }) => (
           <button
             className={tab === id ? "active" : ""}
@@ -958,7 +914,20 @@ export default function App() {
             <span>{label}</span>
           </button>
         ))}
-      </nav>
+      </nav>}
+      {modal === "finish" && activeSession && <div className="modal-backdrop" onClick={() => setModal(null)}>
+        <section className="modal finish-review" role="dialog" aria-modal="true" aria-labelledby="finish-title" onKeyDown={event => { if (event.key === "Escape") setModal(null); }} onClick={event => event.stopPropagation()}>
+          <div className="modal-head"><div><span className="eyebrow">PODSUMUJ SESJĘ</span><h2 id="finish-title">Zakończyć trening?</h2></div><IconButton label="Wróć do treningu" onClick={() => setModal(null)}><X size={18} /></IconButton></div>
+          <p>Zatwierdzone serie: <b>{completedSetCount}</b>. Poprawnie wypełnione: <b>{filledSetCount}</b>.</p>
+          {filledSetCount > 0 && <details className="finish-set-list"><summary>Sprawdź serie przed zapisem</summary>{activeSession.exercises.filter(e => e.sets.some(validSet)).map(e => <div key={e.id}><b>{e.name}</b>{e.sets.map((s,i) => validSet(s) && <p key={i}>Seria {i + 1}: {s.weight} kg × {s.reps} · {s.completed ? "zatwierdzona" : "do potwierdzenia"}</p>)}</div>)}</details>}
+          {completedSetCount === 0 && <p>Wpisanie wartości nie zatwierdza serii. Możesz użyć ✓ przy serii lub świadomie zapisać wypełnione serie poniżej.</p>}
+          {completedSetCount > 0 && <button type="button" className="primary-cta" onClick={() => finishWorkout(false)}>Zapisz zatwierdzone serie</button>}
+          {filledSetCount > completedSetCount && <><p>Wypełnione pola mogą zawierać wartości podpowiedziane z poprzedniego treningu. Potwierdź, że te serie rzeczywiście wykonałeś. Puste i niepoprawne serie zostaną pominięte.</p><button type="button" className="secondary-cta" onClick={() => finishWorkout(true)}>Zatwierdź wypełnione serie i zapisz</button></>}
+          {filledSetCount === 0 && <p>Nie ma serii do zapisania. Wróć i wpisz ciężar (0 dla masy ciała) oraz powtórzenia albo odrzuć tę sesję.</p>}
+          <button type="button" className="back-link" onClick={() => setModal(null)}>Kontynuuj trening</button>
+          <button type="button" className="back-link" onClick={() => { update("activeSession", null); setModal(null); setTab("home"); setNotice("Trening odrzucony bez zapisu."); }}>Odrzuć trening bez zapisu</button>
+        </section>
+      </div>}
       {planEditor && (
         <div className="modal-backdrop" onClick={() => setPlanEditor(null)}>
           <form
@@ -1030,7 +999,7 @@ export default function App() {
             <div className="modal-head"><div><span className="eyebrow">EDYCJA BAZY</span><h2>Edytuj ćwiczenie</h2></div><IconButton label="Zamknij" onClick={() => setExerciseEditor(null)}><X size={18} /></IconButton></div>
             <label>Nazwa ćwiczenia<input name="name" defaultValue={exerciseEditor.name} required /></label>
             <label>Partia<select name="category" defaultValue={exerciseEditor.category}><option>Klatka</option><option>Plecy</option><option>Nogi</option><option>Barki</option><option>Biceps</option><option>Triceps</option><option>Brzuch</option></select></label>
-            <label>Sprzęt<select name="equipment" defaultValue={exerciseEditor.equipment}><option>Hantle</option><option>Sztanga</option><option>Wyciąg</option><option>Masa ciała</option><option>Maszyna</option></select></label>
+            <label>Sprzęt<select name="equipment" defaultValue={exerciseEditor.equipment}><option>Hantle</option><option>Sztanga</option><option>Wyciąg</option><option>Masa ciała</option><option>Maszyna</option><option>Suwnica Smitha</option></select></label>
             <button className="primary-cta" type="submit"><Check size={18} /> Zapisz zmiany</button>
           </form>
         </div>
@@ -1057,9 +1026,11 @@ export default function App() {
                     <X size={18} />
                   </IconButton>
                 </div>
+                <ExerciseVisual exercise={exercise} />
                 <label>
                   Przerwa między seriami
                   <select name="rest" defaultValue={exercise.rest}>
+                    <option value="0">Bez przerwy</option>
                     <option value="30">30 sekund</option>
                     <option value="60">1 minuta</option>
                     <option value="90">1:30</option>
@@ -1117,7 +1088,8 @@ export default function App() {
                 <option>Plecy</option>
                 <option>Nogi</option>
                 <option>Barki</option>
-                <option>Ramiona</option>
+                <option>Biceps</option>
+                <option>Triceps</option>
                 <option>Brzuch</option>
               </select>
             </label>
@@ -1135,7 +1107,7 @@ export default function App() {
                 <option>Hantle</option>
                 <option>Sztanga</option>
                 <option>Wyciąg</option>
-                <option>Masa ciała</option><option>Maszyna</option>
+                <option>Masa ciała</option><option>Maszyna</option><option>Suwnica Smitha</option>
               </select>
             </label>
             <button className="primary-cta" type="submit">

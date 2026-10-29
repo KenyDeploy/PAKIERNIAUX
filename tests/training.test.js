@@ -1,8 +1,20 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createSession, completeSession, lastExercise, measurementChange, normalizeData, weekDates, currentStreak } from "../src/training.js";
+import { createSession, completeSession, lastExercise, measurementChange, normalizeData, weekDates, currentStreak, trainingAttendance, validSet } from "../src/training.js";
 const exercises = [{ id: 3, name: "Przysiad", sets: 4, reps: 6, rest: 150 }];
 const plan = { id: 1, exercises: [3] };
+test("manual attendance counts once, includes multiple sessions per day, and never duplicates recorded dates", () => {
+  const sessions=[{completedAt:new Date(2026,9,29,10).getTime()},{completedAt:new Date(2026,9,29,18).getTime()}];
+  assert.deepEqual(trainingAttendance(sessions,['2026-10-28','2026-10-28','2026-10-29']), {dates:['2026-10-28','2026-10-29'],manualDays:['2026-10-28'],count:3});
+  assert.equal(trainingAttendance(sessions,[]).count,2);
+});
+test("a confirmed but invalid set cannot poison saved volume", () => {
+  assert.equal(validSet({weight:' ',reps:'8'}),false);
+  assert.equal(validSet({weight:'22,5',reps:'8'}),true);
+  const s=createSession(plan,exercises,[],1000);
+  s.exercises[0].sets[0]={weight:'bad',reps:'8',completed:true};
+  assert.equal(completeSession(s),null);
+});
 test("four-set workout stores only confirmed sets and calculates volume", () => {
   const s = createSession(plan, exercises, [], 1000);
   assert.equal(s.exercises[0].sets.length, 4);

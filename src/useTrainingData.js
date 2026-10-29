@@ -16,17 +16,20 @@ export function useTrainingData(defaults) {
   const owner = useRef(null), generation = useRef(0), dirty = useRef(false);
   const hydrated = useRef(!supabase);
   const latest = useRef(data), revision = useRef(0), queue = useRef(Promise.resolve());
-  const update = useCallback((key, value) => {
+  const updateData = useCallback(transform => {
     if (!hydrated.current) return;
     dirty.current = true; revision.current++;
-    setData(current => {
-      const next = { ...current, [key]: typeof value === "function" ? value(current[key]) : value };
-      latest.current = next;
-      try { localStorage.setItem(cacheKey(owner.current), JSON.stringify({ data: next, pending: true })); }
-      catch { setStatus("Brak miejsca na zapis lokalny"); }
-      return next;
-    });
+    const next = transform(latest.current);
+    latest.current = next;
+    try {
+      localStorage.setItem(cacheKey(owner.current), JSON.stringify({ data: next, pending: true }));
+      setStatus(supabase ? "Zapisano lokalnie · oczekuje na synchronizację" : "Zapis na tym urządzeniu");
+    }
+    catch { setStatus("Brak miejsca na zapis lokalny"); }
+    setData(next);
   }, []);
+  const update = useCallback((key, value) => updateData(current => ({ ...current,
+    [key]: typeof value === "function" ? value(current[key]) : value })), [updateData]);
   useEffect(() => {
     if (!supabase) return;
     let alive = true;
@@ -98,7 +101,7 @@ export function useTrainingData(defaults) {
     document.addEventListener("visibilitychange", hide);
     return () => { window.removeEventListener("online", save); document.removeEventListener("visibilitychange", hide); };
   }, [ready, flush]);
-  return { data, update, authUser: user, authLoading: loading, cloudHydrated: ready, syncStatus: status,
+  return { data, update, updateData, authUser: user, authLoading: loading, cloudHydrated: ready, syncStatus: status,
     retrySync: () => ready ? flush().catch(() => {}) : setRetry(n => n + 1),
     signOut: async () => { try { await flush(); await supabase.auth.signOut(); } catch { setStatus("Najpierw zsynchronizuj dane przed wylogowaniem."); } } };
 }

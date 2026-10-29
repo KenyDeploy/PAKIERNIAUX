@@ -3,6 +3,13 @@ export function dateKey(value = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 export const number = value => Number(String(value).replace(",", "."));
+export const planName = name => ({ "Upper Body Power": "Góra ciała — siła", "Lower Body Strength": "Dół ciała — siła" })[name] || name;
+export const validSet = row => String(row.weight ?? "").trim() !== "" && Number.isFinite(number(row.weight)) && number(row.weight) >= 0 && Number.isInteger(number(row.reps)) && number(row.reps) > 0;
+export function trainingAttendance(workouts, completedDays) {
+  const sessionDays = new Set(workouts.map(w => dateKey(w.completedAt)));
+  const manualDays = [...new Set(completedDays)].filter(day => !sessionDays.has(day));
+  return { dates: [...new Set([...sessionDays, ...manualDays])].sort(), manualDays, count: workouts.length + manualDays.length };
+}
 export const volume = rows => rows.reduce((sum, row) => sum + (row.completed ? number(row.weight) * number(row.reps) : 0), 0);
 export function lastExercise(workouts, id) {
   return [...workouts].sort((a, b) => b.startedAt - a.startedAt)
@@ -27,7 +34,7 @@ export function createSession(plan, exercises, workouts, now = Date.now()) {
   };
 }
 export function completeSession(session, now = Date.now()) {
-  const exercises = session.exercises.map(e => ({ ...e, sets: e.sets.filter(s => s.completed) })).filter(e => e.sets.length);
+  const exercises = session.exercises.map(e => ({ ...e, sets: e.sets.filter(s => s.completed && validSet(s)) })).filter(e => e.sets.length);
   if (!exercises.length) return null;
   return { ...session, exercises, completedAt: now,
     durationSeconds: Math.max(0, Math.floor((now - session.startedAt) / 1000)),
@@ -58,6 +65,14 @@ export function normalizeData(saved = {}, defaults) {
   }
   data.plans = data.plans.filter(Boolean).map(p => ({ ...p, exercises: Array.isArray(p.exercises) ? p.exercises : [] }));
   data.exercises = data.exercises.filter(Boolean).map(e => ({ ...e, name: e.name || (e.id === 1 ? "Wyciskanie hantli na skosie" : "Ćwiczenie"), rest: e.rest ?? 90 }));
+  // One-time additive catalogue upgrade; preserve existing IDs, settings and custom exercises.
+  // Once upgraded, intentionally deleted catalogue entries stay deleted.
+  if (saved.catalogVersion !== 2 && data.exercises.length) {
+    const missing = (defaults.exercises || []).filter(e => !data.exercises.some(existing => existing.id === e.id || existing.name === e.name));
+    data.exercises = [...data.exercises, ...missing];
+  }
+  data.catalogVersion = 2;
+  data.exercises = data.exercises.map(e => e.id === 115 && e.name === "Hip thrust" ? { ...e, name: "Unoszenie bioder ze sztangą" } : e.id === 118 && e.name === "Face pull" ? { ...e, name: "Przyciąganie liny do twarzy" } : e);
   // Legacy day numbers have no month/year. Preserve them separately rather than inventing dates.
   data.legacyCompletedDays = saved.legacyCompletedDays || data.completedDays.filter(d => typeof d === "number");
   data.completedDays = data.completedDays.filter(d => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d));

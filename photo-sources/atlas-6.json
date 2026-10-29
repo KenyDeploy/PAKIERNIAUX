@@ -1,0 +1,44 @@
+{
+  "atlas": 6,
+  "generator": "OpenAI Image Generation",
+  "date": "2026-10-29",
+  "sourceArtifact": "exec-29f68c47-aa64-4913-9933-a033c7b8de9a.png",
+  "grid": {
+    "columns": 2,
+    "rows": 3
+  },
+  "exercises": [
+    {
+      "id": 124,
+      "name": "Spięcia brzucha"
+    },
+    {
+      "id": 125,
+      "name": "Unoszenie kolan w zwisie"
+    },
+    {
+      "id": 126,
+      "name": "Wyciskanie na maszynie siedząc"
+    },
+    {
+      "id": 127,
+      "name": "Rozpiętki na maszynie"
+    },
+    {
+      "id": 128,
+      "name": "Wyciskanie sztangi na ławce skośnej"
+    },
+    {
+      "id": 129,
+      "name": "Wyciskanie na ławce poziomej w suwnicy Smitha"
+    }
+  ],
+  "scenes": [
+    "Abdominal floor crunch, supine on mat with bent knees, shoulders slightly raised and arms crossed over chest.",
+    "Hanging knee raise on overhead pull-up bar, knees bent toward chest.",
+    "Seated chest press machine, back supported, handles at chest height pushed forward.",
+    "Pec deck chest fly machine, seated back supported, arms closing in front of chest.",
+    "Incline BARBELL bench press on a 30-degree incline bench, bar above upper chest.",
+    "Flat barbell bench press in SMITH machine, horizontal bench and bar guided on two vertical rails."
+  ]
+}
