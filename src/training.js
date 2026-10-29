@@ -18,7 +18,7 @@ export function createSession(plan, exercises, workouts, now = Date.now()) {
     exercises: selected.map(exercise => {
       const last = lastExercise(workouts, exercise.id)?.sets.filter(s => s.completed) || [];
       const target = plan.targets?.[exercise.id] || exercise;
-      return { ...exercise, reps: target.reps, rest: target.rest || 90,
+      return { ...exercise, reps: target.reps, rest: target.rest ?? 90,
         sets: Array.from({ length: target.sets || 3 }, (_, i) => ({
           weight: String(last[i]?.weight ?? last[0]?.weight ?? ""),
           reps: String(last[i]?.reps ?? target.reps ?? 10), completed: false,
@@ -57,7 +57,7 @@ export function normalizeData(saved = {}, defaults) {
     if (!Array.isArray(data[key])) data[key] = defaults[key] || [];
   }
   data.plans = data.plans.filter(Boolean).map(p => ({ ...p, exercises: Array.isArray(p.exercises) ? p.exercises : [] }));
-  data.exercises = data.exercises.filter(Boolean).map(e => ({ ...e, name: e.name || (e.id === 1 ? "Wyciskanie hantli na skosie" : "Ćwiczenie"), rest: e.rest || 90 }));
+  data.exercises = data.exercises.filter(Boolean).map(e => ({ ...e, name: e.name || (e.id === 1 ? "Wyciskanie hantli na skosie" : "Ćwiczenie"), rest: e.rest ?? 90 }));
   // Legacy day numbers have no month/year. Preserve them separately rather than inventing dates.
   data.legacyCompletedDays = saved.legacyCompletedDays || data.completedDays.filter(d => typeof d === "number");
   data.completedDays = data.completedDays.filter(d => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d));

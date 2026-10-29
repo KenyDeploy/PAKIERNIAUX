@@ -14,8 +14,10 @@ export function useTrainingData(defaults) {
   const [status, setStatus] = useState(supabase ? "Łączenie…" : "Zapis na tym urządzeniu");
   const [retry, setRetry] = useState(0);
   const owner = useRef(null), generation = useRef(0), dirty = useRef(false);
+  const hydrated = useRef(!supabase);
   const latest = useRef(data), revision = useRef(0), queue = useRef(Promise.resolve());
   const update = useCallback((key, value) => {
+    if (!hydrated.current) return;
     dirty.current = true; revision.current++;
     setData(current => {
       const next = { ...current, [key]: typeof value === "function" ? value(current[key]) : value };
@@ -33,6 +35,7 @@ export function useTrainingData(defaults) {
       const id = session?.user?.id || null;
       if (!alive || (owner.current === id && id && request)) return;
       owner.current = id; const token = ++generation.current;
+      hydrated.current = false;
       dirty.current = false; setReady(false); setLoading(Boolean(id)); setUser(session?.user || null);
       setData(normalizeData({}, defaults));
       if (!id) { setData(normalizeData({}, defaults)); setLoading(false); return; }
@@ -45,6 +48,7 @@ export function useTrainingData(defaults) {
         const cached = readCache(id);
         const saved = normalizeData(cached?.pending ? cached.data : row?.data || {}, defaults);
         latest.current = saved; setData(saved); dirty.current = Boolean(cached?.pending);
+        hydrated.current = true;
         setReady(true); setStatus(dirty.current ? "Oczekuje na synchronizację" : "Zsynchronizowano");
       } catch {
         if (alive && token === generation.current) setStatus("Nie udało się wczytać danych. Spróbuj ponownie.");
@@ -63,11 +67,14 @@ export function useTrainingData(defaults) {
   }, [defaults, retry]);
   const flush = useCallback(() => {
     const id = owner.current, token = generation.current, rev = revision.current, snapshot = latest.current;
-    if (!supabase || !id || !dirty.current) return queue.current;
+    if (!hydrated.current || !supabase || !id || !dirty.current) return queue.current;
     setStatus("Zapisywanie…");
     queue.current = queue.current.catch(() => {}).then(async () => {
-      if (token !== generation.current || id !== owner.current) return;
-      const { error } = await supabase.from("user_data").upsert({ user_id: id, data: snapshot, updated_at: new Date().toISOString() }).abortSignal(AbortSignal.timeout(10000));
+      if (!hydrated.current || token !== generation.current || id !== owner.current) return;
+      let error;
+      try {
+        ({ error } = await supabase.from("user_data").upsert({ user_id: id, data: snapshot, updated_at: new Date().toISOString() }).abortSignal(AbortSignal.timeout(10000)));
+      } catch (cause) { error = cause; }
       if (token !== generation.current) return;
       if (error) { setStatus("Zapisano lokalnie · ponów synchronizację"); throw error; }
       if (revision.current === rev) {

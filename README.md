@@ -28,3 +28,11 @@ Build generuje manifest i service worker z cache powłoki. Nowy worker czeka na 
 `npm test` uruchamia testy obliczeń i interfejsu w Happy DOM, wraz z testem atrap synchronizacji. `tests/browser.mjs` jest osobnym scenariuszem dla Playwright (zainstaluj Playwright i Chromium i uruchom przy działającym serwerze). Opcjonalnie ustaw `PLAYWRIGHT_MODULE` na ścieżkę modułu oraz `APP_URL` na adres lokalnego trybu testowego bez Supabase. Test wymaga pustego profilu przeglądarki i nie powinien być uruchamiany na prawdziwym koncie użytkownika.
 
 Pełne ustalenia, zakres weryfikacji, ograniczenia i plan dalszego rozwoju: [AUDIT.md](AUDIT.md).
+
+Test w zainstalowanym Chromium można uruchomić bez pobierania przeglądarki:
+
+```sh
+CHROMIUM_PATH=/usr/bin/chromium node tests/browser.mjs
+```
+
+Wymaga modułu `playwright` (lub `PLAYWRIGHT_MODULE` wskazującego jego plik wejściowy) i działającego serwera lokalnego bez konfiguracji Supabase. Scenariusz korzysta z osobnego, pustego kontekstu przeglądarki. Obejmuje własny plan, cele serii, zapis i wznowienie treningu oraz przerw, historię, wykres, pomiary, 36 kombinacji zakładek i szerokości oraz 4 szerokości modalu planu. To symulacja telefonu w Chromium, nie test Safari ani fizycznego iPhone’a.

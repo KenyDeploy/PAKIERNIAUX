@@ -185,10 +185,11 @@ export default function App() {
   });
   const activeExerciseIndex = activeSession?.index || 0;
   const setActiveExerciseIndex = value => update("activeSession", current => ({ ...current, index: typeof value === "function" ? value(current.index) : value }));
-  const [restSeconds, setRestSeconds] = useState(0);
-  const [isResting, setIsResting] = useState(false);
+  const [clockNow, setClockNow] = useState(Date.now);
+  const restSeconds = Math.max(0, Math.ceil(((activeSession?.restUntil || 0) - clockNow) / 1000));
+  const isResting = restSeconds > 0;
   const workoutStartedAt = activeSession?.startedAt;
-  const [elapsedWorkoutSeconds, setElapsedWorkoutSeconds] = useState(0);
+  const elapsedWorkoutSeconds = Math.max(0, Math.floor((clockNow - (workoutStartedAt || clockNow)) / 1000));
   const [planEditor, setPlanEditor] = useState(null);
   const filteredExercises = useMemo(
     () =>
@@ -206,7 +207,7 @@ export default function App() {
     const session = createSession(plan, exercises, workouts);
     if (!session) { setNotice("Dodaj ćwiczenia do planu przed rozpoczęciem."); setTab("plans"); return; }
     update("activeSession", session);
-    setSummary(null); setNotice(""); setElapsedWorkoutSeconds(0); setTab("workout");
+    setClockNow(Date.now()); setSummary(null); setNotice(""); setTab("workout");
   };
   const currentExercise = activeSession?.exercises[activeExerciseIndex];
   const previousExercise = currentExercise && lastExercise(workouts, currentExercise.id);
@@ -220,23 +221,21 @@ export default function App() {
       setNotice("Podaj ciężar (0 dla masy ciała) i pełną liczbę powtórzeń większą od zera."); return;
     }
     updateSet(index, "completed", !row.completed); setNotice("");
-    if (!row.completed) { setRestSeconds(currentExercise.rest || 90); setIsResting(true); }
+    if (!row.completed) {
+      const now = Date.now();
+      setClockNow(now);
+      update("activeSession", session => ({ ...session, restUntil: now + (currentExercise.rest ?? 90) * 1000, restExerciseName: currentExercise.name }));
+    }
   };
   const addSet = () => update("activeSession", session => ({ ...session, exercises: session.exercises.map((e, i) => i === session.index ? { ...e, sets: [...e.sets, { weight: "", reps: String(e.reps), completed: false }] } : e) }));
   useEffect(() => {
-    if (!isResting || restSeconds <= 0) return;
-    const end = Date.now() + restSeconds * 1000;
-    const timer = setInterval(() => setRestSeconds(Math.max(0, Math.ceil((end - Date.now()) / 1000))), 250);
-    return () => clearInterval(timer);
-  }, [isResting, restSeconds]);
-  useEffect(() => {
-    if (!workoutStartedAt || tab !== "workout") return undefined;
-    const timer = setInterval(() => setElapsedWorkoutSeconds(Math.floor((Date.now() - workoutStartedAt) / 1000)), 1000);
-    return () => clearInterval(timer);
-  }, [workoutStartedAt, tab]);
-  useEffect(() => {
-    if (isResting && restSeconds === 0) setIsResting(false);
-  }, [isResting, restSeconds]);
+    if (!activeSession || tab !== "workout") return;
+    const tick = () => setClockNow(Date.now());
+    tick();
+    const timer = setInterval(tick, 250);
+    document.addEventListener("visibilitychange", tick);
+    return () => { clearInterval(timer); document.removeEventListener("visibilitychange", tick); };
+  }, [activeSession?.id, tab]);
   const addExercise = (event) => {
     event.preventDefault();
     if (!newExercise.name.trim()) return;
@@ -330,7 +329,7 @@ export default function App() {
     if (!result) { setNotice("Zatwierdź przynajmniej jedną serię przed zakończeniem."); return; }
     update("workouts", current => [result, ...current]);
     setCompletedDays(current => [...new Set([...current, dateKey(result.completedAt)])]);
-    update("activeSession", null); setSummary(result); setIsResting(false); setTab("history"); setNotice("");
+    update("activeSession", null); setSummary(result); setTab("history"); setNotice("");
   };
   const deleteExercise = (exerciseId) => {
     setExercises((current) => current.filter((exercise) => exercise.id !== exerciseId));
@@ -729,23 +728,23 @@ export default function App() {
             {isResting && (
               <section className="rest-card">
                 <span className="eyebrow">
-                  PRZERWA · {currentExercise.name}
+                  PRZERWA · {activeSession.restExerciseName || currentExercise.name}
                 </span>
                 <strong>
                   {Math.floor(restSeconds / 60)}:
                   {String(restSeconds % 60).padStart(2, "0")}
                 </strong>
                 <div>
-                  <button onClick={() => setRestSeconds((value) => value + 15)}>
+                  <button onClick={() => update("activeSession", session => ({ ...session, restUntil: Math.max(Date.now(), session.restUntil || 0) + 15000 }))}>
                     +15 s
                   </button>
-                  <button onClick={() => setIsResting(false)}>
+                  <button onClick={() => update("activeSession", session => ({ ...session, restUntil: null }))}>
                     <SkipForward size={15} /> Pomiń
                   </button>
                 </div>
               </section>
             )}
-            <button type="button" className="back-link" onClick={() => { if (window.confirm("Usunąć rozpoczęty trening i wpisane w nim serie?")) { update("activeSession", null); setIsResting(false); setTab("home"); } }}>Anuluj rozpoczęty trening</button>
+            <button type="button" className="back-link" onClick={() => { if (window.confirm("Usunąć rozpoczęty trening i wpisane w nim serie?")) { update("activeSession", null); setTab("home"); } }}>Anuluj rozpoczęty trening</button>
             <div className="workout-navigation">
               <button
                 className="secondary-cta"
@@ -758,7 +757,6 @@ export default function App() {
                 <button
                   className="primary-cta"
                   onClick={() => {
-                    setIsResting(false);
                     setActiveExerciseIndex((value) => value + 1);
                   }}
                 >

@@ -8,9 +8,15 @@ test('cloud hydration does not auto-write; accounts and failed reads remain isol
  const window=new Window({url:'http://localhost'});
  for(const key of ['window','document','navigator','localStorage'])Object.defineProperty(globalThis,key,{value:key==='window'?window:window[key],configurable:true,writable:true});
  globalThis.IS_REACT_ACT_ENVIRONMENT=true;
- const writes=[];let callback;let currentUser='a';let failRead=false;let failWrite=false;
+ const writes=[];let callback;let currentUser='a';let failRead=false;let failWrite=false;let rejectWrite=false;
  const db={a:{plans:[{id:1,name:'Plan A',exercises:[]}],measurements:[]},b:{plans:[],measurements:[]}};
  globalThis.__testSupabase={auth:{getSession:async()=>({data:{session:{user:{id:currentUser}}}}),onAuthStateChange:cb=>{callback=cb;return{data:{listener:null,subscription:{unsubscribe(){}}}};},signOut:async()=>callback('SIGNED_OUT',null)},from(){let selected=false,id,payload;const q={select(){selected=true;return q;},eq(_,value){id=value;return q;},maybeSingle(){return q;},upsert(p){payload=p;return q;},abortSignal(){if(selected)return Promise.resolve(failRead?{error:new Error('read failed')}:{data:db[id]?{data:db[id]}:null});writes.push(payload);return Promise.resolve(failWrite?{error:new Error('write failed')}:{error:null});}};return q;}};
+ const originalFrom=globalThis.__testSupabase.from;
+ globalThis.__testSupabase.from=function(){
+  const q=originalFrom();const originalUpsert=q.upsert;
+  q.upsert=function(payload){originalUpsert(payload);if(rejectWrite)q.abortSignal=()=>Promise.reject(new TypeError('Failed to fetch'));return q;};
+  return q;
+ };
  const server=await createServer({server:{middlewareMode:true,hmr:false},plugins:[{name:'mock-supabase',enforce:'pre',resolveId(id){if(id==='./supabase')return '\0test-supabase';},load(id){if(id==='\0test-supabase')return 'export const supabase = globalThis.__testSupabase;';}}]});
  const {createRoot}=await import('react-dom/client');let root;let api;
  const wait=()=>new Promise(resolve=>setTimeout(resolve,20));
@@ -26,6 +32,12 @@ test('cloud hydration does not auto-write; accounts and failed reads remain isol
   assert.equal(JSON.parse(localStorage.getItem('pakiernia.v2.a')).pending,true);
   failWrite=false;await act(async()=>{await api.retrySync();});
   assert.equal(JSON.parse(localStorage.getItem('pakiernia.v2.a')).pending,false);
+  await act(()=>api.update('waterByDate',{'2026-10-29':2}));
+  rejectWrite=true;await act(async()=>{await api.retrySync();});
+  assert.match(api.syncStatus,/Zapisano lokalnie/);
+  assert.equal(JSON.parse(localStorage.getItem('pakiernia.v2.a')).pending,true);
+  rejectWrite=false;await act(async()=>{await api.retrySync();});
+  assert.equal(JSON.parse(localStorage.getItem('pakiernia.v2.a')).pending,false);
   const beforeSwitch=writes.length;
   currentUser='b';await act(async()=>{callback('SIGNED_IN',{user:{id:'b'}});await wait();});
   assert.deepEqual(api.data.plans,[]);assert.equal(writes.length,beforeSwitch);
@@ -36,5 +48,11 @@ test('cloud hydration does not auto-write; accounts and failed reads remain isol
   assert.equal(api.cloudHydrated,false);assert.deepEqual(api.data.plans,[]);
   assert.match(api.syncStatus,/Nie udało się wczytać/);
   assert.equal(writes.some(w=>w.user_id==='c'),false);
+  const beforeBlockedWrite=writes.length;
+  await act(()=>api.update('plans',[{id:99,name:'Must not overwrite unread data',exercises:[]}]));
+  await act(async()=>{await api.retrySync();await wait();});
+  assert.equal(writes.length,beforeBlockedWrite);
+  assert.equal(localStorage.getItem('pakiernia.v2.c'),null);
+  assert.deepEqual(api.data.plans,[]);
  }finally{if(root)await act(()=>root.unmount());await server.close();window.happyDOM.abort();delete globalThis.__testSupabase;}
 });

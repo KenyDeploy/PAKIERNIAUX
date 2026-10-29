@@ -28,6 +28,9 @@ test("plan-specific targets override exercise defaults", () => {
   assert.equal(s.exercises[0].sets.length, 5);
   assert.equal(s.exercises[0].sets[0].reps, "12");
   assert.equal(s.exercises[0].rest, 60);
+  const noRest = createSession({ ...plan, targets: { 3: { sets: 1, reps: 8, rest: 0 } } }, exercises, []);
+  assert.equal(noRest.exercises[0].rest, 0);
+  assert.equal(normalizeData({exercises:[{...exercises[0],rest:0}]}, {}).exercises[0].rest, 0);
 });
 test("measurements compare latest available values without converting omissions to zero", () => {
   assert.deepEqual(measurementChange([{date:"2026-10-29",biceps:38},{date:"2026-10-26",biceps:null},{date:"2026-10-22",biceps:37}], "biceps"), { latest:38,previous:37,delta:1,previousDate:"2026-10-22" });

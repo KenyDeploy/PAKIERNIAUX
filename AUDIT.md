@@ -1,5 +1,19 @@
 # Pakiernia u Matiego — audyt i pierwsza naprawa
 
+## Kontynuacja — 29 października 2026
+
+Zweryfikowano PR #1: nadal otwarty i roboczy, bez zmian od przekazania `3c9b308`. Kontynuacja zachowuje obecny model danych i nie zmienia schematu bazy.
+
+- Ochrona odczytu konta działa teraz również wewnątrz funkcji modyfikacji i kolejki zapisu. Nie można przypadkowo zapisać wartości domyślnych przed udanym odczytem.
+- Odrzucone żądanie sieciowe (wyjątek, a nie tylko odpowiedź z `error`) zachowuje lokalny zapis i pokazuje komunikat o konieczności ponowienia.
+- Przerwa ma trwały termin końca w rozpoczętej sesji. Nie restartuje się po odświeżeniu ani powrocie z tła. Zachowano wydłużanie i pomijanie; 0 sekund w planie pozostaje zerem. Przełączenie ćwiczenia zachowuje przerwę z nazwą ćwiczenia, które ją rozpoczęło. Oba zegary obliczają czas z dat zamiast sumowania wywołań interwału.
+- Test Chromium ujawnił rozszerzanie widoku 320 px przez odznaki i problemy z dotknięciem dolnej nawigacji. Siatka ma elastyczne kolumny i dwa pola na małych ekranach. Usunięto fikcyjną liczbę zdobytych odznak dodawaną przez CSS.
+- `npm test`: 8 testów przechodzi, w tym rozszerzony test blokady modyfikacji po błędzie odczytu, wyjątku sieciowego, ponowienia zapisu i zerowej przerwy. `npm run build`: przechodzi.
+- Playwright + systemowy Chromium: przepływ plan → cele → trening → serie → zapis → historia → wykres → ponowne otwarcie; wcześniejsze wyniki, pomiary, wznowienie i wygaśnięcie przerwy. 36 kombinacji zakładek i szerokości 320/375/390/430/768/1280 px oraz 4 szerokości modalu. Sprawdzana szerokość dokumentu i widoku względem zadanej szerokości, pola ≥16 px, brak błędów JavaScript.
+- Za zgodą użytkownika podjęto próbę utworzenia dwóch kont tymczasowych przez Supabase Auth. Adresy `.invalid` odrzucono; kolejne próby w domenie przykładowej zatrzymał limit `over_email_send_rate_limit`. Odczyt `auth.users` potwierdził brak utworzonych kont testowych. Test rzeczywistego logowania dwóch kont i RLS przez klientów pozostaje niewykonany. Nie zmieniano ustawień e-maili, haseł ani istniejących kont.
+
+Powyższe testy przeglądarkowe są symulacją mobilną. Safari, instalacja PWA i klawiatura na fizycznym iPhonie nadal nie zostały sprawdzone. Pozostałe ograniczenia opisane niżej (pełny offline, konflikty snapshotów, grafiki konkretnych ćwiczeń i dalszy rozwój funkcji) pozostają aktualne. Historyczna sekcja weryfikacji poniżej opisuje stan pierwszego przekazania.
+
 ## Zweryfikowany punkt wyjścia
 
 Repozytorium: KenyDeploy/PAKIERNIAUX, main `aedfc600e16c02c833d513fc7e5e795e500823f5`. Produkcja Vercel `pakierniaux` była zbudowana z tego samego commita. Supabase: projekt Pakiernia. Inspekcja bazy była wyłącznie odczytem.
