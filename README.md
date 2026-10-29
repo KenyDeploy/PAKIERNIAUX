@@ -1,52 +1,30 @@
-# PAKIERNIA U MATIEGO — nowy UX
+# Pakiernia u Matiego
 
-## Wymagania
-Node.js 18+ (zalecane 20+).
+Prywatny dziennik treningowy: plany z bazy ćwiczeń, zapisywanie serii, historia i statystyki na rzeczywistych danych, pomiary sylwetki i konta Supabase.
 
-## Uruchomienie lokalne
-```bash
-npm install
+## Uruchomienie
+
+Node.js 22.12+ (produkcja Vercel używa Node 24).
+
+```sh
+npm ci
 npm run dev
-```
-Otwórz adres pokazany przez Vite.
-
-## Build produkcyjny
-```bash
+npm test
 npm run build
 ```
 
-## Vercel
-1. Wrzuć zawartość projektu do repo GitHub.
-2. W Vercel wybierz `Add New Project` i repozytorium.
-3. Framework: Vite.
-4. Build command: `npm run build`
-5. Output directory: `dist`
-6. Deploy.
+W `.env.local` ustaw `VITE_SUPABASE_URL` i `VITE_SUPABASE_PUBLISHABLE_KEY`. Nie commituj tego pliku. Bez konfiguracji Supabase działa lokalny tryb urządzenia. Brak klucza serwisowego w aplikacji klienckiej.
 
-## Supabase
-1. Otwórz SQL Editor w projekcie Supabase.
-2. Wklej i uruchom zawartość `supabase/schema.sql`.
-3. Włącz Email provider w Authentication > Providers.
-4. Lokalna konfiguracja jest w `.env.local` (nie commituj tego pliku).
+## Zapis danych
 
-Aplikacja używa Supabase Auth oraz tabeli `user_data`. Po zalogowaniu plany, ćwiczenia, nawodnienie, kalendarz treningów i pomiary są ładowane oraz zapisywane dla konkretnego użytkownika. `localStorage` pozostaje lokalnym cache i trybem awaryjnym, gdy zmienne Supabase nie są ustawione.
+Obecny klient używa Supabase Auth oraz tabeli `user_data` z RLS według `user_id`. Snapshot obejmuje plany, ćwiczenia, sesje z seriami, rozpoczętą sesję, datowane pomiary, dni treningowe i nawodnienie. Cache jest odrębny dla każdego konta. Nie zapisujemy do chmury, dopóki odczyt konta nie zakończy się powodzeniem. Błąd synchronizacji zachowuje lokalną kopię i umożliwia ponowienie.
 
-## Konfiguracja Supabase
-Utwórz `.env.local` w katalogu projektu:
-```env
-VITE_SUPABASE_URL=https://twoj-projekt.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-```
-Następnie uruchom `supabase/schema.sql` w SQL Editorze, włącz Email provider w Authentication > Providers i zrestartuj Vite. Schemat zawiera osobne tabele na profile, ćwiczenia, plany, sesje treningowe, serie, pomiary, wodę, dni treningowe i odznaki, wszystkie zabezpieczone RLS per `auth.uid()`. Obecna wersja klienta zapisuje kompatybilny snapshot stanu w `user_data`; tabele szczegółowej historii są przygotowane pod kolejny krok migracji zapisu serii i wyników.
+Na istniejącej instalacji nie uruchamiaj ponownie `supabase/schema.sql` jako aktualizacji: nie jest migracją tej poprawki i część istniejących polityk nie jest idempotentna. Ta zmiana nie wymaga migracji SQL.
 
-## Co zostało poprawione
-- ekran startowy z logo i animacją,
-- uproszczona nawigacja mobilna,
-- większe pola i przyciski dotykowe,
-- odchudzony dashboard,
-- mocno przebudowany ekran treningu,
-- lepsza przerwa między seriami,
-- wygodniejsze RPE,
-- lepsze modale,
-- responsywność telefonu/tabletu/desktopu,
-- zachowane: treningi, plany, ćwiczenia, historia, statystyki, pomiary, backup/import, dark/light.
+## PWA i testy
+
+Build generuje manifest i service worker z cache powłoki. Nowy worker czeka na zamknięcie poprzednich okien, żeby nie wymieniać aplikacji w trakcie treningu. Wczytanie danych konta wymaga połączenia; pełny tryb offline i konflikty równoczesnych zmian na kilku urządzeniach są poza zakresem tej wersji.
+
+`npm test` uruchamia testy obliczeń i interfejsu w Happy DOM, wraz z testem atrap synchronizacji. `tests/browser.mjs` jest osobnym scenariuszem dla Playwright (zainstaluj Playwright i Chromium i uruchom przy działającym serwerze). Opcjonalnie ustaw `PLAYWRIGHT_MODULE` na ścieżkę modułu oraz `APP_URL` na adres lokalnego trybu testowego bez Supabase. Test wymaga pustego profilu przeglądarki i nie powinien być uruchamiany na prawdziwym koncie użytkownika.
+
+Pełne ustalenia, zakres weryfikacji, ograniczenia i plan dalszego rozwoju: [AUDIT.md](AUDIT.md).
