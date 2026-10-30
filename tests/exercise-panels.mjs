@@ -1,0 +1,91 @@
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url);
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:process.platform==='win32'?{channel:'msedge'}:{})});
+try {
+  const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+  await page.goto(process.env.APP_URL || 'http://127.0.0.1:5173');
+  await page.locator('.bottom-nav').getByRole('button',{name:'Plany',exact:true}).click();
+  await page.locator('.plan-card').filter({hasText:'Góra ciała — siła'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();
+  const snapshot=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data);
+  const menu=async action=>{await page.getByRole('button',{name:'Menu ćwiczenia',exact:true}).click();if(action)await page.getByRole('dialog').getByRole('button',{name:action,exact:true}).click();};
+  const saveSet=async(weight,reps)=>{await page.getByRole('textbox',{name:/^Ciężar serii/}).fill(weight);await page.getByRole('textbox',{name:/^Powtórzenia serii/}).fill(reps);await page.locator('.set-confirm').click();};
+  const baseline=await snapshot();
+  await page.getByRole('button',{name:'Ostatni trening — szczegóły ćwiczenia'}).click();
+  assert.match(await page.locator('.exercise-history-sheet').innerText(),/Nie masz jeszcze zapisanych wyników/);
+  await page.getByRole('button',{name:'Zamknij historię ćwiczenia'}).click();
+  await saveSet('20','8');
+  await page.evaluate(()=>{
+    const key='pakiernia.v2.local',cache=JSON.parse(localStorage.getItem(key)),id=cache.data.activeSession.exercises[0].id;
+    cache.data.workouts=Array.from({length:7},(_,i)=>({id:'history-fixture-'+i,startedAt:new Date(2026,9,28-i,10).getTime(),completedAt:new Date(2026,9,28-i,11).getTime(),durationSeconds:999,volume:160,plan:{id:100,name:'Testowa zapisana sesja'},exercises:[{id,name:'Poprzednia nazwa',...(i===1?{durationSeconds:45}:{}),sets:[{weight:'20',reps:'8',completed:true},{weight:'999',reps:'9',completed:false}]}]}));
+    localStorage.setItem(key,JSON.stringify(cache));
+  });
+  await page.reload();await page.getByRole('button',{name:'Wznów rozpoczęty trening'}).click();
+  const card=page.getByRole('button',{name:'Ostatni trening — szczegóły ćwiczenia'});
+  assert.match(await card.innerText(),/28.10.2026/);assert.match(await card.innerText(),/1 seria/);assert.doesNotMatch(await card.innerText(),/999/);
+  await card.click();
+  assert.equal(await page.locator('.exercise-history-sessions button').count(),5);
+  assert.equal(await page.locator('.history-exercise-time').count(),0);
+  assert.match(await page.locator('.history-volume').innerText(),/160 kg/);
+  await page.locator('.exercise-history-sessions button').nth(1).click();
+  assert.match(await page.locator('.history-exercise-time').innerText(),/0:45/);
+  for(const width of [320,375,390,430]) {
+    await page.setViewportSize({width,height:740});
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+    assert.ok(await page.locator('.exercise-history-sheet .sheet-body').evaluate(el=>el.scrollWidth<=el.clientWidth));
+  }
+  if(process.env.EXERCISE_HISTORY_SCREENSHOT)await page.screenshot({path:process.env.EXERCISE_HISTORY_SCREENSHOT});
+  await page.getByRole('button',{name:'Pełna historia / progres ćwiczenia'}).click();
+  assert.equal(await page.getByLabel('Ćwiczenie na wykresie').inputValue(),'1');
+  await page.getByRole('button',{name:'Wznów rozpoczęty trening'}).click();
+  await menu();
+  assert.ok(await page.locator('.session-menu-preview .exercise-photo-thumb').isVisible());
+  for(const width of [320,375,390,430]) {
+    await page.setViewportSize({width,height:740});
+    assert.ok(await page.locator('.session-exercise-menu .sheet-body').evaluate(el=>el.scrollWidth<=el.clientWidth));
+    assert.ok(await page.locator('.session-exercise-menu .sheet-footer button').evaluate(el=>{const r=el.getBoundingClientRect();return r.bottom<=innerHeight && el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}));
+  }
+  if(process.env.EXERCISE_MENU_SCREENSHOT)await page.screenshot({path:process.env.EXERCISE_MENU_SCREENSHOT});
+  await page.getByRole('button',{name:'Dodaj inne ćwiczenie',exact:true}).click();
+  await page.getByRole('button',{name:'Nogi',exact:true}).click();
+  await page.getByLabel('Szukaj ćwiczenia do sesji').fill('Przysiad');
+  await page.getByRole('button',{name:'Wybierz: Przysiad ze sztangą',exact:true}).click();
+  await page.getByLabel('Docelowe serie',{exact:true}).fill('2');await page.getByLabel('Docelowe powtórzenia',{exact:true}).fill('6');await page.getByLabel('Przerwa (sekundy)',{exact:true}).fill('0');
+  await page.getByRole('button',{name:'Dodaj do treningu',exact:true}).click();
+  assert.equal((await snapshot()).activeSession.exercises.length,5);
+  await saveSet('40','6');
+  await menu('Zamień ćwiczenie');
+  await page.getByLabel('Szukaj ćwiczenia do sesji').fill('Prostowanie ramion na wyciągu');
+  await page.getByRole('button',{name:'Wybierz: Prostowanie ramion na wyciągu',exact:true}).click();
+  assert.ok(await page.getByRole('button',{name:'Zamień w treningu'}).isDisabled());
+  await page.getByLabel('Potwierdzam zamianę i usunięcie bieżących serii').check();await page.getByRole('button',{name:'Zamień w treningu'}).click();
+  assert.ok((await snapshot()).activeSession.exercises[4].sets.every(row=>!row.completed && row.weight===''));
+  await saveSet('999','8');await menu('Pomiń ćwiczenie');
+  await page.reload();await page.getByRole('button',{name:'Wznów rozpoczęty trening'}).click();
+  assert.ok(await page.locator('.session-skipped-banner').isVisible());
+  await menu('Cofnij pominięcie');assert.equal((await snapshot()).activeSession.exercises[4].sets[0].weight,'999');
+  await menu('Usuń z bieżącego treningu');
+  assert.ok(await page.getByRole('button',{name:'Usuń tylko z tej sesji'}).isDisabled());
+  await page.getByRole('button',{name:'Zamknij opcje ćwiczenia'}).click();assert.equal((await snapshot()).activeSession.exercises.length,5);
+  await menu('Usuń z bieżącego treningu');await page.getByLabel('Potwierdzam usunięcie z bieżącego treningu').check();
+  const beforeQuota=(await snapshot()).activeSession;
+  await page.evaluate(()=>{window.__panelStorage=Storage.prototype.setItem;Storage.prototype.setItem=function(){throw new Error('QuotaExceededError');};});
+  await page.getByRole('button',{name:'Usuń tylko z tej sesji'}).click();assert.deepEqual((await snapshot()).activeSession,beforeQuota);assert.ok(await page.getByRole('alert').isVisible());
+  await page.evaluate(()=>{Storage.prototype.setItem=window.__panelStorage;delete window.__panelStorage;});
+  await page.getByRole('button',{name:'Usuń tylko z tej sesji'}).click();
+  let data=await snapshot();assert.equal(data.activeSession.exercises.length,4);assert.equal(data.activeSession.index,3);assert.deepEqual(data.plans,baseline.plans);assert.deepEqual(data.exercises,baseline.exercises);
+  await page.getByRole('button',{name:'Zakończ',exact:true}).click();await page.getByRole('button',{name:'Zapisz trening'}).click();
+  data=await snapshot();assert.equal(data.workouts.length,8);assert.equal(data.workouts[0].volume,160);assert.deepEqual(data.workouts[0].exercises.map(e=>e.id),[1]);
+  await page.locator('.bottom-nav').getByRole('button',{name:'Plany',exact:true}).click();await page.locator('.plan-card').filter({hasText:'Góra ciała — siła'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();
+  for(let i=0;i<4;i++){await menu('Usuń z bieżącego treningu');await page.getByLabel('Potwierdzam usunięcie z bieżącego treningu').check();await page.getByRole('button',{name:'Usuń tylko z tej sesji'}).click();}
+  assert.equal((await snapshot()).activeSession.exercises.length,0);assert.ok(await page.getByRole('heading',{name:'Trening bez ćwiczeń'}).isVisible());
+  await page.reload();await page.getByRole('button',{name:'Wznów rozpoczęty trening'}).click();
+  await page.getByRole('button',{name:'Dodaj inne ćwiczenie',exact:true}).click();await page.getByLabel('Szukaj ćwiczenia do sesji').fill('Przysiad ze sztangą');await page.getByRole('button',{name:'Wybierz: Przysiad ze sztangą',exact:true}).click();await page.getByRole('button',{name:'Dodaj do treningu'}).click();
+  assert.equal((await snapshot()).activeSession.exercises.length,1);assert.equal((await snapshot()).activeSession.exercises[0].id,3);
+  await menu('Usuń z bieżącego treningu');await page.getByLabel('Potwierdzam usunięcie z bieżącego treningu').check();await page.getByRole('button',{name:'Usuń tylko z tej sesji'}).click();
+  await page.getByRole('button',{name:'Zakończ trening',exact:true}).click();assert.equal(await page.getByRole('button',{name:'Zapisz trening'}).count(),0);await page.getByRole('button',{name:'Odrzuć trening bez zapisu'}).click();
+  assert.equal((await snapshot()).workouts.length,8);assert.deepEqual(errors,[]);
+  console.log('Exercise history / last five / actual time / add / replace / skip / undo / remove / empty session / resume passed');
+}finally{await browser.close();}

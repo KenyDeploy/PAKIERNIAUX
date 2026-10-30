@@ -1,0 +1,36 @@
+{
+  "atlas": 2,
+  "generator": "OpenAI Image Generation",
+  "date": "2026-10-29",
+  "sourceArtifact": "exec-12446ecd-844d-4645-b352-b911d3f147ba.png",
+  "grid": {
+    "columns": 2,
+    "rows": 3
+  },
+  "exercises": [
+    {
+      "id": 100,
+      "name": "Wyciskanie sztangi na ławce poziomej"
+    },
+    {
+      "id": 101,
+      "name": "Rozpiętki z hantlami"
+    },
+    {
+      "id": 102,
+      "name": "Pompki"
+    },
+    {
+      "id": 103,
+      "name": "Rozpiętki na bramie"
+    },
+    {
+      "id": 104,
+      "name": "Martwy ciąg klasyczny"
+    },
+    {
+      "id": 105,
+      "name": "Wiosłowanie sztangą"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "atlas": 5,
+  "generator": "OpenAI Image Generation",
+  "date": "2026-10-29",
+  "sourceArtifact": "exec-b1f88f5e-9554-4e15-8afe-7f4179e92abc.png",
+  "grid": {
+    "columns": 2,
+    "rows": 3
+  },
+  "exercises": [
+    {
+      "id": 118,
+      "name": "Przyciąganie liny do twarzy"
+    },
+    {
+      "id": 119,
+      "name": "Wyciskanie hantli siedząc"
+    },
+    {
+      "id": 120,
+      "name": "Uginanie ramion ze sztangą"
+    },
+    {
+      "id": 121,
+      "name": "Uginanie młotkowe"
+    },
+    {
+      "id": 122,
+      "name": "Wyciskanie francuskie"
+    },
+    {
+      "id": 123,
+      "name": "Pompki na poręczach"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+/* Accent tokens are scoped to the current account and inherited by sheets. */
+.app-shell{
+ --on-accent:#101510;--success:#73d99a;--warning:#ffbd66;--danger:#ff8585;
+ --accent-soft:color-mix(in srgb,var(--accent) 9%,#111512);
+ --accent-border:color-mix(in srgb,var(--accent) 35%,#303632);
+ --accent-glow:color-mix(in srgb,var(--accent) 14%,transparent);
+ --muted:#aab3a7;
+ background:radial-gradient(circle at 10% 0,var(--accent-soft),transparent 27%),var(--bg);
+}
+.app-shell .brand-mark{box-shadow:3px 3px 0 var(--accent-border)}
+.app-shell .primary-cta,.app-shell .finish-button,.app-shell .set-row.active .set-confirm{color:var(--on-accent);box-shadow:0 5px 20px var(--accent-glow)}
+.app-shell .cta-icon{background:color-mix(in srgb,var(--accent) 85%,#101510)}
+.app-shell .dashboard-plan,.app-shell .workout-last-result,.app-shell .measurement-latest-value{border-color:var(--accent-border);background:linear-gradient(120deg,var(--accent-soft),var(--surface))}
+.app-shell .dashboard-plan-icon,.app-shell .dashboard-week .completed,.app-shell .calendar-day.done,.app-shell .selected-exercises button{background:var(--accent-soft);border-color:var(--accent-border)}
+.app-shell .mini-bars i.completed{background:var(--accent);box-shadow:0 0 8px var(--accent-glow)}
+.app-shell .set-row.active,.app-shell .body-hotspots button[aria-pressed=true],.app-shell .body-selected-point{border-color:var(--accent-border)}
+.app-shell .rest-presets button[aria-pressed=true],.app-shell .exercise-history-sessions button[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent)}
+.app-shell .body-profile-summary{background:var(--surface)}
+.app-shell .body-tabs button,.app-shell .body-toggle button{background:var(--surface2)}
+.app-shell .body-tabs button[aria-selected=true],.app-shell .body-toggle button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.app-shell input[type=checkbox]{accent-color:var(--accent)}
+.app-shell .form-error,.app-shell .auth-error{color:var(--warning)}
+.app-shell .bottom-nav button{min-height:44px}
+
+.app-shell .body-hotspot.selected{border-color:var(--accent);background:var(--accent-soft)}
+.app-shell .record-bar i{background:var(--accent)}
+/* Display actual badge criteria, overriding old decorative pseudo labels. */
+.app-shell .badge-item small{font-size:11px}
+.app-shell .badge-item small::after{content:none}
+.app-shell .badges-panel .card-head .eyebrow{font-size:10px}
+.app-shell .badges-panel .card-head .eyebrow::after{content:none}
+
+:root{--accent:#C9FF31;--on-accent:#101510}
+.app-shell .series-summary-row svg,.app-shell .set-row.completed .set-row-heading svg{color:var(--success)}

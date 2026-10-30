@@ -1,0 +1,59 @@
+/* Training timers and photo viewer; no data or theme migration. */
+.workout-total-time { font-size:42px; text-align:center; font-weight:800; font-variant-numeric:tabular-nums; }
+.workout-timer-sheet .rest-presets { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.workout-timer-sheet .workout-clock-section .sheet-hint { margin:6px 0 12px; text-align:center; }
+.workout-timer-sheet .sheet-header,.workout-timer-sheet .sheet-body,.workout-timer-sheet .sheet-footer { padding-left:max(18px,env(safe-area-inset-left)); padding-right:max(18px,env(safe-area-inset-right)); }
+.rest-action-controls,.is-workout .rest-card .rest-action-controls { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; width:100%; }
+.rest-action-controls button { display:flex; justify-content:center; align-items:center; gap:5px; min-width:0; min-height:44px; padding:7px; border:1px solid #52662b; border-radius:10px; background:#293c18; color:var(--accent); font-size:12px; }
+.rest-action-controls button svg { flex-shrink:0; }
+.photo-viewer-stage { touch-action:pan-x pinch-zoom; }
+.is-workout .topbar { height:auto; min-height:74px; padding:calc(12px + env(safe-area-inset-top)) 16px 12px; background:#090c09f5; }
+.is-workout .brand-mark { box-shadow:none; width:40px; height:40px; }
+.is-workout .brand b { font-size:12px; }
+.is-workout .brand small { font-size:8px; }
+.is-workout .top-actions { gap:8px; }
+.is-workout .icon-button { min-width:44px; min-height:44px; background:#111611; }
+.workout-clock { min-width:52px; height:52px; padding:4px; border:2px solid #566b34; border-top-color:var(--accent); border-right-color:var(--accent); border-radius:50%; background:#101510; color:var(--text); font-size:13px; font-weight:800; font-variant-numeric:tabular-nums; }
+.is-workout .workout-hero-photo { overflow:hidden; border-radius:14px; border:1px solid var(--line); height:clamp(100px,18vh,150px); }
+.is-workout .workout-hero-photo .exercise-visual { display:flex; align-items:center; margin:0; border:0; border-radius:0; height:100%; padding:0; }
+.is-workout .workout-hero-photo .exercise-photo { height:auto; width:100%; max-width:none; aspect-ratio:3 / 2; border-radius:0; margin:0; flex-shrink:0; }
+.is-workout .workout-hero-photo svg { height:100%; width:100%; }
+.is-workout .workout-hero-photo figcaption { display:none; }
+.is-workout .rest-card button { min-height:44px; font-size:13px; }
+.workout-clock small { display:block; font-size:8px; color:var(--accent); margin-top:1px; }
+.is-workout .workout-hero-photo { position:relative; }
+.workout-photo-open { position:absolute; inset:0; width:100%; border:0; background:transparent; display:flex; align-items:flex-start; justify-content:flex-end; padding:8px; color:var(--text); }
+.workout-photo-open svg { padding:10px; box-sizing:content-box; border:1px solid #81916b88; border-radius:50%; background:#080d08d9; }
+.is-workout .workout-hero-photo .workout-photo-open svg { width:20px; height:20px; }
+.is-workout .rest-card { padding:12px; box-shadow:none; }
+.is-workout .rest-card strong { font-size:28px; margin:6px 0; letter-spacing:0; }
+.workout-clock-section > p:first-child { color:var(--muted); font-size:13px; text-align:center; }
+.workout-timer-sheet { max-height:min(760px,100%); }
+.timer-finish-action { margin-top:8px; }
+.workout-clock-section .timer-state { text-align:center; margin:4px 0 12px; color:var(--accent); font-size:12px; }
+.manual-rest-form { display:flex; flex-direction:column; gap:12px; padding-top:16px; border-top:1px solid var(--line); }
+.manual-rest-form h3 { font-size:16px; }
+.manual-rest-form .sheet-hint { margin:0; }
+.rest-presets { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.rest-presets button { min-height:48px; border:1px solid var(--line); border-radius:12px; background:#22291e; font-size:16px; }
+.rest-presets button[aria-pressed="true"] { border-color:var(--accent); color:var(--accent); background:#2b3916; }
+.custom-rest-toggle { min-height:44px; border:1px solid var(--line); border-radius:10px; background:#171f14; font-size:13px; }
+.custom-rest-toggle[aria-pressed="true"] { color:var(--accent); border-color:#819c36; }
+.custom-rest-field { display:grid; gap:7px; font-size:12px; color:var(--muted); }
+.custom-rest-field input { min-height:48px; min-width:0; width:100%; padding:10px; border:1px solid var(--line); border-radius:10px; background:#242e20; color:var(--text); font-size:20px; }
+.timer-current-rest { padding:12px; border:1px solid #4f632a; border-radius:10px; font-size:14px; }
+.timer-current-rest b { color:var(--accent); font-variant-numeric:tabular-nums; }
+.workout-rest-preview { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; min-height:44px; padding:8px 12px; margin-bottom:12px; border:1px solid #5a7130; border-radius:10px; background:#202b17; font-size:12px; }
+.workout-rest-preview b { color:var(--accent); font-size:18px; font-variant-numeric:tabular-nums; }
+.photo-viewer-backdrop { padding:0; align-items:stretch; }
+.exercise-photo-viewer.dialog-sheet { max-width:none; width:100%; height:100%; max-height:100%; border:0; border-radius:0; background:#050805; }
+.exercise-photo-viewer .sheet-header { border:0; padding:calc(12px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 12px max(16px,env(safe-area-inset-left)); }
+.exercise-photo-viewer .sheet-header h2 { font-size:16px; }
+.exercise-photo-viewer .icon-button { min-height:48px; min-width:48px; }
+.photo-viewer-stage { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:12px; overflow:auto; }
+.exercise-photo-expanded { width:min(100%,calc((100dvh - 220px) * 1.5)); aspect-ratio:3 / 2; flex-shrink:0; background-size:200% 300%; background-repeat:no-repeat; }
+.photo-viewer-stage > img { width:100%; height:100%; object-fit:contain; }
+.photo-viewer-stage .exercise-visual { width:min(100%,calc((100dvh - 220px) * 1.5)); }
+.photo-viewer-caption { padding:12px max(20px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left)); text-align:center; }
+.photo-viewer-caption h3 { font-size:17px; line-height:1.4; }
+.photo-viewer-caption p,.photo-viewer-caption small { color:var(--muted); margin-top:5px; display:block; font-size:12px; }

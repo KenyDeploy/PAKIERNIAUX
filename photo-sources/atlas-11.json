@@ -1,0 +1,44 @@
+{
+  "atlas": 11,
+  "generator": "OpenAI Image Generation",
+  "date": "2026-10-29",
+  "sourceArtifact": "exec-2295f073-0d2b-4e5c-b10a-7467c24846cb.png",
+  "grid": {
+    "columns": 2,
+    "rows": 3
+  },
+  "exercises": [
+    {
+      "id": 154,
+      "name": "Unoszenie hantli w opadzie tułowia"
+    },
+    {
+      "id": 155,
+      "name": "Uginanie ramion na modlitewniku ze sztangą łamaną"
+    },
+    {
+      "id": 156,
+      "name": "Uginanie ramion na maszynie"
+    },
+    {
+      "id": 157,
+      "name": "Uginanie ramion na wyciągu dolnym"
+    },
+    {
+      "id": 158,
+      "name": "Uginanie ramion z hantlami na ławce skośnej"
+    },
+    {
+      "id": 159,
+      "name": "Prostowanie ramion nad głową na wyciągu"
+    }
+  ],
+  "scenes": [
+    "Bent-over dumbbell rear delt reverse fly, hip hinged flat back, two arms raised wide to sides.",
+    "EZ-bar preacher curl, seated with upper arms supported on a sloping preacher pad and hands curling EZ bar.",
+    "Seated biceps curl MACHINE with upper arms supported on pad, hands curling lever handles upward.",
+    "Standing LOW CABLE biceps curl using short straight bar and underhand grip.",
+    "Incline seated dumbbell biceps curl on a 45-degree bench, arms hanging beside torso and holding two dumbbells.",
+    "Standing OVERHEAD rope cable triceps extension, facing away from pulley, upper arms overhead, hands extend rope upward/forward from behind head."
+  ]
+}

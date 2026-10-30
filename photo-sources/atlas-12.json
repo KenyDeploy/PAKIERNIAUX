@@ -1,0 +1,44 @@
+{
+  "atlas": 12,
+  "generator": "OpenAI Image Generation",
+  "date": "2026-10-29",
+  "sourceArtifact": "exec-ce0f47ba-a4d7-4e46-87ce-315d8518b8a1.png",
+  "grid": {
+    "columns": 2,
+    "rows": 3
+  },
+  "exercises": [
+    {
+      "id": 160,
+      "name": "Prostowanie ramion na maszynie"
+    },
+    {
+      "id": 161,
+      "name": "Wyciskanie sztangi wąskim chwytem"
+    },
+    {
+      "id": 162,
+      "name": "Prostowanie przedramienia z hantlem w opadzie"
+    },
+    {
+      "id": 163,
+      "name": "Spięcia brzucha na maszynie"
+    },
+    {
+      "id": 164,
+      "name": "Spięcia brzucha na wyciągu klęcząc"
+    },
+    {
+      "id": 165,
+      "name": "Skręty tułowia na wyciągu"
+    }
+  ],
+  "scenes": [
+    "Seated triceps extension MACHINE, upper arms supported, hands extending lever handles downward.",
+    "CLOSE-GRIP barbell bench press, supine flat bench with hands only shoulder width apart and elbows tucked.",
+    "Single arm dumbbell triceps kickback, hinged torso, opposite hand on bench, working upper arm next to torso and elbow extended backward.",
+    "Seated abdominal crunch MACHINE, athlete curling torso forward under padded resistance, hands near head on handles.",
+    "KNEELING cable rope abdominal crunch, athlete kneels facing high pulley, rope beside temples, torso curled forward.",
+    "Standing CABLE torso rotation, facing sideways to pulley at chest height with two hands on one handle, arms extended and torso rotating."
+  ]
+}
