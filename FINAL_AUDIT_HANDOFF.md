@@ -1,5 +1,7 @@
 # Pakiernia u Matiego — przekazanie do niezależnego audytu
 
+> Historyczny snapshot przekazania na 9ab3d92. Późniejsze poprawki po fizycznej próbie użytkownika opisuje sekcja „Etap A” w IMPLEMENTATION_PLAN.md. Poniższe wyniki 45/45 i 9/12 odnoszą się do przekazania, a nie automatycznie do każdego późniejszego HEAD.
+
 Data: 30.10.2026. Ten dokument opisuje stan przekazywany do audytu, a nie deklarację gotowości produkcyjnej. Nie dodawano w tym kroku funkcji, poprawek UI ani zmian schematu. „Ukończona” oznacza wskazany zakres działania; nie oznacza weryfikacji na fizycznym iPhonie ani kompletnej zgodności pikselowej z planszą.
 
 ## A. Stan projektu

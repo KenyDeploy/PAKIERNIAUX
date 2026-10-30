@@ -40,7 +40,7 @@ await page.getByRole('textbox',{name:'Powtórzenia serii 1',exact:true}).fill('8
 await page.getByRole('button',{name:'Zatwierdź serię 1',exact:true}).click();
 await page.getByRole('button',{name:'Dodaj serię'}).click();
 assert.equal(await page.locator('.set-row').count(),1);
-assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.exercises[0].sets.length),4);
+assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.exercises[0].sets.length),3);
 await page.getByRole('button',{name:'Następne',exact:true}).click();
 await page.getByRole('textbox',{name:'Ciężar serii 1',exact:true}).fill('50');
 await page.getByRole('button',{name:'Zatwierdź serię 1',exact:true}).click();

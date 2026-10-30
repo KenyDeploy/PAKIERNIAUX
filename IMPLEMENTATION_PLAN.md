@@ -111,3 +111,18 @@ Testy końcowe: npm test — 45/45; npm run build — poprawny. Scenariusze sett
 Ręcznie: fizyczny iPhone Safari/PWA (klawiatura, safe-area, gest, instalacja, powrót z tła), eksport w iOS, dwa rzeczywiste konta na osobnych urządzeniach, równoległe edycje i ponawianie synchronizacji. Naturalna sylwetka i deformacje pozostają oddzielnym etapem po dostarczeniu/licencjonowaniu modeli.
 
 PWA: test pwa.mjs na lokalnym buildzie (127.0.0.1:4173) przeszedł: cache powłoki/zdjęć → offline → odtworzenie pauzy i sesji → zapis → ponowne otwarcie. Nie potwierdza offline kont chmurowych.
+
+
+### Etap A po fizycznej próbie użytkownika — seria i historia (30.10.2026)
+
+Zgłoszenie pochodzi z iPhone’a użytkownika; autor zmian nie przeprowadził fizycznego testu urządzenia. Ostatni punkt polecenia urwał się po „przykrywane przez p”; przyjęto zakres ochrony przed dolnym obszarem iOS/klawiaturą, bez zgadywania dalszych wymagań.
+
+- [x] Jawne potwierdzenie serii ustawia następną planowaną niewykonaną, bez jej zaliczenia. Po ostatniej wraca do wcześniejszej niewykonanej albo pokazuje koniec dostępnych serii. Wynik zapisu wraca do edytora; błąd nie zamyka korekty.
+- [x] Przyciski wyboru serii są zawsze dostępne nad formularzem, ze stanem aktywna/wykonana/oczekuje. Pasek przewija się lokalnie, bez powiększania całego dokumentu. Stare serie i dodatkowe pola pozostają w danych.
+- [x] „Dodaj serię” w edytorze wznawia istniejącą niewykonaną, zamiast mnożyć wiersze. Gdy wszystkie są zatwierdzone, tworzy i od razu pokazuje nową. Świadome dodanie dodatkowej z menu jest zachowane; nowy wybór sesji ma pierwszeństwo nad lokalną korektą starej serii.
+- [x] Historia: pełna data w osobnym time, pod nią tytuł i opis, dalej rzeczywista objętość/serie jeśli istnieją. Bez dawnej kolumny 44 px i dzielenia daty po spacji. Test z html 24 px i tytułami 48 px nie wykazał nakładania.
+- [x] Akcje poprzednie/następne/zakończ pozostają statyczne, przed większą kartą przerwy. Mniejsze zdjęcie, safe-area i brak pustego odstępu po schowanym głównym menu. Przewijanie nowego formularza uwzględnia sticky nagłówek; reakcja na visualViewport utrzymuje aktywne pole nad klawiaturą.
+- [x] Build i 6 odpowiednich testów (active-series/app). Chromium: workout-ux-a.mjs, single-series.mjs i browser.mjs przechodzą. Nowy scenariusz obejmuje menu podczas korekty, wszystkie serie → nowa, wznowienie istniejącej bez duplikatu, błąd zapisu, reload, historię ręczną/zapisaną z większym tekstem, 320/375/390/430 px, niski ekran i zasymulowany visualViewport 300 px.
+- [ ] Ponowna fizyczna próba na iPhonie: szczególnie wybór/dodanie serii, klawiatura, sticky nagłówek i dolny obszar Safari/PWA. Użytkownik potwierdził problemy starego preview, nie poprawność tej poprawki.
+
+Bez zmian produkcyjnych danych, SQL, synchronizacji, innych ekranów lub logiki timera. Nie uruchamiano ponownie całego npm test; próby ograniczono do zmienionego zakresu. Trzy czerwone skrypty z przekazania audytu nie zostały w tym etapie naprawione ani oznaczone jako zielone.

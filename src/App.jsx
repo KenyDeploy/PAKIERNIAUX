@@ -40,6 +40,8 @@ import "./theme.css";
 import { MeasurementsPage } from "./MeasurementsPage";
 import { HomeDashboard } from "./HomeDashboard";
 import { ActiveSetEditor } from "./ActiveSetEditor";
+import { confirmSeries } from "./activeSeries.js";
+import "./WorkoutHistory.css";
 import { supabase } from "./supabase";
 import { catalog, starterExercises } from "./catalog";
 import { useTrainingData } from "./useTrainingData";
@@ -200,16 +202,17 @@ export default function App() {
     if (changeSession(session => skipSessionExercise(session, activeExerciseIndex, skipped))) setWorkoutPanel(null);
   };
   const toggleSet = index => {
-    if (currentExercise.skipped) return;
+    if (currentExercise.skipped) return false;
     const now = Date.now();
     const saved = changeSession(session => {
       const exercise = session.exercises[session.index], row = exercise.sets[index];
       if (exercise.skipped) return session;
       if (!row.completed && !validSet(row)) throw new Error("Podaj ciężar (0 dla masy ciała) i pełną liczbę powtórzeń większą od zera.");
-      const next = { ...session, exercises: session.exercises.map((e, i) => i === session.index ? { ...e, sets: e.sets.map((s, j) => j === index ? { ...s, completed: !s.completed } : s) } : e) };
+      const next = { ...session, exercises: session.exercises.map((e, i) => i === session.index ? confirmSeries(e, index) : e) };
       return row.completed ? next : startSessionRest(next, exercise.rest ?? 90, exercise.name, now);
     });
     if (saved) { setClockNow(now); setNotice(""); }
+    return saved;
   };
   const addSet = () => changeSession(session => addSessionSet(session, activeExerciseIndex));
   useEffect(() => {
@@ -628,20 +631,17 @@ export default function App() {
             {!history.length && <div className="empty-state">Ukończ pierwszy trening, aby zobaczyć prawdziwe wyniki.</div>}
             <div className="history-list">
               {history.map((item) => (
-                <section className="history-row" key={item.id}>
-                  <div className="history-date">
-                    <b>{item.date.split(" ")[0]}</b>
-                    <small>{item.date.split(" ").slice(1).join(" ")}</small>
-                  </div>
-                  <div>
+                <article className="history-row" key={item.id}>
+                  <time className="history-entry-date" dateTime={item.day}>{item.date}</time>
+                  <div className="history-entry-content">
                     <h2>{item.name}</h2>
                     {item.manual ? <p>Wpis z kalendarza · bez danych o seriach, czasie i objętości</p> : <p>
                       {item.exercises} <span>·</span> {item.duration}
                     </p>}
                   </div>
-                  {!item.manual && <><strong>{item.volume}</strong>
+                  {!item.manual && <><strong className="history-entry-volume">{item.volume}</strong>
                   <details className="session-details"><summary>Serie</summary>{item.exercises && workouts.find(w => w.id === item.id)?.exercises.map(e => <div key={e.id}><b>{e.name}</b><p>{e.sets.map(s => `${s.weight} kg × ${s.reps}`).join(" · ")}</p></div>)}</details></>}
-                </section>
+                </article>
               ))}
             </div>
           </>

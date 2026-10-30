@@ -27,6 +27,20 @@ export function appendSeries(exercise) {
   return { ...exercise, activeSetIndex: exercise.sets.length, sets: [...exercise.sets, { weight: "", reps: String(exercise.reps ?? 10), completed: false }] };
 }
 
+// Reuse unfinished work before creating an additional row.
+export function addOrResumeSeries(exercise) {
+  const pending = activeSeriesIndex(exercise);
+  return pending < 0 ? appendSeries(exercise) : selectSeries(exercise, pending);
+}
+
+export function confirmSeries(exercise, index) {
+  if (!exercise.sets[index] || exercise.sets[index].skipped) throw new Error("Nie znaleziono serii.");
+  const sets = exercise.sets.map((row, i) => i === index ? { ...row, completed: true } : row);
+  let next = sets.findIndex((row, i) => i > index && !row.completed && !row.skipped);
+  if (next < 0) next = sets.findIndex(row => !row.completed && !row.skipped);
+  return { ...exercise, sets, activeSetIndex: next };
+}
+
 export function steppedSeriesValue(value, field, direction) {
   const current = String(value ?? "").trim() === "" ? 0 : number(value);
   if (!Number.isFinite(current) || current < 0 || (field === "reps" && !Number.isInteger(current))) throw new Error("Wpisz poprawną liczbę przed użyciem przycisków ±.");

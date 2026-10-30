@@ -21,3 +21,10 @@
 .active-set-editor .series-summary-row button { display:flex; align-items:center; gap:5px; min-width:70px; min-height:44px; padding:8px; border:1px solid var(--line,#30382b); border-radius:10px; background:var(--surface2,#20271c); color:var(--text,#fff); font-size:12px; }
 .active-set-editor button:focus-visible { outline:2px solid var(--accent,#c8ff00); outline-offset:-3px; }
 .active-set-editor button:disabled { opacity:.45; }
+.series-picker { display:flex; gap:6px; margin-bottom:10px; max-width:100%; overflow-x:auto; padding:2px; }
+.is-workout .series-picker button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:48px; min-height:44px; padding:5px 8px; border:1px solid var(--line); border-radius:9px; background:var(--surface2); color:var(--muted); }
+.series-picker button small { font-size:10px; }
+.series-picker button { flex-shrink:0; }
+.is-workout .series-picker button[aria-current=step] { border-color:var(--accent); color:var(--accent); background:var(--accent-soft,var(--surface2)); }
+.series-add-hint { font-size:12px; line-height:1.5; color:var(--muted); margin-top:8px; }
+.is-workout .active-set-editor .set-row { scroll-margin-top:calc(112px + env(safe-area-inset-top)); scroll-margin-bottom:24px; }

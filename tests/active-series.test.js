@@ -1,8 +1,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {activeSeriesIndex,appendSeries,changeExerciseSeries,selectSeries,steppedSeriesValue,updateSeriesField} from '../src/activeSeries.js';
+import {activeSeriesIndex,appendSeries,addOrResumeSeries,confirmSeries,changeExerciseSeries,selectSeries,steppedSeriesValue,updateSeriesField} from '../src/activeSeries.js';
 
 const initial=()=>({id:7,reps:8,sets:[{weight:'20',reps:'8',completed:true,note:'keep'},{weight:'22,5',reps:'8',completed:false},{weight:'30',reps:'6',completed:false}]});
+
+test('confirmation explicitly selects the next planned row without completing it, then returns to earlier unfinished work',()=>{
+  const first=initial();const second=confirmSeries(first,1);
+  assert.equal(second.activeSetIndex,2);assert.equal(second.sets[2].completed,false);
+  assert.equal(first.sets[1].completed,false);assert.equal(second.sets[0].note,'keep');
+  const all=confirmSeries(second,2);assert.equal(activeSeriesIndex(all),-1);assert.equal(all.sets.length,3);
+  const earlier={...first,activeSetIndex:2};assert.equal(confirmSeries(earlier,2).activeSetIndex,1);
+  assert.equal(confirmSeries(first,0).sets[0].completed,true,'Saving a correction never toggles a performed row off');
+});
+
+test('add resumes an existing pending row, and creates/selects exactly one new row only after all available rows are complete',()=>{
+  const first=initial(),resumed=addOrResumeSeries(first);
+  assert.equal(resumed.sets,first.sets);assert.equal(resumed.activeSetIndex,1);
+  const all=confirmSeries(confirmSeries(first,1),2),added=addOrResumeSeries(all);
+  assert.equal(added.sets.length,4);assert.equal(activeSeriesIndex(added),3);assert.equal(added.sets[3].completed,false);
+  assert.deepEqual(added.sets.slice(0,3),all.sets);assert.equal(addOrResumeSeries(added).sets.length,4);
+});
 test('one active pointer advances only over confirmed rows and preserves old arrays and metadata',()=>{
   const exercise=initial(),before=JSON.stringify(exercise);
   assert.equal(activeSeriesIndex(exercise),1);
