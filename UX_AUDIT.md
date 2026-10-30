@@ -4,6 +4,12 @@ Data: 30.10.2026. Repozytorium KenyDeploy/PAKIERNIAUX, gałąź `codex/real-prog
 
 **Wniosek:** podstawowy start i zapis serii są krótkie. Najpierw należy zabezpieczyć utratę sesji i szkiców, następnie ułatwić wznowienie oraz dostęp do akcji treningu. Nie należy wracać do zakładek serii ani chować ich w rozwijanej liście. W tym etapie nie wdrożono poprawek aplikacji.
 
+## Późniejsze wdrożenie UX01
+
+UX01 wdrożono osobno po audycie: odrzucenie sesji zawierającej zatwierdzone serie otwiera drugi DialogSheet z jednoznacznym ostrzeżeniem, nazwą treningu, liczbą wykonanych serii oraz przyciskami „Wróć do treningu” / „Usuń trening”. Liczenie obejmuje także wyniki w pominiętych ćwiczeniach, bo odrzucenie usuwa całą sesję. Usunięcie sprawdza tożsamość sesji wskazanej przy otwieraniu potwierdzenia. Anulowanie/Escape/tło nie zmienia danych; błąd zapisu nie zamyka panelu. Puste sesje zachowują prostą ścieżkę, a zwykły zapis nadal ma tylko dotychczasowe podsumowanie.
+
+Walidacja UX01: 7 odpowiednich testów session-discard/app/session-actions i build — PASS. Scenariusze session-discard oraz growing-series — PASS w lokalnym Chromium. Sprawdzono trzy wykonane serie, identyczność snapshotów i ID po anulowaniu oraz przypadkowym zamknięciu, reload/wznowienie, faktyczne odrzucenie, błąd pamięci/ponowienie, zachowanie wcześniejszej historii i zwykły zapis; 320/375/390/430 px, stopka od 360 px wysokości. Test fizycznego iPhone’a nie został wykonany. Regresje: tests/session-discard.test.js i tests/session-discard.mjs. Pozostałe UX02–UX10 nie zostały wdrożone. Dalsza treść i załączone obserwacje opisują historyczny stan audytu przed tą poprawką.
+
 ## Metoda i granice
 
 - Analiza bieżącego kodu oraz istniejących IMPLEMENTATION_PLAN.md i FINAL_AUDIT_HANDOFF.md, bez ponownego audytu bazy/architektury.

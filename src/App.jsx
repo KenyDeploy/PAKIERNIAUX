@@ -57,7 +57,7 @@ import { RestControls } from "./RestControls";
 import { WorkoutTimerSheet } from "./WorkoutTimerSheet";
 import { ExercisePhotoViewer } from "./ExercisePhotoViewer";
 import { workoutElapsedSeconds, restRemainingSeconds, pauseWorkoutClock, resumeWorkoutClock, startSessionRest, pauseSessionRest, resumeSessionRest, extendSessionRest, skipSessionRest } from "./trainingClock.js";
-import { addSessionExercise, replaceSessionExercise, skipSessionExercise, removeSessionExercise, editSessionTargets, addSessionSet } from "./sessionActions.js";
+import { addSessionExercise, replaceSessionExercise, skipSessionExercise, removeSessionExercise, editSessionTargets, addSessionSet, confirmedSessionSetCount, discardStartedSession } from "./sessionActions.js";
 import { ExercisePhotoField } from "./ExercisePhotoField";
 
 const initialPlans = [
@@ -141,9 +141,18 @@ export default function App() {
   const [workoutPanel, setWorkoutPanel] = useState(null);
   const [includeFilled, setIncludeFilled] = useState(false);
   const [finishError, setFinishError] = useState("");
+  const [discardSessionId, setDiscardSessionId] = useState(null);
   const [exerciseError, setExerciseError] = useState("");
   const [photoBusy, setPhotoBusy] = useState(false);
   const openFinishReview = () => { setIncludeFilled(false); setFinishError(""); setModal("finish"); };
+  const discardWorkout = (confirmed = false, expectedId = activeSession?.id) => {
+    try {
+      if (!updateData(current => discardStartedSession(current, expectedId, confirmed))) {
+        setFinishError("Nie udało się zapisać zmiany. Spróbuj ponownie."); return;
+      }
+      setModal(null); setTab("home"); setNotice("Trening odrzucony bez zapisu.");
+    } catch (cause) { setFinishError(cause.message); }
+  };
   const openExerciseEditor = exercise => { setExerciseError(""); setModal(null); setExerciseEditor({ ...exercise }); };
   const [newExercise, setNewExercise] = useState({
     name: "",
@@ -741,10 +750,24 @@ export default function App() {
           <div className="sheet-secondary-actions">
             {filledSetCount > 0 && <button type="button" onClick={() => setModal(null)}>Kontynuuj</button>}
             <button type="button" className="danger-action" aria-label="Odrzuć trening bez zapisu" onClick={() => {
-              if (!updateData(current => ({ ...current, activeSession: null }))) { setFinishError("Nie udało się zapisać zmiany. Spróbuj ponownie."); return; }
-              setModal(null); setTab("home"); setNotice("Trening odrzucony bez zapisu.");
+              setFinishError("");
+              if (confirmedSessionSetCount(activeSession) > 0) { setDiscardSessionId(activeSession.id); setModal("discard"); }
+              else discardWorkout();
             }}>Odrzuć bez zapisu</button>
           </div>
+        </footer>
+      </DialogSheet>}
+      {modal === "discard" && activeSession && <DialogSheet labelledBy="discard-title" onClose={() => setModal(null)} className="finish-review">
+        <header className="sheet-header"><h2 id="discard-title">Usunąć cały rozpoczęty trening?</h2></header>
+        <div className="sheet-body">
+          <p>Zapisane w nim serie zostaną utracone</p>
+          <p><b>{planName(activeSession.plan?.name) || "Trening"}</b></p>
+          <p>Liczba wykonanych serii: <b>{confirmedSessionSetCount(activeSession)}</b></p>
+          {finishError && <p className="form-error" role="alert">{finishError}</p>}
+        </div>
+        <footer className="sheet-footer">
+          <button type="button" className="primary-cta" onClick={() => setModal(null)}>Wróć do treningu</button>
+          <button type="button" className="workout-menu-action session-remove-action" onClick={() => discardWorkout(true, discardSessionId)}>Usuń trening</button>
         </footer>
       </DialogSheet>}
       {planEditor && (

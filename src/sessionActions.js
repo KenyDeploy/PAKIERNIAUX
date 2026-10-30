@@ -1,6 +1,15 @@
 import { createSession } from "./training.js";
 import { appendSeries } from "./activeSeries.js";
 
+// Discarding destroys the whole draft, including results in skipped exercises.
+export const confirmedSessionSetCount = session => (session?.exercises || []).reduce((sum, exercise) => sum + (exercise.sets || []).filter(row => row?.completed).length, 0);
+
+export function discardStartedSession(data, expectedId, confirmed = false) {
+  if (!data.activeSession || data.activeSession.id !== expectedId) throw new Error("Sesja zmieniła się. Otwórz ponownie podsumowanie.");
+  if (confirmedSessionSetCount(data.activeSession) > 0 && !confirmed) throw new Error("Potwierdź usunięcie całego rozpoczętego treningu.");
+  return { ...data, activeSession: null };
+}
+
 export function sessionTargets(values) {
   const limits = { sets: [1, 50], reps: [1, 1000], rest: [0, 3600] };
   return Object.fromEntries(Object.entries(limits).map(([key, [min, max]]) => {
