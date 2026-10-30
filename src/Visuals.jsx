@@ -16,7 +16,7 @@ export function BodyProgress({ measurements }) {
           <path d="M79 53 L77 65 Q57 65 49 76 L35 130 L23 169 Q22 177 30 178 L44 147 L57 111 L64 150 L62 177 L57 217 L63 303 Q66 311 74 302 L83 224 L90 192 L97 224 L106 302 Q114 311 117 303 L123 217 L118 177 L116 150 L123 111 L136 147 L150 178 Q158 177 157 169 L145 130 L131 76 Q123 65 103 65 L101 53" />
         </g>
         <g fill="none" stroke="#8ca17c" strokeWidth="1" opacity=".6"><path d="M66 91 Q90 106 114 91 M90 78 V151 M69 123 Q90 130 111 123 M65 153 Q90 161 115 153 M64 183 L83 204 M116 183 L97 204" /></g>
-        {[[48,108,"biceps"],[90,93,"chest"],[90,151,"waist"],[69,221,"thigh"]].map(([x,y,key]) => <g key={key}><circle cx={x} cy={y} r="10" fill={selected === key ? "#c8ff00" : "#4b6838"} opacity=".25"/><circle cx={x} cy={y} r="4" fill={selected === key ? "#c8ff00" : "#9aba82"}/></g>)}
+        {[[48,108,"biceps"],[90,93,"chest"],[90,151,"waist"],[69,221,"thigh"]].map(([x,y,key]) => <g key={key}><circle cx={x} cy={y} r="10" fill={selected === key ? "var(--accent)" : "#4b6838"} opacity=".25"/><circle cx={x} cy={y} r="4" fill={selected === key ? "var(--accent)" : "#9aba82"}/></g>)}
       </svg>
       <div className="body-metrics">{metrics.map(([key,label,unit]) => {
         const change = measurementChange(measurements, key);
@@ -39,8 +39,8 @@ export function TrendChart({ points, unit }) {
   return <div className="trend-chart"><div className="chart-value" aria-live="polite">{selected.date} · <b>{fmt(selected.value)} {unit}</b></div>
     <svg viewBox="0 0 320 160" role="img" aria-label={`Wykres ${unit}: ${points.map(p => `${p.date}: ${p.value}`).join(", ")}`}>
       {[min, (min + max)/2, max].map((v,i) => <g key={i}><line x1="35" x2="300" y1={y(v)} y2={y(v)} stroke="#303b2c"/><text x="0" y={y(v)+4} fill="#98a58e" fontSize="9">{fmt(v)}</text></g>)}
-      <polyline points={points.map((p,i) => `${x(i)},${y(p.value)}`).join(" ")} fill="none" stroke="#c8ff00" strokeWidth="2.5" />
-      {points.map((p,i) => <g key={i}><circle cx={x(i)} cy={y(p.value)} r="5" fill="#c8ff00"/><circle cx={x(i)} cy={y(p.value)} r="14" fill="transparent" tabIndex="0" role="button" aria-label={`${p.date}: ${p.value} ${unit}`} onFocus={() => setActive(i)} onClick={() => setActive(i)} onKeyDown={e => { if(e.key === "Enter" || e.key === " ") { e.preventDefault(); setActive(i); } }} /></g>)}
+      <polyline points={points.map((p,i) => `${x(i)},${y(p.value)}`).join(" ")} fill="none" stroke="var(--accent)" strokeWidth="2.5" />
+      {points.map((p,i) => <g key={i}><circle cx={x(i)} cy={y(p.value)} r="5" fill="var(--accent)"/><circle cx={x(i)} cy={y(p.value)} r="14" fill="transparent" tabIndex="0" role="button" aria-label={`${p.date}: ${p.value} ${unit}`} onFocus={() => setActive(i)} onClick={() => setActive(i)} onKeyDown={e => { if(e.key === "Enter" || e.key === " ") { e.preventDefault(); setActive(i); } }} /></g>)}
     </svg><div className="chart-dates"><span>{points[0].date}</span><span>{points.at(-1).date}</span></div>
     <details className="chart-table"><summary>Pokaż wartości</summary>{points.map((p,i) => <div key={i}>{p.date}<b>{fmt(p.value)} {unit}</b></div>)}</details>
   </div>;
@@ -58,8 +58,8 @@ export function ExerciseVisual({ exercise }) {
         <circle cx="162" cy="29" r="12" fill="#758b66" strokeWidth="2"/>
         <path d={isLeg ? "M162 49 L150 79 L177 99 L158 130 M150 79 L122 103 L130 130 M158 53 L129 43 L103 44 M158 53 L190 44 L213 44" : isBack ? "M162 49 V86 M162 57 L130 42 L117 17 M162 57 L194 42 L207 17 M162 86 L137 120 L117 129 M162 86 L187 120 L207 129" : "M162 49 V86 M162 57 L129 71 L110 52 M162 57 L195 71 L214 52 M162 86 L143 130 M162 86 L181 130"}/>
       </g>
-      <g stroke="#c8ff00" strokeWidth="8" strokeLinecap="round"><path d={isLeg ? "M68 39 H249" : isBack ? "M91 12 H231" : "M95 44 H121 M203 44 H229"}/></g>
-      <text x="16" y="23" fill="#c8ff00" fontSize="10" letterSpacing="2">{exercise.category.toUpperCase()}</text>
+      <g stroke="var(--accent)" strokeWidth="8" strokeLinecap="round"><path d={isLeg ? "M68 39 H249" : isBack ? "M91 12 H231" : "M95 44 H121 M203 44 H229"}/></g>
+      <text x="16" y="23" fill="var(--accent)" fontSize="10" letterSpacing="2">{exercise.category.toUpperCase()}</text>
     </svg><figcaption>{exercise.equipment} · ilustracja partii mięśniowej</figcaption>
   </figure>;
 }

@@ -7,7 +7,8 @@ try {
   const page=await browser.newPage({viewport:{width:390,height:740},isMobile:true,hasTouch:true});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
   await page.goto(process.env.APP_URL || 'http://127.0.0.1:5173');
-  await page.locator('.primary-cta').first().click();
+  await page.locator('.bottom-nav').getByRole('button',{name:'Plany',exact:true}).click();
+  await page.locator('.plan-card').filter({hasText:'Góra ciała — siła'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();
   const snapshot=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data);
   const initial=await snapshot();
   for(const width of [320,375,390,430]) {

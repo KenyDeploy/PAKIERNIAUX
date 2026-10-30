@@ -7,7 +7,8 @@ try {
   const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
   await page.goto(process.env.APP_URL || 'http://127.0.0.1:5173');
-  await page.locator('.primary-cta').first().click();
+  await page.locator('.bottom-nav').getByRole('button',{name:'Plany',exact:true}).click();
+  await page.locator('.plan-card').filter({hasText:'Góra ciała — siła'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();
   const snapshot=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data);
   const menu=async action=>{await page.getByRole('button',{name:'Menu ćwiczenia',exact:true}).click();if(action)await page.getByRole('dialog').getByRole('button',{name:action,exact:true}).click();};
   const saveSet=async(weight,reps)=>{await page.getByRole('textbox',{name:/^Ciężar serii/}).fill(weight);await page.getByRole('textbox',{name:/^Powtórzenia serii/}).fill(reps);await page.locator('.set-confirm').click();};
@@ -77,7 +78,7 @@ try {
   let data=await snapshot();assert.equal(data.activeSession.exercises.length,4);assert.equal(data.activeSession.index,3);assert.deepEqual(data.plans,baseline.plans);assert.deepEqual(data.exercises,baseline.exercises);
   await page.getByRole('button',{name:'Zakończ',exact:true}).click();await page.getByRole('button',{name:'Zapisz trening'}).click();
   data=await snapshot();assert.equal(data.workouts.length,8);assert.equal(data.workouts[0].volume,160);assert.deepEqual(data.workouts[0].exercises.map(e=>e.id),[1]);
-  await page.locator('.bottom-nav').getByRole('button',{name:'Pulpit',exact:true}).click();await page.locator('.primary-cta').first().click();
+  await page.locator('.bottom-nav').getByRole('button',{name:'Plany',exact:true}).click();await page.locator('.plan-card').filter({hasText:'Góra ciała — siła'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();
   for(let i=0;i<4;i++){await menu('Usuń z bieżącego treningu');await page.getByLabel('Potwierdzam usunięcie z bieżącego treningu').check();await page.getByRole('button',{name:'Usuń tylko z tej sesji'}).click();}
   assert.equal((await snapshot()).activeSession.exercises.length,0);assert.ok(await page.getByRole('heading',{name:'Trening bez ćwiczeń'}).isVisible());
   await page.reload();await page.getByRole('button',{name:'Wznów rozpoczęty trening'}).click();

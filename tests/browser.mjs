@@ -19,7 +19,8 @@ assert.ok(!(await page.locator('.exercise-list').innerText()).includes('Hantle')
 await page.getByLabel('Filtr sprzętu').selectOption('Wszystkie');
 await page.locator('.category-scroll').getByRole('button',{name:'Wszystkie',exact:true}).click();
 await page.locator('.bottom-nav').getByRole('button',{name:'Pulpit',exact:true}).click();
-await page.getByRole('button',{name:'Rozpocznij trening'}).click();
+await page.locator('.bottom-nav').getByRole('button',{name:'Plany',exact:true}).click();
+await page.locator('.plan-card').filter({hasText:'Góra ciała — siła'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();
 assert.equal(await page.locator('.bottom-nav').count(),0);
 assert.equal(await page.locator('.workout-navigation').evaluate(el=>getComputedStyle(el).position),'static');
 assert.equal(await page.locator('.current-exercise').evaluate(el=>getComputedStyle(el,'::before').content),'none');
@@ -34,15 +35,16 @@ await page.getByRole('textbox',{name:'Ciężar serii 1',exact:true}).fill('22,5'
 await page.getByRole('textbox',{name:'Powtórzenia serii 1',exact:true}).fill('8');
 await page.getByRole('button',{name:'Zatwierdź serię 1',exact:true}).click();
 await page.getByRole('button',{name:'Dodaj serię'}).click();
-assert.equal(await page.locator('.set-row').count(),4);
+assert.equal(await page.locator('.set-row').count(),1);
+assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.exercises[0].sets.length),4);
 await page.getByRole('button',{name:'Następne',exact:true}).click();
 await page.getByRole('textbox',{name:'Ciężar serii 1',exact:true}).fill('50');
 await page.getByRole('button',{name:'Zatwierdź serię 1',exact:true}).click();
 const restUntil = await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.restUntil);
 await page.getByRole('button',{name:'Poprzednie',exact:true}).click();
-assert.equal(await page.getByRole('textbox',{name:'Ciężar serii 1',exact:true}).inputValue(),'22,5');
+assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.exercises[0].sets[0].weight),'22,5');
 await page.getByRole('button',{name:'Następne',exact:true}).click();
-assert.equal(await page.getByRole('textbox',{name:'Ciężar serii 1',exact:true}).inputValue(),'50');
+assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.exercises[1].sets[0].weight),'50');
 assert.ok(await page.locator('.workout-header').evaluate(el=>el.getBoundingClientRect().top>=document.querySelector('.topbar').getBoundingClientRect().bottom));
 assert.ok(restUntil > Date.now());
 await page.reload();
@@ -50,8 +52,8 @@ await page.getByRole('button',{name:'Wznów rozpoczęty trening'}).click();
 assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.restUntil),restUntil);
 await page.locator('.rest-card').waitFor();
 assert.ok((await page.locator('.rest-card').innerText()).includes('PRZERWA'));
-assert.equal(await page.getByRole('textbox',{name:'Ciężar serii 1',exact:true}).inputValue(),'50');
-assert.equal(await page.getByRole('button',{name:'Zatwierdź serię 1',exact:true}).getAttribute('aria-pressed'),'true');
+assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.exercises[1].sets[0].weight),'50');
+assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.exercises[1].sets[0].completed),true);
 await page.getByRole('button',{name:'Następne',exact:true}).click();
 await page.getByRole('button',{name:'Następne',exact:true}).click();
 await page.getByRole('button',{name:'Zakończ',exact:true}).click();
@@ -64,12 +66,14 @@ await page.getByLabel('Ćwiczenie na wykresie').selectOption('1');
 assert.ok((await page.locator('.chart-value').innerText()).includes('22,5'));
 await page.locator('.bottom-nav').getByRole('button',{name:'Pomiary'}).click();
 for (const [date,biceps,weight] of [['2026-10-22','37','86'],['2026-10-29','38','87']]) {
+  await page.getByRole("button",{name:"Dodaj pomiar",exact:true}).click();
   await page.locator('input[name="date"]').fill(date);
-  await page.locator('input[name="biceps"]').fill(biceps);
+  await page.locator('input[name="bicepsRight"]').fill(biceps);
   await page.locator('input[name="weight"]').fill(weight);
   await page.getByRole('button',{name:'Zapisz pomiar'}).click();
 }
-assert.ok((await page.locator('.body-metrics').innerText()).includes('+1 cm od poprzedniego'));
+await page.getByLabel('Wybierz pomiar',{exact:true}).selectOption('bicepsRight');
+assert.ok((await page.getByTestId('measurement-change').innerText()).includes('+1 cm względem poprzedniego zapisu'));
 await page.screenshot({path:'/tmp/pakiernia-body.png',fullPage:true});
 for(const width of [320,375,390,430,768,1280]) {
  await page.setViewportSize({width,height:844});
@@ -86,8 +90,9 @@ for(const width of [320,375,390,430,768,1280]) {
 }
 await page.setViewportSize({width:390,height:844});
 await page.locator('.bottom-nav').getByRole('button',{name:'Pulpit'}).click();
-await page.getByRole('button',{name:'Rozpocznij trening'}).click();
-assert.equal(await page.getByRole('textbox',{name:'Ciężar serii 1',exact:true}).inputValue(),'22,5');
+await page.locator('.bottom-nav').getByRole('button',{name:'Plany',exact:true}).click();
+await page.locator('.plan-card').filter({hasText:'Góra ciała — siła'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();
+assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.exercises[0].sets[0].weight),'22,5');
 assert.ok((await page.locator('.last-result-card').innerText()).includes('22,5 kg × 8'));
 await page.screenshot({path:'/tmp/pakiernia-workout.png',fullPage:true});
 // An expired persisted deadline must not restart the rest on reopening.
@@ -110,7 +115,8 @@ for(const width of [320,390,768,1280]){
 }
 await page.getByRole('button',{name:'Zapisz plan',exact:true}).click();
 await page.locator('.plan-card').filter({hasText:'Plan testowy bez przerwy'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();
-assert.equal(await page.locator('.set-row').count(),2);
+assert.equal(await page.locator('.set-row').count(),1);
+assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.exercises[0].sets.length),2);
 await page.getByRole('button',{name:'Zatwierdź serię 1',exact:true}).click();
 assert.equal(await page.locator('.rest-card').count(),0);
 await page.getByRole('button',{name:'Zakończ',exact:true}).click();
@@ -135,7 +141,8 @@ assert.equal(await page.getByTestId('training-count').innerText(),'3');
 await page.getByRole('button',{name:`Trening ${manualDate}`,exact:true}).click();
 assert.equal(await page.getByTestId('training-count').innerText(),'2');
 // The finish dialog lets the user explicitly confirm filled, unchecked sets.
-await page.getByRole('button',{name:'Rozpocznij trening'}).click();
+await page.locator('.bottom-nav').getByRole('button',{name:'Plany',exact:true}).click();
+await page.locator('.plan-card').filter({hasText:'Góra ciała — siła'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();
 await page.getByRole('textbox',{name:'Ciężar serii 1',exact:true}).fill('30,5');
 await page.getByRole('button',{name:'Zakończ trening',exact:true}).click();
 const dialog=page.getByRole('dialog',{name:'Zakończyć trening?'});

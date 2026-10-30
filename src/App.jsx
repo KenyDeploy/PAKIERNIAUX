@@ -34,6 +34,9 @@ import {
 } from "lucide-react";
 import "./styles.css";
 import { recordedWeights } from "./dashboard.js";
+import { SettingsPage } from "./SettingsPage";
+import { themeTokens } from "./preferences.js";
+import "./theme.css";
 import { MeasurementsPage } from "./MeasurementsPage";
 import { HomeDashboard } from "./HomeDashboard";
 import { ActiveSetEditor } from "./ActiveSetEditor";
@@ -105,7 +108,9 @@ function formatDuration(totalSeconds) {
 }
 export default function App() {
   const [tab, setTab] = useState("home");
+  const [themePreview, setThemePreview] = useState(null);
   const { data, update, updateData, authUser, authLoading, cloudHydrated, syncStatus, retrySync, signOut } = useTrainingData(defaultData);
+  useEffect(() => { setThemePreview(null); }, [tab, authUser?.id]);
   const { plans, exercises, measurements, workouts, completedDays, waterByDate, activeSession } = data;
   const setPlans = value => update("plans", value);
   const setExercises = value => update("exercises", value);
@@ -348,7 +353,7 @@ export default function App() {
   if (supabase && !authUser) return <div className="auth-screen"><form className="auth-card" onSubmit={submitAuth}><span className="brand-mark"><Zap size={20} fill="currentColor" /></span><span className="eyebrow">PAKIERNIA U MATIEGO</span><h1>{authMode === "login" ? "Wróć do swojego progresu" : "Załóż konto"}</h1><p>{authMode === "login" ? "Zaloguj się, aby mieć swoje plany, wyniki i odznaki na każdym urządzeniu." : "Twoje treningi i pomiary będą prywatne i zsynchronizowane."}</p><label>Email<input type="email" value={authForm.email} onChange={(event) => setAuthForm({ ...authForm, email: event.target.value })} required /></label><label>Hasło<input type="password" minLength={6} value={authForm.password} onChange={(event) => setAuthForm({ ...authForm, password: event.target.value })} required /></label>{authError && <div className="auth-error">{authError}</div>}<button className="primary-cta" type="submit">{authMode === "login" ? "Zaloguj się" : "Utwórz konto"}</button><button className="auth-switch" type="button" onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthError(""); }}>{authMode === "login" ? "Nie mam jeszcze konta" : "Mam już konto"}</button></form></div>;
 
   return (
-    <div className={`app-shell${tab === "workout" ? " is-workout" : tab === "home" ? " is-home" : ""}`}>
+    <div style={themeTokens(themePreview || data.preferences?.theme)} className={`app-shell${tab === "workout" ? " is-workout" : tab === "home" ? " is-home" : ""}`}>
       <header className="topbar">
         <button className="brand" onClick={() => setTab("home")}>
           <span className="brand-mark">
@@ -361,7 +366,7 @@ export default function App() {
         </button>
         <div className="top-actions">
           {tab === "workout" && activeSession ? <><button type="button" className="workout-clock" aria-label="Czas treningu i opcje" onClick={() => setWorkoutPanel("timer")}><span>{formatDuration(elapsedWorkoutSeconds)}</span>{activeSession.pausedAt != null && <small>Pauza</small>}</button><IconButton label="Opcje ćwiczenia" onClick={() => setWorkoutPanel("exercise")}><span aria-hidden="true">•••</span></IconButton></> : <><span className="status-dot" />
-          <IconButton label={supabase ? "Wyloguj" : "Ustawienia"} onClick={supabase ? signOut : undefined}>
+          <IconButton label="Ustawienia" onClick={() => setTab("settings")}>
             <Settings2 size={18} />
           </IconButton>
           </>}
@@ -690,6 +695,7 @@ export default function App() {
             </section>
           </>
         )}
+        {tab === "settings" && <SettingsPage key={authUser?.id || "local"} data={data} user={authUser} cloud={Boolean(supabase)} syncStatus={syncStatus} onSync={retrySync} onSignOut={signOut} onPersist={updateData} onPreview={setThemePreview} onBack={() => setTab("home")} onProfile={() => setTab("body")} />}
         {tab === "body" && <MeasurementsPage key={authUser?.id || "local"} data={data} today={today} onPersist={updateData} />}
         </>}
       </main>

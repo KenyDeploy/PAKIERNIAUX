@@ -22,7 +22,8 @@ try {
   console.error(await page.evaluate(async()=>({url:location.href,text:document.body.innerText.slice(0,1000),activeSession:Boolean(JSON.parse(localStorage.getItem('pakiernia.v2.local')||'null')?.data.activeSession),worker:Boolean(navigator.serviceWorker?.controller),caches:await caches.keys(),scripts:await Promise.all([...document.scripts].filter(s=>s.src).map(async s=>{const r=await caches.match(s.src);return {src:s.src,cached:Boolean(r),vary:r?.headers.get('vary'),type:r?.headers.get('content-type')};}))})));
   throw error;
  });
- assert.equal(await page.getByRole('textbox',{name:'Ciężar serii 1',exact:true}).inputValue(),'42,5');
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.exercises[0].sets[0].weight),'42,5');
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.exercises[0].sets[0].completed),true);
  await page.getByRole('button',{name:'Zakończ trening',exact:true}).click();
  await page.getByRole('button',{name:'Zapisz trening',exact:true}).click();
  await page.getByText('Dobra robota!').waitFor();

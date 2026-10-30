@@ -20,7 +20,8 @@ const footerVisible=async dialog=>{
 };
 try {
  await page.goto(process.env.APP_URL || 'http://127.0.0.1:5173');
- await page.getByRole('button',{name:'Rozpocznij trening'}).click();
+ await nav('Plany');
+ await page.locator('.plan-card').filter({hasText:'Góra ciała — siła'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();
  assert.ok(await page.getByRole('textbox',{name:'Ciężar serii 1',exact:true}).evaluate(el=>el.getBoundingClientRect().bottom<innerHeight),'First set should be visible without scrolling past a large photo');
  // A long session makes the expanded review taller than any tested phone.
  await page.evaluate(()=>{const key='pakiernia.v2.local',entry=JSON.parse(localStorage.getItem(key));entry.data.activeSession.exercises.forEach(e=>{e.sets=Array.from({length:20},(_,i)=>({weight:'20',reps:'8',completed:i<2}));});localStorage.setItem(key,JSON.stringify(entry));});
