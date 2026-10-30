@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 
-export function DialogSheet({ children, labelledBy, onClose, onSubmit, className = "" }) {
+export function DialogSheet({ children, labelledBy, onClose, onSubmit, className = "", backdropClassName = "" }) {
   const panel = useRef(null);
   const close = useRef(onClose);
   close.current = onClose;
@@ -38,7 +38,7 @@ export function DialogSheet({ children, labelledBy, onClose, onSubmit, className
       event.preventDefault(); first.focus();
     }
   };
-  return <div className="sheet-backdrop" style={viewport ? { height: viewport.height, top: viewport.top } : undefined}
+  return <div className={`sheet-backdrop ${backdropClassName}`} style={viewport ? { height: viewport.height, top: viewport.top } : undefined}
     onPointerDown={event => { if (event.target === event.currentTarget) close.current(); }}>
     <Panel className={`dialog-sheet ${className}`} role="dialog" aria-modal="true" aria-labelledby={labelledBy}
       ref={panel} tabIndex={-1} onKeyDown={keys} onSubmit={onSubmit}>{children}</Panel>

@@ -31,6 +31,7 @@ import {
   SkipForward,
   Pencil,
   Trash2,
+  Maximize2,
 } from "lucide-react";
 import "./styles.css";
 import { ActiveSetEditor } from "./ActiveSetEditor";
@@ -44,6 +45,10 @@ import { DialogSheet } from "./DialogSheet";
 import { exerciseHistory, historySetLabel } from "./exerciseHistory.js";
 import { ExerciseHistorySheet, seriesLabel } from "./ExerciseHistorySheet";
 import { SessionExerciseEditor } from "./SessionExerciseEditor";
+import { RestControls } from "./RestControls";
+import { WorkoutTimerSheet } from "./WorkoutTimerSheet";
+import { ExercisePhotoViewer } from "./ExercisePhotoViewer";
+import { workoutElapsedSeconds, restRemainingSeconds, pauseWorkoutClock, resumeWorkoutClock, startSessionRest, pauseSessionRest, resumeSessionRest, extendSessionRest, skipSessionRest } from "./trainingClock.js";
 import { SessionExerciseMenu } from "./SessionExerciseMenu";
 import { addSessionExercise, replaceSessionExercise, skipSessionExercise, removeSessionExercise, editSessionTargets, addSessionSet } from "./sessionActions.js";
 import { ExercisePhotoField } from "./ExercisePhotoField";
@@ -143,10 +148,9 @@ export default function App() {
   }, [activeExerciseIndex, activeSession?.id, activeSession?.exercises[activeExerciseIndex]?.id, tab]);
   const setActiveExerciseIndex = value => update("activeSession", current => ({ ...current, index: typeof value === "function" ? value(current.index) : value }));
   const [clockNow, setClockNow] = useState(Date.now);
-  const restSeconds = Math.max(0, Math.ceil(((activeSession?.restUntil || 0) - clockNow) / 1000));
+  const restSeconds = restRemainingSeconds(activeSession, clockNow);
   const isResting = restSeconds > 0;
-  const workoutStartedAt = activeSession?.startedAt;
-  const elapsedWorkoutSeconds = Math.max(0, Math.floor((clockNow - (workoutStartedAt || clockNow)) / 1000));
+  const elapsedWorkoutSeconds = workoutElapsedSeconds(activeSession, clockNow);
   const [planEditor, setPlanEditor] = useState(null);
   const filteredExercises = useMemo(
     () =>
@@ -179,23 +183,26 @@ export default function App() {
       });
     } catch (cause) { setNotice(cause.message); return false; }
   };
+  const changeRest = action => {
+    const now = Date.now();
+    const saved = changeSession(session => action === "pause" ? pauseSessionRest(session, now) : action === "resume" ? resumeSessionRest(session, now) : action === "extend" ? extendSessionRest(session, 15, now) : skipSessionRest(session));
+    if (saved) setClockNow(now);
+    return saved;
+  };
   const setExerciseSkipped = skipped => {
     if (changeSession(session => skipSessionExercise(session, activeExerciseIndex, skipped))) setWorkoutPanel(null);
   };
-  const updateSet = (index, field, value) => update("activeSession", session => ({ ...session,
-    exercises: session.exercises.map((exercise, i) => i === session.index ? { ...exercise,
-      sets: exercise.sets.map((row, j) => j === index ? { ...row, [field]: value, ...(field !== "completed" ? { completed: false } : {}) } : row) } : exercise) }));
   const toggleSet = index => {
-    const row = currentExercise.sets[index];
-    if (!row.completed && (row.weight === "" || !Number.isFinite(number(row.weight)) || number(row.weight) < 0 || !Number.isInteger(number(row.reps)) || number(row.reps) < 1)) {
-      setNotice("Podaj ciężar (0 dla masy ciała) i pełną liczbę powtórzeń większą od zera."); return;
-    }
-    updateSet(index, "completed", !row.completed); setNotice("");
-    if (!row.completed) {
-      const now = Date.now();
-      setClockNow(now);
-      update("activeSession", session => ({ ...session, restUntil: now + (currentExercise.rest ?? 90) * 1000, restExerciseName: currentExercise.name }));
-    }
+    if (currentExercise.skipped) return;
+    const now = Date.now();
+    const saved = changeSession(session => {
+      const exercise = session.exercises[session.index], row = exercise.sets[index];
+      if (exercise.skipped) return session;
+      if (!row.completed && !validSet(row)) throw new Error("Podaj ciężar (0 dla masy ciała) i pełną liczbę powtórzeń większą od zera.");
+      const next = { ...session, exercises: session.exercises.map((e, i) => i === session.index ? { ...e, sets: e.sets.map((s, j) => j === index ? { ...s, completed: !s.completed } : s) } : e) };
+      return row.completed ? next : startSessionRest(next, exercise.rest ?? 90, exercise.name, now);
+    });
+    if (saved) { setClockNow(now); setNotice(""); }
   };
   const addSet = () => changeSession(session => addSessionSet(session, activeExerciseIndex));
   useEffect(() => {
@@ -368,10 +375,11 @@ export default function App() {
           </span>
         </button>
         <div className="top-actions">
-          <span className="status-dot" />
+          {tab === "workout" && activeSession ? <><button type="button" className="workout-clock" aria-label="Czas treningu i opcje" onClick={() => setWorkoutPanel("timer")}><span>{formatDuration(elapsedWorkoutSeconds)}</span>{activeSession.pausedAt != null && <small>Pauza</small>}</button><IconButton label="Opcje ćwiczenia" onClick={() => setWorkoutPanel("exercise")}><span aria-hidden="true">•••</span></IconButton></> : <><span className="status-dot" />
           <IconButton label={supabase ? "Wyloguj" : "Ustawienia"} onClick={supabase ? signOut : undefined}>
             <Settings2 size={18} />
           </IconButton>
+          </>}
         </div>
       </header>
       <main className="content">
@@ -652,7 +660,6 @@ export default function App() {
         {tab === "workout" && currentExercise && (
           <div className="workout-screen">
             <div className="workout-header">
-              <div className="workout-topline"><button className="back-link" onClick={() => setTab("home")}><X size={18} /> Zwiń</button><span className="timer"><Clock3 size={15} />{formatDuration(elapsedWorkoutSeconds)}</span><button type="button" className="workout-finish-link" aria-label="Zakończ trening" onClick={openFinishReview}>Zakończ</button></div>
               <div className="workout-heading">
                 <span className="eyebrow">
                   ĆWICZENIE {activeExerciseIndex + 1} /{" "}
@@ -674,12 +681,13 @@ export default function App() {
               </small>
             </div>
             <label className="exercise-jump">Przejdź do ćwiczenia<select aria-label="Przejdź do ćwiczenia" value={activeExerciseIndex} onChange={event => setActiveExerciseIndex(Number(event.target.value))}>{activeSession.exercises.map((e,i) => <option key={e.id} value={i}>{i + 1}. {e.name}</option>)}</select></label>
-            <details className="workout-photo-details" key={currentExercise.id}>
-              <summary>{exercisePhotoStyle(currentExercise) ? <span className="exercise-photo-thumb" role="img" aria-label={currentExercise.name} style={exercisePhotoStyle(currentExercise)} /> : <Dumbbell size={24} />}<span>Zdjęcie ćwiczenia<small>Dotknij, aby powiększyć</small></span><ChevronRight size={18} /></summary>
+            <div className="workout-hero-photo">
               <ExerciseVisual exercise={currentExercise} />
-            </details>
+              <button type="button" className="workout-photo-open" aria-label="Powiększ zdjęcie ćwiczenia" onClick={() => setWorkoutPanel("photo")}><Maximize2 size={20} /></button>
+            </div>
             <button type="button" className="workout-last-result" aria-label="Ostatni trening — szczegóły ćwiczenia" onClick={() => setWorkoutPanel("history")}><History size={21} /><span><small>{previousExercise ? `Ostatni trening · ${displayDate(previousExercise.date)}` : "Ostatni trening"}</small><b>{previousExercise ? `${seriesLabel(previousExercise.sets.length)} · ${previousExercise.sets.slice(0, 3).map(historySetLabel).join(" / ") + (previousExercise.sets.length > 3 ? " …" : "")}` : "Brak wyników — ustal punkt wyjściowy"}</b></span><ChevronRight size={20} /></button>
             <section className="workout-exercise current-exercise card">
+              {isResting && <button type="button" className="workout-rest-preview" aria-label="Aktywna przerwa — otwórz ustawienia" onClick={() => setWorkoutPanel("timer")}><span>Przerwa{activeSession.restPausedRemainingMs != null ? " · wstrzymana" : " między seriami"}</span><b role="timer" aria-live="off">{formatDuration(restSeconds)}</b></button>}
               {currentExercise.skipped && <div className="session-skipped-banner" role="status"><p>Ćwiczenie pominięte. Jego serie nie trafią do wyniku treningu.</p><button type="button" onClick={() => setExerciseSkipped(false)}>Cofnij pominięcie</button></div>}
               <div className="exercise-title">
                 <span className={`exercise-icon ${currentExercise.color}`}>
@@ -700,20 +708,13 @@ export default function App() {
             {isResting && (
               <section className="rest-card">
                 <span className="eyebrow">
-                  PRZERWA · {activeSession.restExerciseName || currentExercise.name}
+                  PRZERWA · {activeSession.restExerciseName || currentExercise.name}{activeSession.restPausedRemainingMs != null ? " · WSTRZYMANA" : ""}
                 </span>
                 <strong>
                   {Math.floor(restSeconds / 60)}:
                   {String(restSeconds % 60).padStart(2, "0")}
                 </strong>
-                <div>
-                  <button onClick={() => update("activeSession", session => ({ ...session, restUntil: Math.max(Date.now(), session.restUntil || 0) + 15000 }))}>
-                    +15 s
-                  </button>
-                  <button onClick={() => update("activeSession", session => ({ ...session, restUntil: null }))}>
-                    <SkipForward size={15} /> Pomiń
-                  </button>
-                </div>
+                <RestControls session={activeSession} onAction={changeRest} />
               </section>
             )}
             <div className="workout-navigation">
@@ -931,6 +932,11 @@ export default function App() {
           </button>
         ))}
       </nav>}
+      {workoutPanel === "photo" && currentExercise && <ExercisePhotoViewer exercise={currentExercise} onClose={() => setWorkoutPanel(null)} />}
+      {workoutPanel === "timer" && activeSession && <WorkoutTimerSheet key={activeSession.id} session={activeSession} now={clockNow} onClose={() => setWorkoutPanel(null)}
+        onToggle={() => { const now = Date.now(); const saved = changeSession(session => session.pausedAt != null ? resumeWorkoutClock(session, now) : pauseWorkoutClock(session, now)); if (saved) setClockNow(now); return saved; }}
+        onRest={seconds => { const now = Date.now(); const saved = changeSession(session => ({ ...startSessionRest(session, seconds, currentExercise?.name || "Przerwa ręczna", now), manualRestSeconds: seconds })); if (saved) setClockNow(now); return saved; }}
+        onRestAction={changeRest} onFinish={() => { setWorkoutPanel(null); openFinishReview(); }} />}
       {workoutPanel === "history" && currentExercise && <ExerciseHistorySheet exercise={currentExercise} sessions={exerciseSessions} onClose={() => setWorkoutPanel(null)} onProgress={() => { setStatsExercise(String(currentExercise.id)); setStatsRange(3650); setWorkoutPanel(null); setTab("stats"); }} />}
       {["add", "replace", "parameters"].includes(workoutPanel) && activeSession && (currentExercise || workoutPanel === "add") && <SessionExerciseEditor
         key={workoutPanel + activeSession.id + (currentExercise?.id ?? "empty")} mode={workoutPanel} session={activeSession} exercise={currentExercise || { name: "", sets: [], reps: 10, rest: 90 }} exercises={exercises}

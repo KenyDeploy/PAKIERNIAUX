@@ -1,3 +1,5 @@
+import { workoutElapsedSeconds } from "./trainingClock.js";
+
 export function dateKey(value = new Date()) {
   const d = new Date(value);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -41,7 +43,7 @@ export function completeSession(session, now = Date.now()) {
   }).filter(e => e.sets.length);
   if (!exercises.length) return null;
   return { ...session, exercises, completedAt: now,
-    durationSeconds: Math.max(0, Math.floor((now - session.startedAt) / 1000)),
+    durationSeconds: workoutElapsedSeconds(session, now),
     volume: exercises.reduce((sum, e) => sum + volume(e.sets), 0) };
 }
 export function measurementChange(measurements, key) {
