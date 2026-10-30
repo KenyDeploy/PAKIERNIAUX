@@ -39,9 +39,10 @@ test('UI saves real sets, restores a draft, updates history, chart and body chan
     await click('Postęp');assert.match(container.querySelector('.chart-value').textContent,/22,5/);
     await click('Pomiary');
     for(const [date,biceps] of [['2026-10-22','37'],['2026-10-29','38']]) {
-      await input('input[name="date"]',date);await input('input[name="biceps"]',biceps);
+      await click('Dodaj pomiar');
+      await input('input[name="date"]',date);await input('input[name="bicepsRight"]',biceps);
       await act(()=>container.querySelector('.measurement-form').dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true})));
     }
-    assert.match(container.querySelector('.body-metrics').textContent,/\+1 cm od poprzedniego/);
+    assert.match(container.querySelector('[data-testid="measurement-change"]').textContent,/\+1 cm względem poprzedniego zapisu/);
   } finally {if(root)await act(()=>root.unmount());await server.close();window.happyDOM.abort();}
 });

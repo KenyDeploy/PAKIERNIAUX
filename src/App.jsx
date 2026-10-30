@@ -34,13 +34,14 @@ import {
 } from "lucide-react";
 import "./styles.css";
 import { recordedWeights } from "./dashboard.js";
+import { MeasurementsPage } from "./MeasurementsPage";
 import { HomeDashboard } from "./HomeDashboard";
 import { ActiveSetEditor } from "./ActiveSetEditor";
 import { supabase } from "./supabase";
 import { catalog, starterExercises } from "./catalog";
 import { useTrainingData } from "./useTrainingData";
 import { dateKey, number, volume, createSession, completeSession, validSet, trainingAttendance, planName, weekDates } from "./training";
-import { BodyProgress, ExerciseVisual, TrendChart } from "./Visuals";
+import { ExerciseVisual, TrendChart } from "./Visuals";
 import { exercisePhotoStyle } from "./exercisePhotos";
 import { DialogSheet } from "./DialogSheet";
 import { exerciseHistory, historySetLabel } from "./exerciseHistory.js";
@@ -108,7 +109,7 @@ export default function App() {
   const { plans, exercises, measurements, workouts, completedDays, waterByDate, activeSession } = data;
   const setPlans = value => update("plans", value);
   const setExercises = value => update("exercises", value);
-  const setMeasurements = value => update("measurements", value);
+
   const setCompletedDays = value => update("completedDays", value);
   useEffect(() => { setTab("home"); setModal(null); setWorkoutPanel(null); setPlanEditor(null); setExerciseEditor(null); setSummary(null); setNotice(""); setNewExercise({ name: "", category: "Klatka", equipment: "Hantle" }); setExerciseError(""); }, [authUser?.id]);
   const [notice, setNotice] = useState("");
@@ -270,17 +271,6 @@ export default function App() {
       ...current,
       exercises: current.exercises.filter((id) => id !== exerciseId),
     }));
-  const saveMeasurement = event => {
-    event.preventDefault(); const form = new FormData(event.currentTarget);
-    const entry = { id: crypto.randomUUID(), date: form.get("date"), createdAt: Date.now() };
-    for (const key of ["weight", "biceps", "chest", "waist", "thigh"]) {
-      const raw = form.get(key); entry[key] = raw === "" ? null : number(raw);
-      if (entry[key] !== null && (!Number.isFinite(entry[key]) || entry[key] <= 0)) { setNotice("Pomiary muszą być większe od zera."); return; }
-    }
-    if (!["weight", "biceps", "chest", "waist", "thigh"].some(key => entry[key] !== null)) { setNotice("Uzupełnij przynajmniej jeden pomiar."); return; }
-    setMeasurements(current => [entry, ...current].sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.createdAt || 0) - (a.createdAt || 0)));
-    event.currentTarget.reset(); setNotice("Pomiar zapisany.");
-  };
   const saveRest = (event, exerciseId) => {
     event.preventDefault();
     const seconds = Number(new FormData(event.currentTarget).get("rest"));
@@ -700,84 +690,7 @@ export default function App() {
             </section>
           </>
         )}
-        {tab === "body" && (
-          <>
-            <div className="page-heading">
-              <span className="eyebrow">TWOJE DANE</span>
-              <h1>Ciało i pomiary</h1>
-              <p>
-                Aktualizuj co 2–4 tygodnie i obserwuj kierunek, nie pojedynczy
-                dzień.
-              </p>
-            </div>
-            <BodyProgress measurements={measurements} />
-            {data.legacyMeasurements?.length > 0 && <details className="card legacy-data"><summary>Poprzednie pomiary bez daty ({data.legacyMeasurements.length})</summary><p>Stara wersja zapisywała „Dzisiaj” zamiast daty. Zachowaliśmy te wpisy, ale nie uwzględniamy ich w wykresach i porównaniach.</p>{data.legacyMeasurements.map((m,i) => <p key={i}>{m.date}: waga {m.weight ?? "—"} kg, biceps {m.biceps ?? "—"} cm, klatka {m.chest ?? "—"} cm, talia {m.waist ?? "—"} cm, udo {m.thigh ?? "—"} cm</p>)}</details>}
-            <section className="card"><h2>Masa ciała w czasie</h2><TrendChart points={[...measurements].reverse().filter(m => m.weight != null).map(m => ({ date: displayDate(m.date), value: m.weight }))} unit="kg" /></section>
-            <form className="measurement-form card" onSubmit={saveMeasurement}>
-              <div className="card-head">
-                <div>
-                  <span className="eyebrow">NOWY POMIAR</span>
-                  <h2>Zapisz aktualny stan</h2>
-                </div>
-                <CalendarDays size={20} />
-              </div>
-              <label className="date-field">Data pomiaru<input type="date" name="date" defaultValue={today} max={today} required /></label>
-              <div className="measurement-grid">
-                {[
-                  ["weight", "Waga", "kg"],
-                  ["biceps", "Biceps", "cm"],
-                  ["chest", "Klatka", "cm"],
-                  ["waist", "Talia", "cm"],
-                  ["thigh", "Udo", "cm"],
-                ].map(([name, label, unit]) => (
-                  <label key={name}>
-                    {label}
-                    <div>
-                      <input
-                        name={name}
-                        inputMode="decimal"
-                        type="number"
-                        min="0.1"
-                        step="0.1"
-                        placeholder="0"
-                      />
-                      <span>{unit}</span>
-                    </div>
-                  </label>
-                ))}
-              </div>
-              <button className="primary-cta" type="submit">
-                <Plus size={18} /> Zapisz pomiar
-              </button>
-            </form>
-            <section className="card measurement-history">
-              <div className="card-head">
-                <div>
-                  <span className="eyebrow">ZMIANA W CZASIE</span>
-                  <h2>Historia pomiarów</h2>
-                </div>
-                <TrendingUp size={20} />
-              </div>
-              <div className="measurement-labels"><span>DATA / WAGA</span><span>BICEPS</span><span>KLATKA</span><span>TALIA</span><span>UDO</span></div>
-              {!measurements.length && <p className="empty-state">Dodaj pierwszy pomiar.</p>}
-              {measurements.map((measurement, index) => (
-                <div
-                  className="measurement-row"
-                  key={`${measurement.date}-${index}`}
-                >
-                  <div>
-                    <b>{displayDate(measurement.date)}</b>
-                    <small>{measurement.weight ?? "—"} kg</small>
-                  </div>
-                  <span>{measurement.biceps ?? "—"} cm</span>
-                  <span>{measurement.chest ?? "—"} cm</span>
-                  <span>{measurement.waist ?? "—"} cm</span>
-                  <span>{measurement.thigh ?? "—"} cm</span>
-                </div>
-              ))}
-            </section>
-          </>
-        )}
+        {tab === "body" && <MeasurementsPage key={authUser?.id || "local"} data={data} today={today} onPersist={updateData} />}
         </>}
       </main>
       {tab !== "workout" && <nav className="bottom-nav">
