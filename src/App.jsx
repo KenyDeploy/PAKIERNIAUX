@@ -39,6 +39,8 @@ import { themeTokens } from "./preferences.js";
 import "./theme.css";
 import { MeasurementsPage } from "./MeasurementsPage";
 import { HomeDashboard } from "./HomeDashboard";
+import { PlanEditor } from "./PlanEditor";
+import { newPlanDraft } from "./formDrafts.js";
 import { ActiveSetEditor } from "./ActiveSetEditor";
 import { confirmSeries } from "./activeSeries.js";
 import "./WorkoutHistory.css";
@@ -114,7 +116,6 @@ export default function App() {
   const { data, update, updateData, authUser, authLoading, cloudHydrated, syncStatus, retrySync, signOut } = useTrainingData(defaultData);
   useEffect(() => { setThemePreview(null); }, [tab, authUser?.id]);
   const { plans, exercises, measurements, workouts, completedDays, waterByDate, activeSession } = data;
-  const setPlans = value => update("plans", value);
   const setExercises = value => update("exercises", value);
   
   const setCompletedDays = value => update("completedDays", value);
@@ -250,45 +251,7 @@ export default function App() {
     if (result.error) setAuthError(result.error.message);
     else if (authMode === "signup" && !result.data.session) setAuthError("Sprawdź email, aby potwierdzić konto.");
   };
-  const addPlan = () => {
-    const plan = {
-      id: Date.now(),
-      name: `Nowy plan ${plans.length + 1}`,
-      days: "Do ustawienia",
-      duration: "30 min",
-      exercises: exercises[0] ? [exercises[0].id] : [],
-      color: "blue",
-    };
-    setPlans((current) => [...current, plan]);
-    setPlanEditor(plan);
-  };
-  const savePlan = (event) => {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const updated = {
-      ...planEditor,
-      name: form.get("name") || planEditor.name,
-      days: form.get("days") || "Do ustawienia",
-      exercises: planEditor.exercises,
-      targets: planEditor.targets || {},
-    };
-    setPlans((current) =>
-      current.map((plan) => (plan.id === updated.id ? updated : plan)),
-    );
-    setActivePlan(updated);
-    setPlanEditor(null);
-  };
-  const addExerciseToPlan = (exerciseId) =>
-    setPlanEditor((current) =>
-      current.exercises.includes(exerciseId)
-        ? current
-        : { ...current, exercises: [...current.exercises, exerciseId] },
-    );
-  const removeExerciseFromPlan = (exerciseId) =>
-    setPlanEditor((current) => ({
-      ...current,
-      exercises: current.exercises.filter((id) => id !== exerciseId),
-    }));
+  const addPlan = () => setPlanEditor(newPlanDraft(plans, exercises));
   const saveRest = (event, exerciseId) => {
     event.preventDefault();
     const seconds = Number(new FormData(event.currentTarget).get("rest"));
@@ -770,71 +733,7 @@ export default function App() {
           <button type="button" className="workout-menu-action session-remove-action" onClick={() => discardWorkout(true, discardSessionId)}>Usuń trening</button>
         </footer>
       </DialogSheet>}
-      {planEditor && (
-        <div className="modal-backdrop" onClick={() => setPlanEditor(null)}>
-          <form
-            className="modal plan-editor"
-            onSubmit={savePlan}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="modal-head">
-              <div>
-                <span className="eyebrow">EDYCJA PLANU</span>
-                <h2>Ułóż swój trening</h2>
-              </div>
-              <IconButton label="Zamknij" onClick={() => setPlanEditor(null)}>
-                <X size={18} />
-              </IconButton>
-            </div>
-            <label>
-              Nazwa planu
-              <input name="name" defaultValue={planEditor.name} />
-            </label>
-            <label>
-              Dni treningowe
-              <input name="days" defaultValue={planEditor.days} />
-            </label>
-            <div className="editor-label">
-              <span className="eyebrow">ĆWICZENIA W PLANIE</span>
-              <small>{planEditor.exercises.length} wybranych</small>
-            </div>
-            <div className="selected-exercises">
-              {planEditor.exercises.map((id) => {
-                const exercise = exercises.find((item) => item.id === id);
-                return (
-                  <div className="plan-exercise-edit" key={id}>
-                    <button type="button" onClick={() => removeExerciseFromPlan(id)}>{exercise?.name}<X size={14} /></button>
-                    <div className="plan-targets">{[["sets", "Serie", 3, 1, 20], ["reps", "Powt.", 10, 1, 100], ["rest", "Przerwa (s)", 90, 0, 900]].map(([key, label, fallback, min, max]) => <label key={key}>{label}<input type="number" min={min} max={max} required value={planEditor.targets?.[id]?.[key] ?? exercise?.[key] ?? fallback} onChange={event => setPlanEditor(current => ({ ...current, targets: { ...current.targets, [id]: { sets: exercise?.sets || 3, reps: exercise?.reps || 10, rest: exercise?.rest || 90, ...current.targets?.[id], [key]: event.target.value === "" ? "" : Number(event.target.value) } } }))} /></label>)}</div>
-                  </div>
-                );
-              })}
-            </div>
-            <select
-              className="exercise-picker"
-              onChange={(event) => {
-                if (event.target.value)
-                  addExerciseToPlan(Number(event.target.value));
-                event.target.value = "";
-              }}
-              defaultValue=""
-            >
-              <option value="">+ Dodaj ćwiczenie z bazy</option>
-              {exercises
-                .filter(
-                  (exercise) => !planEditor.exercises.includes(exercise.id),
-                )
-                .map((exercise) => (
-                  <option value={exercise.id} key={exercise.id}>
-                    {exercise.name}
-                  </option>
-                ))}
-            </select>
-            <button className="primary-cta" type="submit">
-              <Check size={18} /> Zapisz plan
-            </button>
-          </form>
-        </div>
-      )}
+      {planEditor && <PlanEditor key={planEditor.id} plan={planEditor} isNew={!plans.some(plan => plan.id === planEditor.id)} exercises={exercises} onPersist={updateData} onSaved={setActivePlan} onClose={() => setPlanEditor(null)} />}
       {exerciseEditor && (
         <DialogSheet labelledBy="edit-exercise-title" onClose={() => setExerciseEditor(null)} onSubmit={saveExercise} className="exercise-sheet">
           <header className="sheet-header"><h2 id="edit-exercise-title">Edytuj ćwiczenie</h2><IconButton label="Zamknij" onClick={() => setExerciseEditor(null)}><X size={18} /></IconButton></header>
