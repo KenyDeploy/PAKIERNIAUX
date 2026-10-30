@@ -9,7 +9,7 @@ test('UI saves real sets, restores a draft, updates history, chart and body chan
   for(const key of ['window','document','navigator','localStorage','HTMLElement','HTMLInputElement','Event','MouseEvent','FormData']) Object.defineProperty(globalThis,key,{value:key==='window'?window:window[key],configurable:true,writable:true});
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   const { createRoot } = await import('react-dom/client');
-  const server = await createServer({server:{middlewareMode:true,hmr:false},appType:'custom'});
+  const server = await createServer({server:{middlewareMode:true,hmr:false,ws:false},appType:'custom'});
   let root;
   try {
     const {default:App} = await server.ssrLoadModule('/src/App.jsx');

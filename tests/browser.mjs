@@ -1,5 +1,9 @@
+import {createRequire} from "node:module";
+import {tmpdir} from "node:os";
+import {join} from "node:path";
+const screenshotPath=name=>join(process.env.TEST_ARTIFACT_DIR || tmpdir(),name);
 import assert from 'node:assert/strict';
-const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const browser = await chromium.launch({headless:true,args:['--no-sandbox'], ...(process.env.CHROMIUM_PATH ? {executablePath:process.env.CHROMIUM_PATH} : {})});
 const context = await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
 const page = await context.newPage();
@@ -45,7 +49,7 @@ await page.getByRole('button',{name:'Poprzednie',exact:true}).click();
 assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.exercises[0].sets[0].weight),'22,5');
 await page.getByRole('button',{name:'Następne',exact:true}).click();
 assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.exercises[1].sets[0].weight),'50');
-assert.ok(await page.locator('.workout-header').evaluate(el=>el.getBoundingClientRect().top>=document.querySelector('.topbar').getBoundingClientRect().bottom));
+assert.ok(await page.locator('.workout-heading').evaluate(el=>el.getBoundingClientRect().top>=document.querySelector('.topbar').getBoundingClientRect().bottom));
 assert.ok(restUntil > Date.now());
 await page.reload();
 await page.getByRole('button',{name:'Wznów rozpoczęty trening'}).click();
@@ -74,12 +78,12 @@ for (const [date,biceps,weight] of [['2026-10-22','37','86'],['2026-10-29','38',
 }
 await page.getByLabel('Wybierz pomiar',{exact:true}).selectOption('bicepsRight');
 assert.ok((await page.getByTestId('measurement-change').innerText()).includes('+1 cm względem poprzedniego zapisu'));
-await page.screenshot({path:'/tmp/pakiernia-body.png',fullPage:true});
+await page.screenshot({path:screenshotPath('pakiernia-body.png'),fullPage:true});
 for(const width of [320,375,390,430,768,1280]) {
  await page.setViewportSize({width,height:844});
  for(const tab of ['Pulpit','Plany','Baza','Historia','Postęp','Pomiary']) {
   await page.locator('.bottom-nav').getByRole('button',{name:tab,exact:true}).click({timeout:5000}).catch(async error=>{
-   await page.screenshot({path:'/tmp/pakiernia-overlap.png',fullPage:true});
+   await page.screenshot({path:screenshotPath('pakiernia-overlap.png'),fullPage:true});
    console.error({width,tab,layout:await page.evaluate(()=>({width:innerWidth,height:innerHeight,scrollY,nav:document.querySelector('.bottom-nav').getBoundingClientRect().toJSON(),main:document.querySelector('main').getBoundingClientRect().toJSON()}))});throw error;
   });
   const overflow=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
@@ -93,13 +97,14 @@ await page.locator('.bottom-nav').getByRole('button',{name:'Pulpit'}).click();
 await page.locator('.bottom-nav').getByRole('button',{name:'Plany',exact:true}).click();
 await page.locator('.plan-card').filter({hasText:'Góra ciała — siła'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();
 assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.exercises[0].sets[0].weight),'22,5');
-assert.ok((await page.locator('.last-result-card').innerText()).includes('22,5 kg × 8'));
-await page.screenshot({path:'/tmp/pakiernia-workout.png',fullPage:true});
+assert.ok((await page.locator('.workout-last-result').innerText()).includes('22,5 kg × 8'));
+await page.screenshot({path:screenshotPath('pakiernia-workout.png'),fullPage:true});
 // An expired persisted deadline must not restart the rest on reopening.
 await page.evaluate(()=>{const key='pakiernia.v2.local';const cache=JSON.parse(localStorage.getItem(key));cache.data.activeSession.restUntil=Date.now()-1000;localStorage.setItem(key,JSON.stringify(cache));});
 await page.reload();
 await page.getByRole('button',{name:'Wznów rozpoczęty trening'}).click();
 assert.equal(await page.locator('.rest-card').count(),0);
+await page.getByRole('button',{name:'Czas treningu i opcje'}).click();
 await page.getByRole('button',{name:'Zakończ trening',exact:true}).click();
 await page.getByRole('button',{name:'Odrzuć trening bez zapisu',exact:true}).click();
 await page.locator('.bottom-nav').getByRole('button',{name:'Plany',exact:true}).click();
@@ -144,10 +149,11 @@ assert.equal(await page.getByTestId('training-count').innerText(),'2');
 await page.locator('.bottom-nav').getByRole('button',{name:'Plany',exact:true}).click();
 await page.locator('.plan-card').filter({hasText:'Góra ciała — siła'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();
 await page.getByRole('textbox',{name:'Ciężar serii 1',exact:true}).fill('30,5');
+await page.getByRole('button',{name:'Czas treningu i opcje'}).click();
 await page.getByRole('button',{name:'Zakończ trening',exact:true}).click();
 const dialog=page.getByRole('dialog',{name:'Zakończyć trening?'});
 assert.equal(await dialog.locator('.finish-counts b').first().innerText(),'0');
-await page.screenshot({path:'/tmp/pakiernia-finish-review.png',fullPage:true});
+await page.screenshot({path:screenshotPath('pakiernia-finish-review.png'),fullPage:true});
 await dialog.getByRole('checkbox',{name:'Potwierdzam wykonanie wypełnionych serii'}).check();
 await dialog.getByRole('button',{name:'Zapisz trening',exact:true}).click();
 await page.getByText('Dobra robota!').waitFor();
@@ -158,6 +164,7 @@ assert.equal(finished.workouts[0].exercises[0].sets[0].weight,'30,5');
 // Empty sessions can be closed deliberately, without creating a fake workout.
 await page.locator('.bottom-nav').getByRole('button',{name:'Plany',exact:true}).click();
 await page.locator('.plan-card').filter({hasText:'Dół ciała — siła'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();
+await page.getByRole('button',{name:'Czas treningu i opcje'}).click();
 await page.getByRole('button',{name:'Zakończ trening',exact:true}).click();
 assert.ok((await dialog.innerText()).includes('Brak serii do zapisania'));
 await dialog.getByRole('button',{name:'Odrzuć trening bez zapisu',exact:true}).click();

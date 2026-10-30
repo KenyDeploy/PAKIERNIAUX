@@ -1,6 +1,10 @@
+import {createRequire} from "node:module";
+import {tmpdir} from "node:os";
+import {join} from "node:path";
+const screenshotPath=name=>join(process.env.TEST_ARTIFACT_DIR || tmpdir(),name);
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
-const {chromium}=await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
 const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
 const page=await context.newPage(), errors=[];
@@ -26,7 +30,8 @@ try {
  // A long session makes the expanded review taller than any tested phone.
  await page.evaluate(()=>{const key='pakiernia.v2.local',entry=JSON.parse(localStorage.getItem(key));entry.data.activeSession.exercises.forEach(e=>{e.sets=Array.from({length:20},(_,i)=>({weight:'20',reps:'8',completed:i<2}));});localStorage.setItem(key,JSON.stringify(entry));});
  await page.reload();await page.getByRole('button',{name:'Wznów rozpoczęty trening'}).click();
- await page.getByRole('button',{name:'Zakończ trening',exact:true}).click();
+ await page.getByRole('button',{name:'Czas treningu i opcje'}).click();
+await page.getByRole('button',{name:'Zakończ trening',exact:true}).click();
  let dialog=page.getByRole('dialog',{name:'Zakończyć trening?'});
  await dialog.locator('.finish-set-list summary').click();
  for(const [width,height] of [[320,360],[375,500],[390,600],[430,844],[768,650],[1280,720]]){
@@ -41,7 +46,8 @@ try {
  assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('aria-label')),'Wróć do treningu');
  await page.keyboard.press('Escape');
  assert.equal(await page.getByRole('dialog').count(),0);
- await page.getByRole('button',{name:'Zakończ trening',exact:true}).click();
+ await page.getByRole('button',{name:'Czas treningu i opcje'}).click();
+await page.getByRole('button',{name:'Zakończ trening',exact:true}).click();
  dialog=page.getByRole('dialog',{name:'Zakończyć trening?'});
  assert.equal(await dialog.getByRole('checkbox').isChecked(),false);
  await dialog.getByRole('button',{name:'Zapisz trening',exact:true}).click();
@@ -93,9 +99,11 @@ try {
  await page.locator('.exercise-picker').selectOption(String(custom.id));
  await page.getByRole('button',{name:'Zapisz plan',exact:true}).click();
  await page.locator('.plan-card').filter({hasText:'Plan ze swoim zdjęciem'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();
- await page.locator('.workout-photo-details > summary').click();
- assert.ok((await page.locator('.workout-photo-details').innerText()).includes('Twoje zdjęcie'));
- await page.getByRole('button',{name:'Zakończ trening',exact:true}).click();
+ await page.getByRole('button',{name:'Powiększ zdjęcie ćwiczenia'}).click();
+ assert.ok((await page.locator('.exercise-photo-viewer').innerText()).includes('Twoje zdjęcie'));
+ await page.getByRole('button',{name:'Zamknij zdjęcie'}).click();
+ await page.getByRole('button',{name:'Czas treningu i opcje'}).click();
+await page.getByRole('button',{name:'Zakończ trening',exact:true}).click();
  await page.getByRole('button',{name:'Odrzuć trening bez zapisu'}).click();
  await nav('Baza');row=page.locator('.exercise-row').filter({hasText:'Moje poprawione ćwiczenie'});
  await row.getByRole('button',{name:'Edytuj: Moje poprawione ćwiczenie',exact:true}).click();
@@ -105,6 +113,6 @@ try {
  assert.equal((await cache()).exercises.find(e=>e.id===custom.id).customPhoto,null);
  assert.equal(await row.locator('.exercise-photo-thumb').count(),0);
  assert.deepEqual(errors,[]);
- await page.screenshot({path:'/tmp/pakiernia-exercise-edit.png',fullPage:true});
+ await page.screenshot({path:screenshotPath('pakiernia-exercise-edit.png'),fullPage:true});
  console.log('PASS: finish footer visible at 6 viewport sizes with long review; focus/Escape; checked-only save; add/compress/validate/persist/edit/remove photo; custom training photo; storage failure keeps form and data.');
-} catch(error) {await page.screenshot({path:'/tmp/pakiernia-mobile-failure.png',fullPage:true});throw error;} finally {await browser.close();}
+} catch(error) {await page.screenshot({path:screenshotPath('pakiernia-mobile-failure.png'),fullPage:true});throw error;} finally {await browser.close();}

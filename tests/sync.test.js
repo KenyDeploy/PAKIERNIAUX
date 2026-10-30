@@ -17,7 +17,7 @@ test('cloud hydration does not auto-write; accounts and failed reads remain isol
   q.upsert=function(payload){originalUpsert(payload);if(rejectWrite)q.abortSignal=()=>Promise.reject(new TypeError('Failed to fetch'));return q;};
   return q;
  };
- const server=await createServer({server:{middlewareMode:true,hmr:false},plugins:[{name:'mock-supabase',enforce:'pre',resolveId(id){if(id==='./supabase')return '\0test-supabase';},load(id){if(id==='\0test-supabase')return 'export const supabase = globalThis.__testSupabase;';}}]});
+ const server=await createServer({server:{middlewareMode:true,hmr:false,ws:false},plugins:[{name:'mock-supabase',enforce:'pre',resolveId(id){if(id==='./supabase')return '\0test-supabase';},load(id){if(id==='\0test-supabase')return 'export const supabase = globalThis.__testSupabase;';}}]});
  const {createRoot}=await import('react-dom/client');let root;let api;
  const wait=()=>new Promise(resolve=>setTimeout(resolve,20));
  try{
