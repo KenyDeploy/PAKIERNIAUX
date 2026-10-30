@@ -23,12 +23,13 @@ test('UI saves real sets, restores a draft, updates history, chart and body chan
     await input('[aria-label="Ciężar serii 1"]','22,5');
     await input('[aria-label="Powtórzenia serii 1"]','8');
     await click('Zatwierdź serię 1');await click('Dodaj serię');
-    assert.equal(container.querySelectorAll('.set-row').length,4);
+    assert.equal(container.querySelectorAll('.set-row').length,1);
     let data=JSON.parse(localStorage.getItem('pakiernia.v2.local')).data;
     assert.equal(data.activeSession.exercises[0].sets[0].weight,'22,5');
     assert.equal(data.activeSession.exercises[0].sets[0].completed,true);
     await act(()=>root.unmount());root=createRoot(container);await act(()=>root.render(React.createElement(App)));
     await act(()=>container.querySelector('.secondary-cta').click());
+    await click('Popraw serię 1');
     assert.equal(container.querySelector('[aria-label="Ciężar serii 1"]').value,'22,5');
     await click('Następne');await click('Następne');await click('Następne');await click('Zakończ');await click('Zapisz trening');
     data=JSON.parse(localStorage.getItem('pakiernia.v2.local')).data;

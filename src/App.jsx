@@ -33,6 +33,7 @@ import {
   Trash2,
 } from "lucide-react";
 import "./styles.css";
+import { ActiveSetEditor } from "./ActiveSetEditor";
 import { supabase } from "./supabase";
 import { catalog, starterExercises } from "./catalog";
 import { useTrainingData } from "./useTrainingData";
@@ -672,22 +673,7 @@ export default function App() {
                   </small>
                 </div>
               </div>
-              <p className="set-help">Wpisz wynik i zaznacz wykonaną serię ✓.</p>
-              <div className="set-labels">
-                <span>SERIA</span>
-                <span>KG</span>
-                <span />
-                <span>POWT.</span>
-                <span>GOTOWE</span>
-              </div>
-              {currentExercise.sets.map((row, setIndex) => <div className={`set-row ${row.completed ? "completed" : ""}`} key={`${currentExercise.id}-${setIndex}`}>
-                <b>{setIndex + 1}</b>
-                <input aria-label={`Ciężar serii ${setIndex + 1}`} inputMode="decimal" type="text" value={row.weight} onChange={e => updateSet(setIndex, "weight", e.target.value)} placeholder="0" />
-                <span>kg</span>
-                <input aria-label={`Powtórzenia serii ${setIndex + 1}`} inputMode="numeric" type="text" value={row.reps} onChange={e => updateSet(setIndex, "reps", e.target.value)} />
-                <button type="button" aria-label={`Zatwierdź serię ${setIndex + 1}`} aria-pressed={row.completed} onClick={() => toggleSet(setIndex)}>{row.completed ? <Check size={18} /> : <Square size={18} />}</button>
-              </div>)}
-              <button type="button" className="add-set" onClick={addSet}><Plus size={15} /> Dodaj serię</button>
+              <ActiveSetEditor key={activeSession.id + ":" + currentExercise.id} exercise={currentExercise} exerciseIndex={activeExerciseIndex} sessionId={activeSession.id} onPersist={updateData} onConfirm={toggleSet} />
             </section>
             {previousExercise ? <section className="last-result-card">
               <span className="eyebrow">OSTATNI TRENING · {displayDate(previousExercise.date)}</span>
