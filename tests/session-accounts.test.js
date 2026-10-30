@@ -43,14 +43,14 @@ test('modified active sessions remain isolated across accounts A/B, cloud writes
     await act(async()=>{await api.retrySync();});
     assert.equal(writes.at(-1).user_id,'b');assert.equal(db.b.workouts.length,1);assert.equal(db.a.workouts.length,0);
     await switchTo('a');assert.equal(api.data.activeSession.id,draft.id);assert.equal(api.data.activeSession.exercises[0].skipped,true);
-    assert.equal(api.data.activeSession.exercises[1].rest,0);assert.equal(api.data.activeSession.exercises[1].sets.length,3);
+    assert.equal(api.data.activeSession.exercises[1].rest,0);assert.equal(api.data.activeSession.exercises[1].sets.length,1);
     assert.equal(api.data.activeSession.pausedAt,61000);assert.equal(api.data.activeSession.restUntil,null);assert.equal(api.data.activeSession.restPausedRemainingMs,119000);assert.equal(api.data.activeSession.manualRestSeconds,120);
     await act(()=>api.updateData(d=>({...d,activeSession:editSessionTargets(skipSessionExercise(d.activeSession,0,false),1,{sets:4,reps:15,rest:30})})));
     await act(async()=>{await api.retrySync();});
     await act(()=>root.unmount());await mount();
     assert.equal(api.data.activeSession.exercises[0].skipped,false);
     assert.equal(api.data.activeSession.exercises[1].targetSets,4);
-    assert.equal(api.data.activeSession.exercises[1].sets[3].reps,'15');
+    assert.equal(api.data.activeSession.exercises[1].sets.length,1);assert.equal(api.data.activeSession.exercises[1].sets[0].reps,'12');
     assert.equal(api.data.activeSession.restPausedRemainingMs,119000);
     assert.deepEqual(api.data.plans[0].exercises,[1]);
     assert.equal(JSON.parse(localStorage.getItem('pakiernia.v2.b')).data.workouts.length,1);

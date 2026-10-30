@@ -7,7 +7,7 @@ try{
  const nav=name=>page.locator('.bottom-nav').getByRole('button',{name,exact:true}).click();const data=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data);
  await nav('Plany');await page.locator('.plan-card').filter({hasText:'Góra ciała — siła'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();
  await page.getByLabel('Ciężar serii 1',{exact:true}).fill('22,5');await page.getByLabel('Powtórzenia serii 1',{exact:true}).fill('8');await page.getByRole('button',{name:'Zatwierdź serię 1',exact:true}).click();
- assert.equal(await page.locator('.set-row').count(),1);assert.equal((await data()).activeSession.exercises[0].sets[1].completed,false);
+ assert.equal(await page.locator('.series-compact').count(),1);assert.equal((await data()).activeSession.exercises[0].sets.length,1);
  await page.getByRole('button',{name:'Czas treningu i opcje'}).click();await page.getByRole('button',{name:'Zakończ trening',exact:true}).click();await page.getByRole('button',{name:'Zapisz trening',exact:true}).click();assert.equal((await data()).workouts[0].volume,180);assert.equal((await data()).workouts[0].exercises[0].sets.length,1);
  await nav('Historia');assert.match(await page.locator('main').innerText(),/180/);await nav('Postęp');assert.match(await page.locator('.chart-value').innerText(),/22,5/);
  await nav('Pomiary');for(const [date,value] of [['2026-10-22','37'],['2026-10-29','38']]){await page.getByRole('button',{name:'Dodaj pomiar',exact:true}).click();await page.locator('input[name=date]').fill(date);await page.locator('input[name=bicepsRight]').fill(value);await page.getByRole('button',{name:'Zapisz pomiar',exact:true}).click();}assert.match(await page.getByTestId('measurement-change').innerText(),/\+1 cm/);

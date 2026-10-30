@@ -126,3 +126,18 @@ Zgłoszenie pochodzi z iPhone’a użytkownika; autor zmian nie przeprowadził f
 - [ ] Ponowna fizyczna próba na iPhonie: szczególnie wybór/dodanie serii, klawiatura, sticky nagłówek i dolny obszar Safari/PWA. Użytkownik potwierdził problemy starego preview, nie poprawność tej poprawki.
 
 Bez zmian produkcyjnych danych, SQL, synchronizacji, innych ekranów lub logiki timera. Nie uruchamiano ponownie całego npm test; próby ograniczono do zmienionego zakresu. Trzy czerwone skrypty z przekazania audytu nie zostały w tym etapie naprawione ani oznaczone jako zielone.
+
+
+### Narastająca lista serii — zastępuje pojedynczy edytor (30.10.2026)
+
+Nowa sesja zaczyna z jedną kartą, niezależnie od celu planu. Potwierdzenie zwija ją do widocznego kompaktowego wiersza, bez automatycznego tworzenia kolejnej. Każde „Dodaj serię” (również z menu) tworzy nową kartę na końcu; wcześniejsze wyniki pozostają widoczne. Edycja i usuwanie są dostępne przy każdym wierszu. Wykonany lub wpisany wynik wymaga potwierdzenia usunięcia; nieruszona karta z samą sugestią powtórzeń nie wymaga okna.
+
+Nowe serie mają UUID; istniejące identyfikatory i dodatkowe pola nie są zmieniane. Usuwanie kontroluje podpis rekordu, numeracja widoku wynika z bieżącej kolejności, a cele nie generują wierszy ani podczas edycji parametrów, ani po odświeżeniu. Stare rozpoczęte sesje zachowują wszystkie wiersze, także bez dawniej nieistniejących ID. Plan i synchronizacja pozostają bez zmian; completeSession nadal zapisuje wyłącznie rzeczywiście potwierdzone, poprawne i niepominięte wyniki.
+
+Zdjęcia przed/po: docs/audit/series-before.png (ea97309, stary formularz + dwie rozwinięte wykonane serie) oraz docs/audit/series-after.png (nowa lista: trzy zwarte wykonane i dwie edytowalne). Są to lokalne dane testowe, nie dane użytkownika.
+
+Testy: npm test — 49/49; build poprawny. Nowy growing-series.mjs obejmuje pięć wierszy, trzy zatwierdzenia, edycję pierwszego, usunięcie drugiego/anulowanie/błąd pamięci, zachowanie ID, odświeżenie i ponowne wejście, wynik 415 kg po usunięciu, legacy oraz brak fikcyjnego wyniku po usunięciu wszystkich. Chromium: 320/375/390/430 px i zasymulowany visualViewport 300 px. Dodatkowy odstęp przy klawiaturze umożliwia przewinięcie ostatniej karty długiej listy. Pole przy 320 px ma pionowy układ, aby zachować czytelność i przyciski 44 px.
+
+Polecenie single-series.mjs jest teraz zgodnym wstecznie wejściem do testu growing-series; jego stary kontrakt nie obowiązuje. Regresje browser/final-audit/workout-ux-a/timer-photo i testy celów dostosowano do nowego modelu. Dawne dwa czerwone skrypty workout-ui/session-management oraz niezwiązany test stopki ustawień nie są w tym etapie uznawane za naprawione. Nadal potrzebna rzeczywista próba klawiatury Safari/iPhone/PWA; nie deklarujemy takiej próby. Bez migracji bazy, zmian produkcyjnych danych, scalenia i produkcji.
+
+Wyniki regresji tej poprawki: growing-series, browser, workout-ux-a, timer-photo i exercise-panels — PASS na lokalnym buildzie. Screenshoty obejrzano wizualnie; wersja po zmianie ma trzy kompaktowe wykonane serie przed dwiema otwartymi kartami.

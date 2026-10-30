@@ -40,7 +40,7 @@ await page.getByRole('textbox',{name:'Powtórzenia serii 1',exact:true}).fill('8
 await page.getByRole('button',{name:'Zatwierdź serię 1',exact:true}).click();
 await page.getByRole('button',{name:'Dodaj serię'}).click();
 assert.equal(await page.locator('.set-row').count(),1);
-assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.exercises[0].sets.length),3);
+assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.exercises[0].sets.length),2);
 await page.getByRole('button',{name:'Następne',exact:true}).click();
 await page.getByRole('textbox',{name:'Ciężar serii 1',exact:true}).fill('50');
 await page.getByRole('button',{name:'Zatwierdź serię 1',exact:true}).click();
@@ -121,7 +121,7 @@ for(const width of [320,390,768,1280]){
 await page.getByRole('button',{name:'Zapisz plan',exact:true}).click();
 await page.locator('.plan-card').filter({hasText:'Plan testowy bez przerwy'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();
 assert.equal(await page.locator('.set-row').count(),1);
-assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.exercises[0].sets.length),2);
+assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.exercises[0].sets.length),1);
 await page.getByRole('button',{name:'Zatwierdź serię 1',exact:true}).click();
 assert.equal(await page.locator('.rest-card').count(),0);
 await page.getByRole('button',{name:'Zakończ',exact:true}).click();

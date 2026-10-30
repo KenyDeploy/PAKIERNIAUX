@@ -27,11 +27,9 @@ export function createSession(plan, exercises, workouts, now = Date.now()) {
     exercises: selected.map(exercise => {
       const last = lastExercise(workouts, exercise.id)?.sets.filter(s => s.completed) || [];
       const target = plan.targets?.[exercise.id] || exercise;
-      return { ...exercise, reps: target.reps, rest: target.rest ?? 90,
-        sets: Array.from({ length: target.sets || 3 }, (_, i) => ({
-          weight: String(last[i]?.weight ?? last[0]?.weight ?? ""),
-          reps: String(last[i]?.reps ?? target.reps ?? 10), completed: false,
-        })) };
+      return { ...exercise, targetSets: target.sets || 3, reps: target.reps, rest: target.rest ?? 90,
+        sets: [{ id: crypto.randomUUID(), weight: String(last[0]?.weight ?? ""),
+          reps: String(last[0]?.reps ?? target.reps ?? 10), repsSuggested: !last[0], completed: false }] };
     }),
   };
 }

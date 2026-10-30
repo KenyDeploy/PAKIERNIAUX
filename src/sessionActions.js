@@ -1,4 +1,5 @@
 import { createSession } from "./training.js";
+import { appendSeries } from "./activeSeries.js";
 
 export function sessionTargets(values) {
   const limits = { sets: [1, 50], reps: [1, 1000], rest: [0, 3600] };
@@ -57,15 +58,13 @@ export function editSessionTargets(session, index, values) {
   if (!session.exercises[index]) throw new Error("Nie znaleziono ćwiczenia w rozpoczętym treningu.");
   return { ...session, exercises: session.exercises.map((e, i) => i === index ? {
     ...e, targetSets: targets.sets, reps: targets.reps, rest: targets.rest,
-    // A smaller goal never discards rows or changes already entered results.
-    sets: [...e.sets, ...Array.from({ length: Math.max(0, targets.sets - e.sets.length) }, () => ({ weight: "", reps: String(targets.reps), completed: false }))],
+    // Goals are informational; changing them never creates or removes actual rows.
+    sets: e.sets,
   } : e) };
 }
 
 export function addSessionSet(session, index) {
   const exercise = session.exercises[index];
   if (!exercise || exercise.skipped) throw new Error("Cofnij pominięcie ćwiczenia, aby dodać serię.");
-  return { ...session, exercises: session.exercises.map((e, i) => i === index ? {
-    ...e, activeSetIndex: e.sets.length, sets: [...e.sets, { weight: "", reps: String(e.reps), completed: false }],
-  } : e) };
+  return { ...session, exercises: session.exercises.map((e, i) => i === index ? appendSeries(e) : e) };
 }

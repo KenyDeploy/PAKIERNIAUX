@@ -15,15 +15,15 @@ test("a confirmed but invalid set cannot poison saved volume", () => {
   s.exercises[0].sets[0]={weight:'bad',reps:'8',completed:true};
   assert.equal(completeSession(s),null);
 });
-test("four-set workout stores only confirmed sets and calculates volume", () => {
+test("a four-set goal starts with one actual row and stores only confirmed results", () => {
   const s = createSession(plan, exercises, [], 1000);
-  assert.equal(s.exercises[0].sets.length, 4);
+  assert.equal(s.exercises[0].sets.length, 1);assert.equal(s.exercises[0].targetSets,4);
   s.exercises[0].sets[0] = { weight: "22,5", reps: "8", completed: true };
   s.exercises[0].sets[1] = { weight: "50", reps: "6", completed: false };
   const result = completeSession(s, 61000);
   assert.equal(result.volume, 180); assert.equal(result.durationSeconds, 60);
   assert.equal(result.exercises[0].sets.length, 1);
-  assert.equal(s.exercises[0].sets.length, 4);
+  assert.equal(s.exercises[0].sets.length, 2);
 });
 test("previous results seed next session by exercise ID, without auto-completion", () => {
   const s = createSession(plan, exercises, [], 1000);
@@ -37,7 +37,7 @@ test("previous results seed next session by exercise ID, without auto-completion
 });
 test("plan-specific targets override exercise defaults", () => {
   const s = createSession({ ...plan, targets: { 3: { sets: 5, reps: 12, rest: 60 } } }, exercises, []);
-  assert.equal(s.exercises[0].sets.length, 5);
+  assert.equal(s.exercises[0].sets.length, 1);assert.equal(s.exercises[0].targetSets,5);
   assert.equal(s.exercises[0].sets[0].reps, "12");
   assert.equal(s.exercises[0].rest, 60);
   const noRest = createSession({ ...plan, targets: { 3: { sets: 1, reps: 8, rest: 0 } } }, exercises, []);

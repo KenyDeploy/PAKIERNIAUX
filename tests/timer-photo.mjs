@@ -109,6 +109,7 @@ try {
   await gesture([{type:'pointerdown',x:100,y:100},{type:'pointerup',x:105,y:280}]);
   assert.equal(await page.locator('.exercise-photo-viewer').count(),0,'A deliberate downward swipe closes the viewer');
   await page.setViewportSize({width:390,height:844});
+  await page.getByRole('button',{name:'Dodaj serię',exact:true}).click();
   const placement=await page.evaluate(()=>({fields:document.querySelector('.set-fields').getBoundingClientRect().bottom,rest:document.querySelector('.rest-card').getBoundingClientRect().top}));
   assert.ok(placement.rest>placement.fields,'Rest must not cover series inputs');
   await page.locator('.rest-card').getByRole('button',{name:'Pomiń przerwę',exact:true}).click();

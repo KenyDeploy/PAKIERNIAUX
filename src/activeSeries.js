@@ -20,22 +20,30 @@ export function selectSeries(exercise, index) {
 
 export function updateSeriesField(exercise, index, field, value) {
   if (!exercise.sets[index] || !["weight", "reps"].includes(field)) throw new Error("Nieprawidłowe pole serii.");
-  return { ...exercise, activeSetIndex: index, sets: exercise.sets.map((row, i) => i === index ? { ...row, [field]: value, completed: false } : row) };
+  return { ...exercise, activeSetIndex: index, sets: exercise.sets.map((row, i) => i === index ? { ...row, [field]: value, ...(field === "reps" ? { repsSuggested: false } : {}), completed: false } : row) };
 }
 
 export function appendSeries(exercise) {
-  return { ...exercise, activeSetIndex: exercise.sets.length, sets: [...exercise.sets, { weight: "", reps: String(exercise.reps ?? 10), completed: false }] };
+  return { ...exercise, activeSetIndex: exercise.sets.length, sets: [...exercise.sets, { id: crypto.randomUUID(), weight: "", reps: String(exercise.reps ?? 10), repsSuggested: true, completed: false }] };
 }
 
-// Reuse unfinished work before creating an additional row.
-export function addOrResumeSeries(exercise) {
-  const pending = activeSeriesIndex(exercise);
-  return pending < 0 ? appendSeries(exercise) : selectSeries(exercise, pending);
+export const seriesReference = (exercise, index) => ({ id: exercise.sets[index].id, index, signature: JSON.stringify(exercise.sets[index]) });
+export const seriesNeedsConfirmation = row => Boolean(row.completed || String(row.weight ?? "").trim() ||
+  (!row.repsSuggested && String(row.reps ?? "").trim()) || String(row.note ?? "").trim());
+
+export function removeSeries(exercise, reference, confirmed = false) {
+  const index = reference.id != null ? exercise.sets.findIndex(row => row.id === reference.id) : reference.index;
+  const row = exercise.sets[index];
+  if (!row || JSON.stringify(row) !== reference.signature) throw new Error("Seria zmieniła się. Otwórz ponownie usuwanie.");
+  if (seriesNeedsConfirmation(row) && !confirmed) throw new Error("Potwierdź usunięcie wykonanej lub wypełnionej serii.");
+  const sets = exercise.sets.filter((_, i) => i !== index);
+  const selected = exercise.activeSetIndex;
+  return { ...exercise, sets, activeSetIndex: selected === index ? sets.findIndex(s => !s.completed && !s.skipped) : selected > index ? selected - 1 : selected };
 }
 
 export function confirmSeries(exercise, index) {
   if (!exercise.sets[index] || exercise.sets[index].skipped) throw new Error("Nie znaleziono serii.");
-  const sets = exercise.sets.map((row, i) => i === index ? { ...row, completed: true } : row);
+  const sets = exercise.sets.map((row, i) => i === index ? { ...row, repsSuggested: false, completed: true } : row);
   let next = sets.findIndex((row, i) => i > index && !row.completed && !row.skipped);
   if (next < 0) next = sets.findIndex(row => !row.completed && !row.skipped);
   return { ...exercise, sets, activeSetIndex: next };

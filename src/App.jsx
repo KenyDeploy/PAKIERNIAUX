@@ -181,6 +181,7 @@ export default function App() {
     setClockNow(Date.now()); setSummary(null); setNotice(""); setTab("workout");
   };
   const currentExercise = activeSession?.exercises[activeExerciseIndex];
+  const currentSetGoal = currentExercise?.targetSets ?? activeSession?.plan.targets?.[currentExercise?.id]?.sets ?? exercises.find(e => e.id === currentExercise?.id)?.sets;
   const historyExerciseId = currentExercise?.id;
   const exerciseSessions = useMemo(() => historyExerciseId == null ? [] : exerciseHistory(workouts, historyExerciseId), [workouts, historyExerciseId]);
   const previousExercise = exerciseSessions[0];
@@ -553,14 +554,14 @@ export default function App() {
                 <div>
                   <h2>Twoje serie</h2>
                   <small>
-                    {currentExercise.category} · cel {currentExercise.targetSets ?? currentExercise.sets.length} serii × {currentExercise.reps}{" "}
+                    {currentExercise.category} · cel {currentSetGoal ?? "—"} serii × {currentExercise.reps}{" "}
                     powtórzeń · przerwa {Math.floor(currentExercise.rest / 60)}:
                     {String(currentExercise.rest % 60).padStart(2, "0")}
                   </small>
                 </div>
                 <IconButton label="Menu ćwiczenia" onClick={() => setWorkoutPanel("exercise")}><span aria-hidden="true">•••</span></IconButton>
               </div>
-              <ActiveSetEditor key={activeSession.id + ":" + currentExercise.id} exercise={currentExercise} exerciseIndex={activeExerciseIndex} sessionId={activeSession.id} onPersist={updateData} onConfirm={toggleSet} />
+              <ActiveSetEditor key={activeSession.id + ":" + currentExercise.id} exercise={currentExercise} targetSets={currentSetGoal} exerciseIndex={activeExerciseIndex} sessionId={activeSession.id} onPersist={updateData} onConfirm={toggleSet} />
             </section>
             {isResting && (
               <section className="rest-card">

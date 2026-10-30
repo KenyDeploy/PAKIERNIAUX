@@ -36,8 +36,8 @@ test('add and replace affect only the current session, reject duplicate exercise
   assert.equal(JSON.stringify(session),source);
   const replaced=replaceSessionExercise(session,0,library[2],targets,true);
   assert.equal(replaced.exercises[0].id,3);
-  assert.equal(replaced.exercises[0].sets.length,2);
-  assert.deepEqual(replaced.exercises[0].sets[0],{weight:'',reps:'9',completed:false});
+  assert.equal(replaced.exercises[0].sets.length,1);assert.equal(replaced.exercises[0].targetSets,2);
+  assert.equal(replaced.exercises[0].sets[0].weight,'');assert.equal(replaced.exercises[0].sets[0].reps,'9');assert.equal(replaced.exercises[0].sets[0].completed,false);
   assert.equal(replaced.exercises[0].rest,0);
   assert.equal(replaced.id,session.id);assert.equal(replaced.startedAt,1000);
   assert.deepEqual(replaced.plan.exercises,[3,2]);
@@ -70,7 +70,7 @@ test('skipping and undo preserve entered rows, survive resume and exclude skippe
   assert.throws(()=>addSessionSet(resumed,0),/Cofnij/);
 });
 
-test('parameters preserve existing results on smaller goals and seed additional sets with new targets',()=>{
+test('parameters never create or remove rows; explicit additions use the new repetition goal',()=>{
   const session=initial();
   session.exercises[0].sets[0]={weight:'22,5',reps:'8',completed:true};
   const edited=editSessionTargets(session,0,{sets:1,reps:12,rest:0});
@@ -78,10 +78,10 @@ test('parameters preserve existing results on smaller goals and seed additional 
   assert.deepEqual(edited.exercises[0].sets,session.exercises[0].sets);
   assert.equal(edited.exercises[0].rest,0);
   const additional=addSessionSet(edited,0);
-  assert.deepEqual(additional.exercises[0].sets[3],{weight:'',reps:'12',completed:false});
+  assert.equal(additional.exercises[0].sets[1].reps,'12');assert.equal(additional.exercises[0].sets[1].completed,false);assert.ok(additional.exercises[0].sets[1].id);
   const expanded=editSessionTargets(additional,0,{sets:6,reps:15,rest:120});
-  assert.equal(expanded.exercises[0].sets.length,6);
-  assert.equal(expanded.exercises[0].sets[5].reps,'15');
+  assert.equal(expanded.exercises[0].sets.length,2);assert.equal(expanded.exercises[0].targetSets,6);
+  assert.equal(expanded.exercises[0].sets[1].reps,'12');
   assert.deepEqual(expanded.exercises[0].sets[0],session.exercises[0].sets[0]);
   assert.deepEqual(plan.targets[1],{sets:3,reps:8,rest:90});
   assert.deepEqual(sessionTargets({sets:'2',reps:'8',rest:'0'}),{sets:2,reps:8,rest:0});

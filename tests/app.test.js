@@ -29,7 +29,7 @@ test('UI saves real sets, restores a draft, updates history, chart and body chan
     assert.equal(data.activeSession.exercises[0].sets[0].completed,true);
     await act(()=>root.unmount());root=createRoot(container);await act(()=>root.render(React.createElement(App)));
     await act(()=>container.querySelector('.secondary-cta').click());
-    await click('Popraw serię 1');
+    await click('Edytuj serię 1');
     assert.equal(container.querySelector('[aria-label="Ciężar serii 1"]').value,'22,5');
     for(let i=1;i<data.activeSession.exercises.length;i++)await click('Następne');
     await click('Zakończ');await click('Zapisz trening');
