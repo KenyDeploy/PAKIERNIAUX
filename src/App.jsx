@@ -8,7 +8,6 @@ import {
   Check,
   Clock3,
   Dumbbell,
-  Droplets,
   Flame,
   History,
   LayoutDashboard,
@@ -34,11 +33,13 @@ import {
   Maximize2,
 } from "lucide-react";
 import "./styles.css";
+import { recordedWeights } from "./dashboard.js";
+import { HomeDashboard } from "./HomeDashboard";
 import { ActiveSetEditor } from "./ActiveSetEditor";
 import { supabase } from "./supabase";
 import { catalog, starterExercises } from "./catalog";
 import { useTrainingData } from "./useTrainingData";
-import { dateKey, number, volume, createSession, completeSession, validSet, trainingAttendance, planName, weekDates, currentStreak as calculateStreak } from "./training";
+import { dateKey, number, volume, createSession, completeSession, validSet, trainingAttendance, planName, weekDates } from "./training";
 import { BodyProgress, ExerciseVisual, TrendChart } from "./Visuals";
 import { exercisePhotoStyle } from "./exercisePhotos";
 import { DialogSheet } from "./DialogSheet";
@@ -338,15 +339,9 @@ export default function App() {
   const calendarLeadingDays = (new Date(calendarNow.getFullYear(), calendarNow.getMonth(), 1).getDay() + 6) % 7;
   const calendarDays = [...Array(calendarLeadingDays).fill(null), ...Array.from({ length: new Date(calendarNow.getFullYear(), calendarNow.getMonth() + 1, 0).getDate() }, (_, i) => i + 1)];
   const calendarKey = day => dateKey(new Date(calendarNow.getFullYear(), calendarNow.getMonth(), day));
-  const week = weekDates();
   const { dates: trainingDates, manualDays, count: trainingCount } = trainingAttendance(workouts, completedDays);
   const completedSetCount = activeSession?.exercises.filter(e => !e.skipped).reduce((sum,e) => sum + e.sets.filter(s => s.completed && !s.skipped && validSet(s)).length, 0) || 0;
   const filledSetCount = activeSession?.exercises.filter(e => !e.skipped).reduce((sum,e) => sum + e.sets.filter(s => !s.skipped && validSet(s)).length, 0) || 0;
-  const currentWeekCompletion = week.map(day => trainingDates.includes(day));
-  const currentStreak = calculateStreak(trainingDates);
-  const streakMessage = currentStreak ? `${currentStreak} dni bez przerwy` : "Każdy trening się liczy. Zadbaj też o odpoczynek.";
-  const weekVolumes = week.map(day => workouts.filter(w => dateKey(w.completedAt) === day).reduce((sum, w) => sum + w.volume, 0));
-  const weekChartHeights = weekVolumes.map(v => v / Math.max(1, ...weekVolumes) * 100);
   const last7 = workouts.filter(w => w.completedAt >= Date.now() - 7 * 86400000);
   const prior7 = workouts.filter(w => w.completedAt >= Date.now() - 14 * 86400000 && w.completedAt < Date.now() - 7 * 86400000);
   const last7Volume = last7.reduce((sum, w) => sum + w.volume, 0);
@@ -355,15 +350,15 @@ export default function App() {
   const history = [...workouts.map(w => ({ ...w, day: dateKey(w.completedAt), date: displayDate(w.completedAt), duration: `${Math.floor(w.durationSeconds / 60)} min`, name: planName(w.plan.name), volume: `${displayNumber(w.volume)} kg`, exercises: `${w.exercises.length} ćwiczeń` })),
     ...manualDays.map(day => ({ id: `manual-${day}`, day, date: displayDate(day), name: "Trening oznaczony ręcznie", manual: true }))].sort((a,b) => b.day.localeCompare(a.day) || (b.completedAt || 0) - (a.completedAt || 0));
   const monthVolume = workouts.filter(w => dateKey(w.completedAt).slice(0,7) === today.slice(0,7)).reduce((sum,w) => sum + w.volume, 0);
-  const records = [...new Map(workouts.flatMap(w => w.exercises.map(e => [e.id, { id: e.id, name: e.name }]))).values()].map(e => ({ ...e, weight: Math.max(0, ...workouts.flatMap(w => w.exercises.filter(x => x.id === e.id).flatMap(x => x.sets.map(s => number(s.weight))))) }));
+  const records = [...new Map(workouts.flatMap(w => w.exercises.filter(e => recordedWeights(e).length).map(e => [e.id, { id: e.id, name: e.name }]))).values()].map(e => ({ ...e, weight: Math.max(...workouts.flatMap(w => w.exercises.filter(x => x.id === e.id).flatMap(recordedWeights))) }));
   const chartExerciseId = statsExercise || String(records[0]?.id || "");
-  const strengthPoints = [...workouts].reverse().filter(w => w.completedAt >= Date.now() - statsRange * 86400000).flatMap(w => w.exercises.filter(e => String(e.id) === chartExerciseId).map(e => ({ date: displayDate(w.completedAt), value: Math.max(...e.sets.map(s => number(s.weight))) })));
+  const strengthPoints = [...workouts].reverse().filter(w => w.completedAt >= Date.now() - statsRange * 86400000).flatMap(w => w.exercises.filter(e => String(e.id) === chartExerciseId).flatMap(e => { const weights = recordedWeights(e); return weights.length ? [{ date: displayDate(w.completedAt), value: Math.max(...weights) }] : []; }));
   const changeWater = amount => update("waterByDate", current => ({ ...current, [today]: Math.max(0, Number(((current[today] || 0) + amount).toFixed(1))) }));
   if (supabase && authLoading) return <div className="auth-screen"><div className="auth-card"><span className="brand-mark"><Zap size={20} fill="currentColor" /></span><h1>Ładowanie profilu</h1><p>Sprawdzam Twoje dane treningowe.</p></div></div>;
   if (supabase && !authUser) return <div className="auth-screen"><form className="auth-card" onSubmit={submitAuth}><span className="brand-mark"><Zap size={20} fill="currentColor" /></span><span className="eyebrow">PAKIERNIA U MATIEGO</span><h1>{authMode === "login" ? "Wróć do swojego progresu" : "Załóż konto"}</h1><p>{authMode === "login" ? "Zaloguj się, aby mieć swoje plany, wyniki i odznaki na każdym urządzeniu." : "Twoje treningi i pomiary będą prywatne i zsynchronizowane."}</p><label>Email<input type="email" value={authForm.email} onChange={(event) => setAuthForm({ ...authForm, email: event.target.value })} required /></label><label>Hasło<input type="password" minLength={6} value={authForm.password} onChange={(event) => setAuthForm({ ...authForm, password: event.target.value })} required /></label>{authError && <div className="auth-error">{authError}</div>}<button className="primary-cta" type="submit">{authMode === "login" ? "Zaloguj się" : "Utwórz konto"}</button><button className="auth-switch" type="button" onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthError(""); }}>{authMode === "login" ? "Nie mam jeszcze konta" : "Mam już konto"}</button></form></div>;
 
   return (
-    <div className={`app-shell${tab === "workout" ? " is-workout" : ""}`}>
+    <div className={`app-shell${tab === "workout" ? " is-workout" : tab === "home" ? " is-home" : ""}`}>
       <header className="topbar">
         <button className="brand" onClick={() => setTab("home")}>
           <span className="brand-mark">
@@ -386,152 +381,17 @@ export default function App() {
         <div className="sync-status" role="status">{syncStatus}{supabase && <button type="button" onClick={retrySync}>Synchronizuj</button>}</div>
         {supabase && !cloudHydrated && <section className="card"><p>Nie wczytano danych konta. Ponów połączenie przyciskiem powyżej.</p></section>}
         {notice && <div className="notice" role="status">{notice}<button type="button" aria-label="Zamknij komunikat" onClick={() => setNotice("")}>×</button></div>}
-        {cloudHydrated && activeSession && tab !== "workout" && <button className="secondary-cta" onClick={() => setTab("workout")}>Wznów rozpoczęty trening <ArrowRight size={16} /></button>}
+        {cloudHydrated && activeSession && tab !== "workout" && tab !== "home" && <button className="secondary-cta" onClick={() => setTab("workout")}>Wznów rozpoczęty trening <ArrowRight size={16} /></button>}
         {(!supabase || cloudHydrated) && <>
 
-        {tab === "home" && (
-          <>
-            <section className="hero-panel">
-              <div>
-                <span className="eyebrow">{new Date().toLocaleDateString("pl-PL", { weekday: "long", day: "numeric", month: "long" })}</span>
-                <h1>Czas na Twój trening.</h1>
-                <p>Twój kolejny krok zaczyna się od jednej serii.</p>
-              </div>
-              <div className="hero-orbit">
-                <Dumbbell size={28} />
-                <span>
-                  TRENINGI
-                  <br />
-                  <b data-testid="training-count">{trainingCount}</b>
-                </span>
-              </div>
-            </section>
-            <section className="section-heading">
-              <div>
-                <span className="eyebrow">DZISIAJ NA PLANIE</span>
-                <h2>{planName(activePlan.name)}</h2>
-              </div>
-              <button className="text-button" onClick={() => setTab("plans")}>
-                Zmień plan <ChevronRight size={16} />
-              </button>
-            </section>
-            <button className="primary-cta" onClick={() => openWorkout()}>
-              <span className="cta-icon">
-                <Zap size={20} fill="currentColor" />
-              </span>
-              <span>
-                <b>Rozpocznij trening</b>
-                <small>
-                  {activePlan.exercises.length} ćwiczenia ·{" "}
-                  {activePlan.duration}
-                </small>
-              </span>
-              <ArrowRight size={20} />
-            </button>
-            <div className="metric-grid">
-              <section className="water-card card">
-                <div className="card-head">
-                  <div className="metric-icon blue-bg">
-                    <Droplets size={18} />
-                  </div>
-                  <span className="eyebrow">NAWODNIENIE</span>
-                  <b>
-                    {water.toFixed(1)}
-                    <small> / 2.0 L</small>
-                  </b>
-                </div>
-                <div className="water-today-meter">
-                  <div className="water-today-label"><span>DZIŚ</span><b>{Math.round((water / 2) * 100)}%</b></div>
-                  <div className="water-today-track"><span style={{ width: `${Math.min(100, (water / 2) * 100)}%` }} /></div>
-                </div>
-                <div className="water-days">
-                  {weekWater.map((value, index) => (
-                    <span key={index} className={index === (new Date().getDay() + 6) % 7 ? "today" : ""}>
-                      <i style={{ "--day-fill": `${Math.min(100, (value / 2) * 100)}%` }} />
-                      {["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"][index]}
-                    </span>
-                  ))}
-                </div>
-                <div className="water-actions">
-                  <button onClick={() => changeWater(-0.2)}>
-                    − 0.2 L
-                  </button>
-                  <button
-                    className="water-add"
-                    onClick={() => changeWater(0.2)}
-                  >
-                    <Plus size={15} /> szklanka
-                  </button>
-                </div>
-              </section>
-              <section className="streak-card card">
-                <div className="card-head">
-                  <div className="metric-icon orange-bg">
-                    <Flame size={18} />
-                  </div>
-                  <span className="eyebrow">PASSA</span>
-                </div>
-                <strong>{currentStreak}</strong>
-                <span className="muted">dni z rzędu</span>
-                <div className="mini-bars">
-                  {currentWeekCompletion.map((done, index) => (
-                    <i key={index} className={done ? "completed" : ""} style={{ height: `${weekChartHeights[index]}%` }} />
-                  ))}
-                </div>
-                <span className={currentStreak === 0 ? "streak-reset" : "success-text"}>{streakMessage}</span>
-              </section>
-            </div>
-            <section className="section-heading compact">
-              <div>
-                <span className="eyebrow">SZYBKI PODGLĄD</span>
-                <h2>Twój tydzień</h2>
-              </div>
-              <button className="icon-button" onClick={() => setTab("stats")}>
-                <ArrowRight size={18} />
-              </button>
-            </section>
-            <section className="card week-card">
-              <div className="week-chart">
-                {weekChartHeights.map((height, index) => (
-                  <div
-                    key={index}
-                    className={currentWeekCompletion[index] ? "chart-day active" : "chart-day"}
-                  >
-                    <span style={{ height: `${height}%` }} />
-                    <small>
-                      {["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"][index]}
-                    </small>
-                  </div>
-                ))}
-              </div>
-              <div className="chart-footer">
-                <span>
-                  <i className="legend lime" /> Objętość treningowa
-                </span>
-                <b>
-                  {weekChange}
-                </b>
-              </div>
-            </section>
-            <section className="card workout-calendar">
+        {tab === "home" && <HomeDashboard plans={plans} selectedPlanId={selectedPlanId} activeSession={activeSession} workouts={workouts} completedDays={completedDays}
+          today={today} water={water} weekWater={weekWater} onStart={openWorkout} onPlans={() => setTab("plans")} onHistory={() => setTab("history")} onProgress={() => setTab("stats")} onWater={changeWater}
+          calendar={<section className="card workout-calendar">
               <div className="card-head"><div><span className="eyebrow">KALENDARZ TRENINGÓW</span><h2>{calendarMonthName}</h2></div><CalendarDays size={20} /></div>
               <div className="calendar-week-labels">{["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"].map((day) => <span key={day}>{day}</span>)}</div>
               <div className="calendar-month-grid">{calendarDays.map((day, index) => day === null ? <span className="calendar-day-empty" key={`empty-${index}`} /> : <button type="button" aria-label={`Trening ${calendarKey(day)}`} aria-pressed={trainingDates.includes(calendarKey(day))} className={trainingDates.includes(calendarKey(day)) ? "calendar-day done" : "calendar-day"} key={day} onClick={() => toggleTrainingDay(day)}><b>{day}</b>{trainingDates.includes(calendarKey(day)) && <Check size={12} />}</button>)}</div>
               <div className="calendar-caption"><span><i className="calendar-dot done" /> kliknij dzień, aby oznaczyć trening</span><strong>{trainingDates.filter(d => d.slice(0,7) === today.slice(0,7)).length} dni wykonanych</strong></div>
-            </section>
-            <section className="achievement-banner">
-              <div className="badge">
-                <Trophy size={20} />
-              </div>
-              <div>
-                <span className="eyebrow">NASTĘPNE OSIĄGNIĘCIE</span>
-                <b>Pierwsze 5 treningów</b>
-                <small>{trainingCount < 5 ? `Jeszcze ${5 - trainingCount} treningów do 5 sesji` : "Pierwsze 5 treningów ukończone"}</small>
-              </div>
-              <Target size={20} />
-            </section>
-          </>
-        )}
+            </section>} />}
         {tab === "plans" && (
           <>
             <div className="page-heading">

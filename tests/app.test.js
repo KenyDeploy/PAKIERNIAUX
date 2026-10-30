@@ -31,7 +31,8 @@ test('UI saves real sets, restores a draft, updates history, chart and body chan
     await act(()=>container.querySelector('.secondary-cta').click());
     await click('Popraw serię 1');
     assert.equal(container.querySelector('[aria-label="Ciężar serii 1"]').value,'22,5');
-    await click('Następne');await click('Następne');await click('Następne');await click('Zakończ');await click('Zapisz trening');
+    for(let i=1;i<data.activeSession.exercises.length;i++)await click('Następne');
+    await click('Zakończ');await click('Zapisz trening');
     data=JSON.parse(localStorage.getItem('pakiernia.v2.local')).data;
     assert.equal(data.workouts.length,1);assert.equal(data.workouts[0].volume,180);
     assert.equal(data.activeSession,null);assert.match(container.textContent,/Dobra robota/);
