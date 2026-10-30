@@ -17,19 +17,20 @@ export function useTrainingData(defaults) {
   const hydrated = useRef(!supabase);
   const latest = useRef(data), revision = useRef(0), queue = useRef(Promise.resolve());
   const updateData = useCallback(transform => {
-    if (!hydrated.current) return;
-    dirty.current = true; revision.current++;
+    if (!hydrated.current) return false;
     const next = transform(latest.current);
-    latest.current = next;
     try {
       localStorage.setItem(cacheKey(owner.current), JSON.stringify({ data: next, pending: true }));
       setStatus(supabase ? "Zapisano lokalnie · oczekuje na synchronizację" : "Zapis na tym urządzeniu");
     }
-    catch { setStatus("Brak miejsca na zapis lokalny"); }
+    catch { setStatus("Brak miejsca na zapis lokalny. Zmiany nie zostały zapisane."); return false; }
+    dirty.current = true; revision.current++;
+    latest.current = next;
     setData(next);
+    return true;
   }, []);
-  const update = useCallback((key, value) => updateData(current => ({ ...current,
-    [key]: typeof value === "function" ? value(current[key]) : value })), [updateData]);
+  const update = useCallback((key, value) => { updateData(current => ({ ...current,
+    [key]: typeof value === "function" ? value(current[key]) : value })); }, [updateData]);
   useEffect(() => {
     if (!supabase) return;
     let alive = true;

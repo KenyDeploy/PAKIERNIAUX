@@ -38,6 +38,18 @@ test('cloud hydration does not auto-write; accounts and failed reads remain isol
   assert.equal(JSON.parse(localStorage.getItem('pakiernia.v2.a')).pending,true);
   rejectWrite=false;await act(async()=>{await api.retrySync();});
   assert.equal(JSON.parse(localStorage.getItem('pakiernia.v2.a')).pending,false);
+  const storage=globalThis.localStorage;
+  const beforeQuota=api.data, beforeQuotaWrites=writes.length;
+  let accepted;
+  try {
+   globalThis.localStorage={getItem:storage.getItem.bind(storage),setItem(){throw new Error('QuotaExceededError');}};
+   await act(()=>{accepted=api.updateData(current=>({...current,exercises:[{id:999,name:'Unsaved photo'}]}));});
+   assert.equal(accepted,false);
+   assert.equal(api.data,beforeQuota);
+   assert.match(api.syncStatus,/nie zostały zapisane/);
+   await act(async()=>{await api.retrySync();});
+   assert.equal(writes.length,beforeQuotaWrites);
+  } finally {globalThis.localStorage=storage;}
   const beforeSwitch=writes.length;
   currentUser='b';await act(async()=>{callback('SIGNED_IN',{user:{id:'b'}});await wait();});
   assert.deepEqual(api.data.plans,[]);assert.equal(writes.length,beforeSwitch);

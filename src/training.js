@@ -34,7 +34,11 @@ export function createSession(plan, exercises, workouts, now = Date.now()) {
   };
 }
 export function completeSession(session, now = Date.now()) {
-  const exercises = session.exercises.map(e => ({ ...e, sets: e.sets.filter(s => s.completed && validSet(s)) })).filter(e => e.sets.length);
+  const exercises = session.exercises.map(e => {
+    // Keep the image in the library, not duplicated in every completed workout.
+    const { customPhoto, ...snapshot } = e;
+    return { ...snapshot, sets: e.sets.filter(s => s.completed && validSet(s)) };
+  }).filter(e => e.sets.length);
   if (!exercises.length) return null;
   return { ...session, exercises, completedAt: now,
     durationSeconds: Math.max(0, Math.floor((now - session.startedAt) / 1000)),

@@ -39,6 +39,8 @@ import { useTrainingData } from "./useTrainingData";
 import { dateKey, number, volume, lastExercise, createSession, completeSession, validSet, trainingAttendance, planName, weekDates, currentStreak as calculateStreak } from "./training";
 import { BodyProgress, ExerciseVisual, TrendChart } from "./Visuals";
 import { exercisePhotoStyle } from "./exercisePhotos";
+import { DialogSheet } from "./DialogSheet";
+import { ExercisePhotoField } from "./ExercisePhotoField";
 
 const initialPlans = [
   {
@@ -96,7 +98,7 @@ export default function App() {
   const setExercises = value => update("exercises", value);
   const setMeasurements = value => update("measurements", value);
   const setCompletedDays = value => update("completedDays", value);
-  useEffect(() => { setTab("home"); setModal(null); setPlanEditor(null); setExerciseEditor(null); setSummary(null); setNotice(""); }, [authUser?.id]);
+  useEffect(() => { setTab("home"); setModal(null); setPlanEditor(null); setExerciseEditor(null); setSummary(null); setNotice(""); setNewExercise({ name: "", category: "Klatka", equipment: "Hantle" }); setExerciseError(""); }, [authUser?.id]);
   const [notice, setNotice] = useState("");
   const [summary, setSummary] = useState(null);
   const [statsExercise, setStatsExercise] = useState("");
@@ -116,6 +118,12 @@ export default function App() {
   const [category, setCategory] = useState("Wszystkie");
   const [equipment, setEquipment] = useState("Wszystkie");
   const [modal, setModal] = useState(null);
+  const [includeFilled, setIncludeFilled] = useState(false);
+  const [finishError, setFinishError] = useState("");
+  const [exerciseError, setExerciseError] = useState("");
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const openFinishReview = () => { setIncludeFilled(false); setFinishError(""); setModal("finish"); };
+  const openExerciseEditor = exercise => { setExerciseError(""); setModal(null); setExerciseEditor({ ...exercise }); };
   const [newExercise, setNewExercise] = useState({
     name: "",
     category: "Klatka",
@@ -181,11 +189,11 @@ export default function App() {
   }, [activeSession?.id, tab]);
   const addExercise = (event) => {
     event.preventDefault();
-    if (!newExercise.name.trim()) return;
-    setExercises((current) => [
-      ...current,
-      { ...newExercise, id: Date.now(), sets: 3, reps: 10, rest: 90, color: "lime" },
-    ]);
+    if (photoBusy) return;
+    if (!newExercise.name.trim()) { setExerciseError("Podaj nazwę ćwiczenia."); return; }
+    const saved = updateData(current => ({ ...current, exercises: [...current.exercises,
+      { ...newExercise, name: newExercise.name.trim(), id: Date.now(), sets: 3, reps: 10, rest: 90, color: "lime" }] }));
+    if (!saved) { setExerciseError("Nie udało się zapisać. Zwolnij miejsce na urządzeniu lub usuń zdjęcie i spróbuj ponownie."); return; }
     setNewExercise({ name: "", category: "Klatka", equipment: "Hantle" });
     setModal(null);
   };
@@ -258,9 +266,13 @@ export default function App() {
   };
   const saveExercise = (event) => {
     event.preventDefault();
+    if (photoBusy) return;
     const form = new FormData(event.currentTarget);
-    const updated = { ...exerciseEditor, name: form.get("name"), category: form.get("category"), equipment: form.get("equipment") };
-    setExercises((current) => current.map((exercise) => exercise.id === updated.id ? updated : exercise));
+    const name = String(form.get("name") || "").trim();
+    if (!name) { setExerciseError("Podaj nazwę ćwiczenia."); return; }
+    const updated = { ...exerciseEditor, name, category: form.get("category"), equipment: form.get("equipment") };
+    const saved = updateData(current => ({ ...current, exercises: current.exercises.map(exercise => exercise.id === updated.id ? updated : exercise) }));
+    if (!saved) { setExerciseError("Nie udało się zapisać. Zwolnij miejsce na urządzeniu lub usuń zdjęcie i spróbuj ponownie."); return; }
     setExerciseEditor(null);
   };
   const toggleTrainingDay = day => {
@@ -274,14 +286,18 @@ export default function App() {
     const session = activeSession && (includeFilled ? { ...activeSession, exercises: activeSession.exercises.map(e => ({ ...e, sets: e.sets.map(s => ({ ...s, completed: s.completed || validSet(s) })) })) } : activeSession);
     const result = session && completeSession(session);
     if (!result) { setNotice("Zatwierdź przynajmniej jedną serię przed zakończeniem."); return; }
-    updateData(current => ({ ...current,
+    const saved = updateData(current => ({ ...current,
       workouts: current.workouts.some(w => w.id === result.id) ? current.workouts : [result, ...current.workouts],
       completedDays: [...new Set([...current.completedDays, dateKey(result.completedAt)])], activeSession: null }));
+    if (!saved) { setFinishError("Nie udało się zapisać. Trening pozostaje otwarty — zwolnij miejsce i spróbuj ponownie."); return; }
     setModal(null); setSummary(result); setTab("history"); setNotice("");
   };
   const deleteExercise = (exerciseId) => {
-    setExercises((current) => current.filter((exercise) => exercise.id !== exerciseId));
-    setPlans((current) => current.map((plan) => ({ ...plan, exercises: plan.exercises.filter((id) => id !== exerciseId) })));
+    const saved = updateData(current => ({ ...current,
+      exercises: current.exercises.filter(exercise => exercise.id !== exerciseId),
+      plans: current.plans.map(plan => ({ ...plan, exercises: plan.exercises.filter(id => id !== exerciseId) })) }));
+    if (saved) setExerciseEditor(null);
+    else setExerciseError("Nie udało się zapisać zmiany. Spróbuj ponownie.");
   };
   const nav = [
     { id: "home", label: "Pulpit", icon: LayoutDashboard },
@@ -556,7 +572,7 @@ export default function App() {
               <button
                 className="round-add"
                 aria-label="Dodaj własne ćwiczenie"
-                onClick={() => setModal("exercise")}
+                onClick={() => { setExerciseError(""); setModal("exercise"); }}
               >
                 <Plus size={20} />
               </button>
@@ -603,8 +619,7 @@ export default function App() {
                     </small>
                   </div>
                   <div className="exercise-actions">
-                    <button type="button" aria-label="Edytuj ćwiczenie" onClick={(event) => { event.stopPropagation(); setExerciseEditor(exercise); }}><Pencil size={15} /></button>
-                    <button type="button" aria-label="Usuń ćwiczenie" onClick={(event) => { event.stopPropagation(); deleteExercise(exercise.id); }}><Trash2 size={15} /></button>
+                    <button type="button" className="exercise-edit-button" aria-label={`Edytuj: ${exercise.name}`} onClick={(event) => { event.stopPropagation(); openExerciseEditor(exercise); }}><Pencil size={15} /><span>Edytuj</span></button>
                   </div>
                 </section>
               ))}</section>)}
@@ -617,8 +632,8 @@ export default function App() {
         {tab === "workout" && currentExercise && (
           <div className="workout-screen">
             <div className="workout-header">
-              <button className="back-link" onClick={() => setTab("home")}><X size={18} /> Zwiń</button>
-              <div>
+              <div className="workout-topline"><button className="back-link" onClick={() => setTab("home")}><X size={18} /> Zwiń</button><span className="timer"><Clock3 size={15} />{formatDuration(elapsedWorkoutSeconds)}</span><button type="button" className="workout-finish-link" aria-label="Zakończ trening" onClick={openFinishReview}>Zakończ</button></div>
+              <div className="workout-heading">
                 <span className="eyebrow">
                   ĆWICZENIE {activeExerciseIndex + 1} /{" "}
                   {activePlan.exercises.length}
@@ -626,9 +641,6 @@ export default function App() {
                 <h1>{currentExercise.name}</h1>
                 <small>{planName(activePlan.name)}</small>
               </div>
-              <span className="timer">
-                <Clock3 size={15} /> {formatDuration(elapsedWorkoutSeconds)}
-              </span>
             </div>
             <div className="workout-progress">
               <span
@@ -642,7 +654,10 @@ export default function App() {
               </small>
             </div>
             <label className="exercise-jump">Przejdź do ćwiczenia<select aria-label="Przejdź do ćwiczenia" value={activeExerciseIndex} onChange={event => setActiveExerciseIndex(Number(event.target.value))}>{activeSession.exercises.map((e,i) => <option key={e.id} value={i}>{i + 1}. {e.name}</option>)}</select></label>
-            <ExerciseVisual exercise={currentExercise} />
+            <details className="workout-photo-details" key={currentExercise.id}>
+              <summary>{exercisePhotoStyle(currentExercise) ? <span className="exercise-photo-thumb" role="img" aria-label={currentExercise.name} style={exercisePhotoStyle(currentExercise)} /> : <Dumbbell size={24} />}<span>Zdjęcie ćwiczenia<small>Dotknij, aby powiększyć</small></span><ChevronRight size={18} /></summary>
+              <ExerciseVisual exercise={currentExercise} />
+            </details>
             <section className="workout-exercise current-exercise card">
               <div className="exercise-title">
                 <span className={`exercise-icon ${currentExercise.color}`}>
@@ -657,7 +672,7 @@ export default function App() {
                   </small>
                 </div>
               </div>
-              <p className="set-help">Wpisz ciężar i powtórzenia, potem zaznacz puste pole po prawej. Zielony ✓ oznacza wykonaną serię.</p>
+              <p className="set-help">Wpisz wynik i zaznacz wykonaną serię ✓.</p>
               <div className="set-labels">
                 <span>SERIA</span>
                 <span>KG</span>
@@ -677,7 +692,7 @@ export default function App() {
             {previousExercise ? <section className="last-result-card">
               <span className="eyebrow">OSTATNI TRENING · {displayDate(previousExercise.date)}</span>
               <p>{previousSets.map((s, i) => `${i + 1}. ${s.weight} kg × ${s.reps}`).join(" · ")}</p>
-              <small className="last-result-note">Opcjonalny cel: przy tym samym ciężarze spróbuj dodać 1 powtórzenie w jednej serii, jeśli zachowasz technikę. Poprzednia objętość: {displayNumber(volume(previousSets))} kg.</small>
+              <details className="progress-tip"><summary>Opcjonalny cel progresu</summary><p>Przy tym samym ciężarze spróbuj dodać 1 powtórzenie w jednej serii, zachowując technikę. Poprzednia objętość: {displayNumber(volume(previousSets))} kg.</p></details>
             </section> : <section className="card first-result"><p>Pierwszy zapis tego ćwiczenia — ustal wynik wyjściowy.</p></section>}
             {isResting && (
               <section className="rest-card">
@@ -698,8 +713,6 @@ export default function App() {
                 </div>
               </section>
             )}
-            <button type="button" className="back-link" onClick={() => { if (window.confirm("Usunąć rozpoczęty trening i wpisane w nim serie?")) { update("activeSession", null); setTab("home"); } }}>Anuluj rozpoczęty trening</button>
-            {activeExerciseIndex < activePlan.exercises.length - 1 && <button type="button" className="secondary-cta" onClick={() => setModal("finish")}>Zakończ trening</button>}
             <div className="workout-navigation">
               <button
                 className="secondary-cta"
@@ -720,7 +733,7 @@ export default function App() {
               ) : (
                 <button
                   className="finish-button"
-                  onClick={() => setModal("finish")}
+                  onClick={openFinishReview}
                 >
                   Zakończ <Check size={17} />
                 </button>
@@ -915,19 +928,26 @@ export default function App() {
           </button>
         ))}
       </nav>}
-      {modal === "finish" && activeSession && <div className="modal-backdrop" onClick={() => setModal(null)}>
-        <section className="modal finish-review" role="dialog" aria-modal="true" aria-labelledby="finish-title" onKeyDown={event => { if (event.key === "Escape") setModal(null); }} onClick={event => event.stopPropagation()}>
-          <div className="modal-head"><div><span className="eyebrow">PODSUMUJ SESJĘ</span><h2 id="finish-title">Zakończyć trening?</h2></div><IconButton label="Wróć do treningu" onClick={() => setModal(null)}><X size={18} /></IconButton></div>
-          <p>Zatwierdzone serie: <b>{completedSetCount}</b>. Poprawnie wypełnione: <b>{filledSetCount}</b>.</p>
-          {filledSetCount > 0 && <details className="finish-set-list"><summary>Sprawdź serie przed zapisem</summary>{activeSession.exercises.filter(e => e.sets.some(validSet)).map(e => <div key={e.id}><b>{e.name}</b>{e.sets.map((s,i) => validSet(s) && <p key={i}>Seria {i + 1}: {s.weight} kg × {s.reps} · {s.completed ? "zatwierdzona" : "do potwierdzenia"}</p>)}</div>)}</details>}
-          {completedSetCount === 0 && <p>Wpisanie wartości nie zatwierdza serii. Możesz użyć ✓ przy serii lub świadomie zapisać wypełnione serie poniżej.</p>}
-          {completedSetCount > 0 && <button type="button" className="primary-cta" onClick={() => finishWorkout(false)}>Zapisz zatwierdzone serie</button>}
-          {filledSetCount > completedSetCount && <><p>Wypełnione pola mogą zawierać wartości podpowiedziane z poprzedniego treningu. Potwierdź, że te serie rzeczywiście wykonałeś. Puste i niepoprawne serie zostaną pominięte.</p><button type="button" className="secondary-cta" onClick={() => finishWorkout(true)}>Zatwierdź wypełnione serie i zapisz</button></>}
-          {filledSetCount === 0 && <p>Nie ma serii do zapisania. Wróć i wpisz ciężar (0 dla masy ciała) oraz powtórzenia albo odrzuć tę sesję.</p>}
-          <button type="button" className="back-link" onClick={() => setModal(null)}>Kontynuuj trening</button>
-          <button type="button" className="back-link" onClick={() => { update("activeSession", null); setModal(null); setTab("home"); setNotice("Trening odrzucony bez zapisu."); }}>Odrzuć trening bez zapisu</button>
-        </section>
-      </div>}
+      {modal === "finish" && activeSession && <DialogSheet labelledBy="finish-title" onClose={() => setModal(null)} className="finish-review">
+        <header className="sheet-header"><h2 id="finish-title">Zakończyć trening?</h2><IconButton label="Wróć do treningu" onClick={() => setModal(null)}><X size={18} /></IconButton></header>
+        <div className="sheet-body">
+          <div className="finish-counts"><div><b>{completedSetCount}</b><span>zatwierdzonych serii</span></div><div><b>{filledSetCount - completedSetCount}</b><span>do potwierdzenia</span></div></div>
+          {filledSetCount > completedSetCount && <><label className="finish-checkbox"><input type="checkbox" checked={includeFilled} onChange={event => setIncludeFilled(event.target.checked)} /><span>{completedSetCount ? "Zapisz też niezaznaczone serie" : "Potwierdzam wykonanie wypełnionych serii"}</span></label><p className="sheet-hint">Sprawdź wartości — część może pochodzić z poprzedniego treningu.</p></>}
+          {filledSetCount === 0 && <p className="sheet-hint">Brak serii do zapisania. Możesz wrócić do ćwiczeń albo odrzucić sesję.</p>}
+          {filledSetCount > 0 && <details className="finish-set-list"><summary>Sprawdź serie</summary>{activeSession.exercises.filter(e => e.sets.some(validSet)).map(e => <div key={e.id}><b>{e.name}</b>{e.sets.map((s,i) => validSet(s) && <p key={i}>{i + 1}. {s.weight} kg × {s.reps} · {s.completed ? "✓" : "niezatwierdzona"}</p>)}</div>)}</details>}
+          {finishError && <p className="form-error" role="alert">{finishError}</p>}
+        </div>
+        <footer className="sheet-footer">
+          {filledSetCount > 0 ? <button type="button" className="primary-cta" disabled={!completedSetCount && !includeFilled} onClick={() => finishWorkout(includeFilled)}>Zapisz trening</button> : <button type="button" className="primary-cta" onClick={() => setModal(null)}>Wróć do treningu</button>}
+          <div className="sheet-secondary-actions">
+            {filledSetCount > 0 && <button type="button" onClick={() => setModal(null)}>Kontynuuj</button>}
+            <button type="button" className="danger-action" aria-label="Odrzuć trening bez zapisu" onClick={() => {
+              if (!updateData(current => ({ ...current, activeSession: null }))) { setFinishError("Nie udało się zapisać zmiany. Spróbuj ponownie."); return; }
+              setModal(null); setTab("home"); setNotice("Trening odrzucony bez zapisu.");
+            }}>Odrzuć bez zapisu</button>
+          </div>
+        </footer>
+      </DialogSheet>}
       {planEditor && (
         <div className="modal-backdrop" onClick={() => setPlanEditor(null)}>
           <form
@@ -994,15 +1014,18 @@ export default function App() {
         </div>
       )}
       {exerciseEditor && (
-        <div className="modal-backdrop" onClick={() => setExerciseEditor(null)}>
-          <form className="modal" onSubmit={saveExercise} onClick={(event) => event.stopPropagation()}>
-            <div className="modal-head"><div><span className="eyebrow">EDYCJA BAZY</span><h2>Edytuj ćwiczenie</h2></div><IconButton label="Zamknij" onClick={() => setExerciseEditor(null)}><X size={18} /></IconButton></div>
+        <DialogSheet labelledBy="edit-exercise-title" onClose={() => setExerciseEditor(null)} onSubmit={saveExercise} className="exercise-sheet">
+          <header className="sheet-header"><h2 id="edit-exercise-title">Edytuj ćwiczenie</h2><IconButton label="Zamknij" onClick={() => setExerciseEditor(null)}><X size={18} /></IconButton></header>
+          <div className="sheet-body">
             <label>Nazwa ćwiczenia<input name="name" defaultValue={exerciseEditor.name} required /></label>
-            <label>Partia<select name="category" defaultValue={exerciseEditor.category}><option>Klatka</option><option>Plecy</option><option>Nogi</option><option>Barki</option><option>Biceps</option><option>Triceps</option><option>Brzuch</option></select></label>
-            <label>Sprzęt<select name="equipment" defaultValue={exerciseEditor.equipment}><option>Hantle</option><option>Sztanga</option><option>Wyciąg</option><option>Masa ciała</option><option>Maszyna</option><option>Suwnica Smitha</option></select></label>
-            <button className="primary-cta" type="submit"><Check size={18} /> Zapisz zmiany</button>
-          </form>
-        </div>
+            <label>Partia<select name="category" aria-label="Partia" defaultValue={exerciseEditor.category}>{[...new Set([exerciseEditor.category, "Klatka", "Plecy", "Nogi", "Barki", "Biceps", "Triceps", "Brzuch"])].filter(Boolean).map(item => <option key={item}>{item}</option>)}</select></label>
+            <label>Sprzęt<select name="equipment" aria-label="Sprzęt" defaultValue={exerciseEditor.equipment}>{[...new Set([exerciseEditor.equipment, "Hantle", "Sztanga", "Wyciąg", "Masa ciała", "Maszyna", "Suwnica Smitha"])].filter(Boolean).map(item => <option key={item}>{item}</option>)}</select></label>
+            <ExercisePhotoField value={exerciseEditor.customPhoto} onChange={customPhoto => setExerciseEditor(current => ({ ...current, customPhoto }))} onBusy={setPhotoBusy} />
+            <details className="exercise-more-options"><summary>Więcej opcji</summary><button type="button" className="danger-action" onClick={() => { if (window.confirm("Usunąć ćwiczenie z bazy i planów? Zapisane treningi pozostaną w historii.")) deleteExercise(exerciseEditor.id); }}>Usuń ćwiczenie</button></details>
+            {exerciseError && <p className="form-error" role="alert">{exerciseError}</p>}
+          </div>
+          <footer className="sheet-footer"><button className="primary-cta" type="submit" disabled={photoBusy}><Check size={18} />{photoBusy ? "Przygotowuję zdjęcie…" : "Zapisz zmiany"}</button></footer>
+        </DialogSheet>
       )}
       {typeof modal === "string" &&
         modal.startsWith("rest-") &&
@@ -1027,6 +1050,7 @@ export default function App() {
                   </IconButton>
                 </div>
                 <ExerciseVisual exercise={exercise} />
+                <button type="button" className="secondary-cta" onClick={() => openExerciseEditor(exercise)}><Pencil size={16} />Edytuj ćwiczenie i zdjęcie</button>
                 <label>
                   Przerwa między seriami
                   <select name="rest" defaultValue={exercise.rest}>
@@ -1046,76 +1070,17 @@ export default function App() {
             </div>
           );
         })()}
-      {modal === "exercise" && (
-        <div className="modal-backdrop" onClick={() => setModal(null)}>
-          <form
-            className="modal"
-            onSubmit={addExercise}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="modal-head">
-              <div>
-                <span className="eyebrow">WŁASNA BAZA</span>
-                <h2>Dodaj ćwiczenie</h2>
-              </div>
-              <IconButton label="Zamknij" onClick={() => setModal(null)}>
-                <X size={18} />
-              </IconButton>
-            </div>
-            <label>
-              Nazwa ćwiczenia
-              <input
-                autoFocus
-                value={newExercise.name}
-                onChange={(event) =>
-                  setNewExercise({ ...newExercise, name: event.target.value })
-                }
-                placeholder="np. Wznosy bokiem"
-              />
-            </label>
-            <label>
-              Partia
-              <select
-                value={newExercise.category}
-                onChange={(event) =>
-                  setNewExercise({
-                    ...newExercise,
-                    category: event.target.value,
-                  })
-                }
-              >
-                <option>Klatka</option>
-                <option>Plecy</option>
-                <option>Nogi</option>
-                <option>Barki</option>
-                <option>Biceps</option>
-                <option>Triceps</option>
-                <option>Brzuch</option>
-              </select>
-            </label>
-            <label>
-              Sprzęt
-              <select
-                value={newExercise.equipment}
-                onChange={(event) =>
-                  setNewExercise({
-                    ...newExercise,
-                    equipment: event.target.value,
-                  })
-                }
-              >
-                <option>Hantle</option>
-                <option>Sztanga</option>
-                <option>Wyciąg</option>
-                <option>Masa ciała</option><option>Maszyna</option><option>Suwnica Smitha</option>
-              </select>
-            </label>
-            <button className="primary-cta" type="submit">
-              <Plus size={18} /> Dodaj do bazy
-            </button>
-          </form>
+      {modal === "exercise" && <DialogSheet labelledBy="add-exercise-title" onClose={() => setModal(null)} onSubmit={addExercise} className="exercise-sheet">
+        <header className="sheet-header"><h2 id="add-exercise-title">Dodaj ćwiczenie</h2><IconButton label="Zamknij" onClick={() => setModal(null)}><X size={18} /></IconButton></header>
+        <div className="sheet-body">
+          <label>Nazwa ćwiczenia<input value={newExercise.name} onChange={event => setNewExercise(current => ({ ...current, name: event.target.value }))} placeholder="np. Wznosy bokiem" required /></label>
+          <label>Partia<select aria-label="Partia" value={newExercise.category} onChange={event => setNewExercise(current => ({ ...current, category: event.target.value }))}>{["Klatka", "Plecy", "Nogi", "Barki", "Biceps", "Triceps", "Brzuch"].map(item => <option key={item}>{item}</option>)}</select></label>
+          <label>Sprzęt<select aria-label="Sprzęt" value={newExercise.equipment} onChange={event => setNewExercise(current => ({ ...current, equipment: event.target.value }))}>{["Hantle", "Sztanga", "Wyciąg", "Masa ciała", "Maszyna", "Suwnica Smitha"].map(item => <option key={item}>{item}</option>)}</select></label>
+          <ExercisePhotoField value={newExercise.customPhoto} onChange={customPhoto => setNewExercise(current => ({ ...current, customPhoto }))} onBusy={setPhotoBusy} />
+          {exerciseError && <p className="form-error" role="alert">{exerciseError}</p>}
         </div>
-      )}
+        <footer className="sheet-footer"><button className="primary-cta" type="submit" disabled={photoBusy}><Plus size={18} />{photoBusy ? "Przygotowuję zdjęcie…" : "Dodaj do bazy"}</button></footer>
+      </DialogSheet>}
     </div>
   );
 }

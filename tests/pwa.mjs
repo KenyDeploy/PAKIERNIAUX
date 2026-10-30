@@ -24,7 +24,7 @@ try {
  });
  assert.equal(await page.getByRole('textbox',{name:'Ciężar serii 1',exact:true}).inputValue(),'42,5');
  await page.getByRole('button',{name:'Zakończ trening',exact:true}).click();
- await page.getByRole('button',{name:'Zapisz zatwierdzone serie',exact:true}).click();
+ await page.getByRole('button',{name:'Zapisz trening',exact:true}).click();
  await page.getByText('Dobra robota!').waitFor();
  await page.reload();
  assert.equal(await page.getByTestId('training-count').innerText(),'1');

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { measurementChange } from "./training";
 import { exercisePhotoStyle } from "./exercisePhotos";
+import { isCustomPhoto } from "./photoUpload.js";
 
 const metrics = [["weight", "Masa ciała", "kg"], ["biceps", "Biceps", "cm"], ["chest", "Klatka", "cm"], ["waist", "Talia", "cm"], ["thigh", "Udo", "cm"]];
 const fmt = value => value == null ? "—" : Number(value).toLocaleString("pl-PL", { maximumFractionDigits: 1 });
@@ -46,7 +47,7 @@ export function TrendChart({ points, unit }) {
 }
 export function ExerciseVisual({ exercise }) {
   const photo = exercisePhotoStyle(exercise);
-  if (photo) return <figure className="exercise-visual"><div className="exercise-photo" role="img" aria-label={exercise.name} style={photo} /><figcaption>{exercise.name} · wizualizacja AI</figcaption></figure>;
+  if (photo) return <figure className="exercise-visual"><div className="exercise-photo" role="img" aria-label={exercise.name} style={photo} /><figcaption>{isCustomPhoto(exercise.customPhoto) ? "Twoje zdjęcie" : "Wizualizacja AI"}</figcaption></figure>;
   const isLeg = exercise.category === "Nogi", isBack = exercise.category === "Plecy";
   return <figure className="exercise-visual">
     <svg viewBox="0 0 320 150" role="img" aria-label={`Ilustracja partii: ${exercise.category}`}>

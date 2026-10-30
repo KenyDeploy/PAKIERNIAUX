@@ -1,4 +1,5 @@
 import { catalog } from "./catalog.js";
+import { isCustomPhoto } from "./photoUpload.js";
 // Generated for Pakiernia, 2026-10-29. Each atlas contains six specific exercises.
 // Match the full name so renaming a custom exercise never assigns the wrong photo.
 const names = [
@@ -7,6 +8,7 @@ const names = [
   "Uginanie przedramion z hantlami", "Prostowanie ramion na wyciągu",
 ];
 export function exercisePhotoStyle(exercise) {
+  if (isCustomPhoto(exercise.customPhoto)) return { backgroundImage: `url("${exercise.customPhoto}")`, backgroundPosition: "center", backgroundSize: "cover" };
   const aliases = { "Hip thrust": "Unoszenie bioder ze sztangą", "Face pull": "Przyciąganie liny do twarzy" };
   const name = aliases[exercise.name] || exercise.name;
   let index = names.indexOf(name), atlas = 1;

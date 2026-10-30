@@ -1,5 +1,17 @@
 # Pakiernia u Matiego — audyt i pierwsza naprawa
 
+## Etap wygody — 30 października 2026
+
+Zgłoszenie użytkownika: przyciski zakończenia ucięte na telefonie, za dużo tekstu, brak zdjęcia w formularzu ćwiczenia i trudna do znalezienia edycja.
+
+- Zakończenie ma krótki panel z jednym przyciskiem zapisu, zwięzłymi licznikami i opcjonalną listą serii. Dodatkowe, niezaznaczone serie wymagają świadomego potwierdzenia. Nagłówek i stopka nie przewijają się; przewijany jest wyłącznie środek. Panel uwzględnia visualViewport, safe areas, klawiaturę/Escape, utrzymanie fokusu i blokadę przewijania tła. Formularze nowego/edytowanego ćwiczenia używają tego samego układu.
+- Dodano wybór, podgląd, zmianę i usuwanie własnego zdjęcia w formularzach ćwiczeń. Przyciski Edytuj są widoczne w bazie i szczegółach; usunięcie ćwiczenia przeniesiono do edycji i wymaga potwierdzenia. Dotychczasowe, nietypowe kategorie i sprzęt są zachowywane przy edycji.
+- Zdjęcie JPG/PNG/WebP do 10 MB jest przetwarzane na urządzeniu do JPEG do 80 KB i maksymalnie 640 px, zapisywane jako opcjonalne `customPhoto` z prywatnymi danymi konta. Bez nowego publicznego hostingu, zmian schematu ani polityk. Własne zdjęcie zastępuje ilustrację w bazie i podczas treningu. Nie jest powielane w każdej ukończonej sesji. To świadomie mały etap; przy dużych bibliotekach zdjęć właściwym kolejnym krokiem jest prywatny Storage.
+- Brak miejsca na lokalny snapshot blokuje zapis i zamknięcie formularza zamiast udawać sukces. Dotychczas zapisane dane pozostają bez zmian; dane wpisane w formularzu są nadal dostępne do poprawienia.
+- Trening jest bardziej zwarty: wszystkie podstawowe serie są wyżej, zdjęcie ma miniaturę z opcją rozwinięcia, wskazówka progresu jest rozwijana, a przycisk zakończenia jest w górnym pasku. Dotychczasowe wyniki i przerwy pozostają zachowane.
+
+Weryfikacja: 14 testów automatycznych, kompilacja, dotychczasowy scenariusz Chromium i PWA. Nowy `tests/mobile-forms.mjs` sprawdza długie podsumowanie na 6 rozmiarach od 320×360 px, widoczną stopkę po przewinięciu, fokus/Escape, zapis tylko zatwierdzonych serii, dodanie/kompresję/edycję/usunięcie zdjęcia, odczyt po odświeżeniu i zdjęcie w treningu, błędny plik oraz brak miejsca na zapis. Jest to symulacja przeglądarkowa, bez potwierdzenia fizycznego iPhone’a. Kolejne etapy zapisano w `ROADMAP.md`.
+
 ## Zgłoszenia użytkownika — kalendarz, kończenie sesji i baza ze zdjęciami
 
 - Ręczne oznaczenie dnia liczy się jako odbyty trening w pulpicie, historii, odznakach, kalendarzu i passie. Dzień z zapisaną sesją nie jest liczony ponownie jako ręczny trening; dwie rzeczywiste sesje jednego dnia nadal liczą się jako dwie. Ręczne wpisy mają własne wiersze w historii, bez wymyślania czasu, serii i objętości. Statystyki ciężaru i objętości nadal wynikają wyłącznie z zapisanych serii. Kliknięcie dnia z sesją wyjaśnia, dlaczego kalendarz nie usuwa treningu z historii.
