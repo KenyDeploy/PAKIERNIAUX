@@ -49,12 +49,12 @@ import { exercisePhotoStyle } from "./exercisePhotos";
 import { DialogSheet } from "./DialogSheet";
 import { exerciseHistory, historySetLabel } from "./exerciseHistory.js";
 import { ExerciseHistorySheet, seriesLabel } from "./ExerciseHistorySheet";
+import { SessionExerciseMenu } from "./SessionExerciseMenu";
 import { SessionExerciseEditor } from "./SessionExerciseEditor";
 import { RestControls } from "./RestControls";
 import { WorkoutTimerSheet } from "./WorkoutTimerSheet";
 import { ExercisePhotoViewer } from "./ExercisePhotoViewer";
 import { workoutElapsedSeconds, restRemainingSeconds, pauseWorkoutClock, resumeWorkoutClock, startSessionRest, pauseSessionRest, resumeSessionRest, extendSessionRest, skipSessionRest } from "./trainingClock.js";
-import { SessionExerciseMenu } from "./SessionExerciseMenu";
 import { addSessionExercise, replaceSessionExercise, skipSessionExercise, removeSessionExercise, editSessionTargets, addSessionSet } from "./sessionActions.js";
 import { ExercisePhotoField } from "./ExercisePhotoField";
 
@@ -114,7 +114,7 @@ export default function App() {
   const { plans, exercises, measurements, workouts, completedDays, waterByDate, activeSession } = data;
   const setPlans = value => update("plans", value);
   const setExercises = value => update("exercises", value);
-
+  
   const setCompletedDays = value => update("completedDays", value);
   useEffect(() => { setTab("home"); setModal(null); setWorkoutPanel(null); setPlanEditor(null); setExerciseEditor(null); setSummary(null); setNotice(""); setNewExercise({ name: "", category: "Klatka", equipment: "Hantle" }); setExerciseError(""); }, [authUser?.id]);
   const [notice, setNotice] = useState("");
@@ -151,7 +151,7 @@ export default function App() {
   const activeExerciseIndex = activeSession?.index || 0;
   useEffect(() => {
     if (tab !== "workout") return;
-    document.querySelector(".workout-header")?.scrollIntoView?.({ block: "start", behavior: "auto" });
+    document.querySelector(".workout-heading")?.scrollIntoView?.({ block: "start", behavior: "auto" });
   }, [activeExerciseIndex, activeSession?.id, activeSession?.exercises[activeExerciseIndex]?.id, tab]);
   const setActiveExerciseIndex = value => update("activeSession", current => ({ ...current, index: typeof value === "function" ? value(current.index) : value }));
   const [clockNow, setClockNow] = useState(Date.now);
@@ -518,13 +518,13 @@ export default function App() {
               <div className="workout-heading">
                 <span className="eyebrow">
                   ĆWICZENIE {activeExerciseIndex + 1} /{" "}
-                  {activeSession.exercises.length}
+                  {activeSession.exercises.length} · {Math.round((activeExerciseIndex + 1) / activeSession.exercises.length * 100)}%
                 </span>
                 <h1>{currentExercise.name}</h1>
-                <small>{planName(activePlan.name)}</small>
+                <small>{currentExercise.category}</small>
               </div>
             </div>
-            <div className="workout-progress">
+            <div className="workout-progress" role="progressbar" aria-label="Pozycja ćwiczenia w treningu" aria-valuemin={0} aria-valuemax={activeSession.exercises.length} aria-valuenow={activeExerciseIndex + 1}>
               <span
                 style={{
                   width: `${((activeExerciseIndex + 1) / activeSession.exercises.length) * 100}%`,
@@ -535,7 +535,6 @@ export default function App() {
                 ćwiczeń
               </small>
             </div>
-            <label className="exercise-jump">Przejdź do ćwiczenia<select aria-label="Przejdź do ćwiczenia" value={activeExerciseIndex} onChange={event => setActiveExerciseIndex(Number(event.target.value))}>{activeSession.exercises.map((e,i) => <option key={e.id} value={i}>{i + 1}. {e.name}</option>)}</select></label>
             <div className="workout-hero-photo">
               <ExerciseVisual exercise={currentExercise} />
               <button type="button" className="workout-photo-open" aria-label="Powiększ zdjęcie ćwiczenia" onClick={() => setWorkoutPanel("photo")}><Maximize2 size={20} /></button>
@@ -551,7 +550,7 @@ export default function App() {
                 <div>
                   <h2>Twoje serie</h2>
                   <small>
-                    {currentExercise.category} · cel {currentExercise.reps}{" "}
+                    {currentExercise.category} · cel {currentExercise.targetSets ?? currentExercise.sets.length} serii × {currentExercise.reps}{" "}
                     powtórzeń · przerwa {Math.floor(currentExercise.rest / 60)}:
                     {String(currentExercise.rest % 60).padStart(2, "0")}
                   </small>
