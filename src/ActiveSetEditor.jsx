@@ -49,10 +49,12 @@ export function ActiveSetEditor({ exercise, targetSets = exercise.targetSets, ex
       const field=focused.getBoundingClientRect(), save=focused.closest(".series-entry")?.querySelector(".set-confirm")?.getBoundingClientRect();
       const end=save?.bottom||field.bottom;
       const delta=end>bottom ? end-bottom : field.top<top ? field.top-top : 0;
-      if(delta)scroller.scrollBy({top:delta,behavior:"auto"});
+      if(delta)scroller.scrollBy({top:delta,behavior:"instant"});
     };
     let frame;
-    const queue=()=>{window.cancelAnimationFrame(frame);frame=window.requestAnimationFrame(reveal);};
+    // visualViewport and the fixed shell resize in the same event. Measure after
+    // their layout has settled, including a previously focused input on resize.
+    const queue=()=>{window.cancelAnimationFrame(frame);frame=window.requestAnimationFrame(()=>{frame=window.requestAnimationFrame(reveal);});};
     visual?.addEventListener("resize",queue); visual?.addEventListener("scroll",queue);
     list.current?.addEventListener("focusin",queue); list.current?.addEventListener("focusout",queue);
     const node = list.current;
@@ -93,14 +95,14 @@ export function ActiveSetEditor({ exercise, targetSets = exercise.targetSets, ex
   return <div className="active-set-editor growing-series-list" ref={list}>
     <p className="series-status" role="status">{exercise.sets.filter(row=>row.completed).length} wykonanych · {exercise.sets.filter(row=>!row.completed && !row.skipped).length} do wykonania</p>
     {exercise.sets.map((row,index)=>{
-      const editable=!row.completed || editing===keyFor(row,index);
-      return <Fragment key={keyFor(row,index)}>{index===currentIndex && restModule}<div className={`series-entry ${editable?`set-row ${index===currentIndex || editing===keyFor(row,index)?"active":"waiting"}`:"series-compact completed"}`} data-series-index={index} data-series-id={row.id}>
+      const editable=index===currentIndex || editing===keyFor(row,index);
+      return <Fragment key={keyFor(row,index)}>{index===currentIndex && restModule}<div className={`series-entry ${editable?"set-row active":`series-compact ${row.completed?"completed":"waiting"}`}`} data-series-index={index} data-series-id={row.id}>
         {editable ? <>
           <div className="set-row-heading"><b>Seria {index+1}</b><small>{exercise.skipped?"Pominięta":row.completed?"Edycja wyniku":index===currentIndex?"Bieżąca":"Oczekująca"}</small><button type="button" className="series-delete" disabled={exercise.skipped} aria-label={`Usuń serię ${index+1}`} onClick={()=>requestDelete(index)}><Trash2 size={18}/></button></div>
           <div className="set-fields">{[["weight",bodyweight?"Dodatkowe kg":"Ciężar (kg)","decimal"],["reps","Powtórzenia","numeric"]].map(([field,label,inputMode])=><label key={field}>{label}<span className="series-stepper"><button type="button" disabled={exercise.skipped} aria-label={`Zmniejsz ${field==="weight"?"ciężar":"powtórzenia"} serii ${index+1}`} onClick={()=>step(index,field,-1)}><Minus size={18}/></button><input disabled={exercise.skipped} aria-label={`${field==="weight"?"Ciężar":"Powtórzenia"} serii ${index+1}`} aria-describedby={bodyweight?`bodyweight-${index}`:undefined} autoComplete="off" inputMode={inputMode} type="text" value={row[field]??""} onChange={event=>change(index,field,event.target.value)} placeholder={field==="weight"?(bodyweight?"0":"kg"):""}/><button type="button" disabled={exercise.skipped} aria-label={`Zwiększ ${field==="weight"?"ciężar":"powtórzenia"} serii ${index+1}`} onClick={()=>step(index,field,1)}><Plus size={18}/></button></span></label>)}</div>
           {bodyweight && <p id={`bodyweight-${index}`} className="bodyweight-set-hint">Masa ciała · dodatkowy ciężar opcjonalny. Puste pole = 0 kg przy zapisie serii.</p>}
           <button type="button" className="set-confirm" disabled={exercise.skipped} aria-label={`Zatwierdź serię ${index+1}`} onClick={()=>confirm(index)}><Check size={20}/>{row.completed?"Zapisz zmiany":"Zapisz serię"}</button>
-        </> : <><Check className="series-done-icon" size={18}/><div className="series-result"><b>Seria {index+1}</b><span>{seriesResultLabel(exercise,row)}</span><small>Wykonana</small></div><button type="button" disabled={exercise.skipped} aria-label={`Edytuj serię ${index+1}`} onClick={()=>{if(persist(current=>selectSeries(current,index))){setEditing(keyFor(row,index));setError("");scrollTo(index);}}}><Pencil size={18}/></button><button type="button" disabled={exercise.skipped} aria-label={`Usuń serię ${index+1}`} onClick={()=>requestDelete(index)}><Trash2 size={18}/></button></>}
+        </> : <>{row.completed && <Check className="series-done-icon" size={18}/>}<div className="series-result"><b>Seria {index+1}</b><span>{seriesResultLabel(exercise,row)}</span><small>{row.completed?"Wykonana":"Szkic · do wykonania"}</small></div><button type="button" disabled={exercise.skipped} aria-label={`Edytuj serię ${index+1}`} onClick={()=>{if(persist(current=>selectSeries(current,index))){setEditing(keyFor(row,index));setError("");scrollTo(index);}}}><Pencil size={18}/></button><button type="button" disabled={exercise.skipped} aria-label={`Usuń serię ${index+1}`} onClick={()=>requestDelete(index)}><Trash2 size={18}/></button></>}
       </div></Fragment>;
     })}
     {currentIndex<0 && restModule}

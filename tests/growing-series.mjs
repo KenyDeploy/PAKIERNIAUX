@@ -11,7 +11,7 @@ try {
   const resume=()=>page.getByRole('button',{name:'Wznów rozpoczęty trening',exact:true}).click();
   const start=async()=>{await page.locator('.bottom-nav').getByRole('button',{name:'Plany',exact:true}).click();await page.locator('.plan-card').filter({hasText:'Góra ciała — siła'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();};
   const add=()=>page.getByRole('button',{name:'Dodaj serię',exact:true}).click();
-  const save=async(n,weight,reps='8')=>{await page.getByLabel(`Ciężar serii ${n}`,{exact:true}).fill(weight);await page.getByLabel(`Powtórzenia serii ${n}`,{exact:true}).fill(reps);await page.getByRole('button',{name:`Zatwierdź serię ${n}`,exact:true}).click();};
+  const save=async(n,weight,reps='8')=>{if(!await page.getByLabel(`Ciężar serii ${n}`,{exact:true}).count())await page.getByRole('button',{name:`Edytuj serię ${n}`,exact:true}).click();await page.getByLabel(`Ciężar serii ${n}`,{exact:true}).fill(weight);await page.getByLabel(`Powtórzenia serii ${n}`,{exact:true}).fill(reps);await page.getByRole('button',{name:`Zatwierdź serię ${n}`,exact:true}).click();};
   const finish=async()=>{await page.getByRole('button',{name:'Czas treningu i opcje'}).click();await page.getByRole('dialog').getByRole('button',{name:'Zakończ trening',exact:true}).click();};
   await start();const initial=await data();assert.equal((await rows()).length,1);assert.equal(await page.locator('.series-entry').count(),1);assert.equal(await page.locator('.series-picker, .series-history').count(),0);
   assert.equal((await data()).activeSession.exercises[0].targetSets,3);
@@ -19,11 +19,11 @@ try {
   await page.getByRole('button',{name:'Usuń serię 6',exact:true}).click();assert.equal(await page.getByRole('dialog').count(),0);assert.equal((await rows()).length,5);
   const originalIds=(await rows()).map(row=>row.id);assert.equal(new Set(originalIds).size,5);
   for(const n of [1,2,3])await save(n,String(n*10));
-  assert.equal(await page.locator('.series-compact').count(),3);assert.equal(await page.locator('.set-row').count(),2);assert.equal((await rows()).length,5,'Saving never automatically appends a row');
+  assert.equal(await page.locator('.series-compact.completed').count(),3);assert.equal(await page.locator('.set-row').count(),1);assert.equal((await rows()).length,5,'Saving never automatically appends a row');
   for(const width of [320,375,390,430]) {
     await page.setViewportSize({width,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
     assert.ok((await page.locator('.series-compact').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().height))).every(height=>height<=100));
-    await page.getByLabel('Ciężar serii 5',{exact:true}).focus();
+    if(!await page.getByLabel('Ciężar serii 5',{exact:true}).count())await page.getByRole('button',{name:'Edytuj serię 5',exact:true}).click();await page.getByLabel('Ciężar serii 5',{exact:true}).focus();
     await page.evaluate(()=>{Object.defineProperty(visualViewport,'height',{value:300,configurable:true});visualViewport.dispatchEvent(new Event('resize'));});await page.waitForTimeout(80);
     const r=await page.getByLabel('Ciężar serii 5',{exact:true}).boundingBox();assert.ok(r.y>=0 && r.y+r.height<=300);
     await page.evaluate(()=>{delete visualViewport.height;visualViewport.dispatchEvent(new Event('resize'));});
@@ -41,7 +41,7 @@ try {
   await page.locator('.brand').click();await resume();assert.equal((await rows()).length,4);
   await finish();await page.getByRole('button',{name:'Zapisz trening',exact:true}).click();let snapshot=await data();assert.equal(snapshot.workouts.length,1);assert.equal(snapshot.workouts[0].volume,415);assert.deepEqual(snapshot.workouts[0].exercises[0].sets.map(row=>row.id),[originalIds[0],originalIds[2]]);assert.deepEqual(snapshot.plans,initial.plans);
   await start();await page.evaluate(()=>{const k='pakiernia.v2.local',c=JSON.parse(localStorage.getItem(k));c.data.activeSession.exercises[0].sets=[{id:'legacy-performed',weight:'50',reps:'8',completed:true,note:'preserve'},{weight:'55',reps:'6',completed:false},{id:'legacy-pending',weight:'',reps:'8',completed:false}];c.data.activeSession.exercises[0].targetSets=7;localStorage.setItem(k,JSON.stringify(c));});
-  await page.reload();await resume();assert.equal(await page.locator('.series-compact').count(),1);assert.equal(await page.locator('.set-row').count(),2);assert.equal((await rows())[0].note,'preserve');await save(2,'55','6');assert.equal((await rows()).length,3);assert.equal((await rows())[2].id,'legacy-pending');
+  await page.reload();await resume();assert.equal(await page.locator('.series-compact.completed').count(),1);assert.equal(await page.locator('.set-row').count(),1);assert.equal((await rows())[0].note,'preserve');await save(2,'55','6');assert.equal((await rows()).length,3);assert.equal((await rows())[2].id,'legacy-pending');
   // Empty exercises remain empty even though their plan target is nonzero.
   for(let n=3;n>=1;n--){await page.getByRole('button',{name:`Usuń serię ${n}`,exact:true}).click();if(await page.getByRole('dialog').count())await page.getByRole('button',{name:'Potwierdź usunięcie serii'}).click();}
   assert.equal((await rows()).length,0);await page.reload();await resume();assert.equal((await rows()).length,0);assert.equal((await data()).activeSession.exercises[0].targetSets,7);

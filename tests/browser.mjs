@@ -134,7 +134,7 @@ assert.ok((await page.locator('main').innerText()).includes('Plan testowy bez pr
 await page.locator('.bottom-nav').getByRole('button',{name:'Pulpit',exact:true}).click();
 const manualDate=await page.evaluate(()=>{const d=new Date();d.setDate(d.getDate()===1?2:1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;});
 const beforeManual=await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data);
-await page.getByRole('button',{name:`Trening ${manualDate}`,exact:true}).click();
+await page.locator('.dashboard-calendar>summary').evaluate(el=>{el.parentElement.open=true;});await page.getByRole('button',{name:`Trening ${manualDate}`,exact:true}).click();
 assert.equal(await page.getByTestId('training-count').innerText(),'3');
 await page.locator('.bottom-nav').getByRole('button',{name:'Historia',exact:true}).click();
 assert.equal(await page.getByTestId('history-training-count').innerText(),'3');
@@ -143,7 +143,7 @@ const afterManual=await page.evaluate(()=>JSON.parse(localStorage.getItem('pakie
 assert.deepEqual(afterManual.workouts,beforeManual.workouts);
 await page.reload();
 assert.equal(await page.getByTestId('training-count').innerText(),'3');
-await page.getByRole('button',{name:`Trening ${manualDate}`,exact:true}).click();
+await page.locator('.dashboard-calendar>summary').evaluate(el=>{el.parentElement.open=true;});await page.getByRole('button',{name:`Trening ${manualDate}`,exact:true}).click();
 assert.equal(await page.getByTestId('training-count').innerText(),'2');
 // Filled drafts stay unconfirmed at finish; explicitly save the row in its editor.
 await page.locator('.bottom-nav').getByRole('button',{name:'Plany',exact:true}).click();

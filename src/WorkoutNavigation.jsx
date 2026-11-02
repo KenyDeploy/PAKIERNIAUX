@@ -19,6 +19,6 @@ export function WorkoutNavigation({ index, count, onPrevious, onNext, onFinish }
   return <nav ref={navigation} className="workout-navigation workout-action-dock" aria-label="Nawigacja treningu">
     <button type="button" className="secondary-cta workout-previous" disabled={index===0} aria-label="Poprzednie ćwiczenie" onClick={onPrevious}>Poprzednie</button>
     <button type="button" className="secondary-cta workout-next" disabled={index>=count-1} aria-label="Następne ćwiczenie" onClick={onNext}>Następne <ArrowRight size={18}/></button>
-    <button type="button" className="secondary-cta workout-finish" aria-label="Zakończ trening" onClick={onFinish}><Square size={16}/> Zakończ</button>
+    <div className="workout-finish-area"><button type="button" className="secondary-cta workout-finish" aria-label="Zakończ trening" onClick={onFinish}><Square size={16}/><span>Zakończ trening</span></button></div>
   </nav>;
 }

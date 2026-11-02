@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { ArrowRight, CalendarDays, Droplets, Dumbbell, Flame, History, ListPlus, Plus, TrendingUp, Weight } from "lucide-react";
 import { dashboardMetrics, dashboardPlan } from "./dashboard.js";
 import { planName } from "./training.js";
@@ -11,7 +11,6 @@ import "./PremiumDashboard.css";
 const format = value => value.toLocaleString("pl-PL", { maximumFractionDigits: 1 });
 const weekdays = ["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"];
 export function HomeDashboard({ plans, selectedPlanId, activeSession, workouts, completedDays, measurements = [], today, water, weekWater, onStart, onPlans, onHistory, onProgress, onWater, calendar, setup }) {
-  useEffect(() => { window.scrollTo?.({ top: 0, left: 0, behavior: "auto" }); }, []);
   const metrics = useMemo(() => dashboardMetrics(workouts, completedDays), [workouts, completedDays, today]);
   const { plan, label } = dashboardPlan(plans, selectedPlanId, activeSession, today);
   const canStart = Boolean(activeSession || plan?.exercises.length);
@@ -35,7 +34,7 @@ export function HomeDashboard({ plans, selectedPlanId, activeSession, workouts, 
     <section className="dashboard-week" aria-label="Bieżący tydzień"><div className="dashboard-section-heading"><h2>Twój tydzień</h2><button type="button" aria-label="Otwórz postęp" onClick={onProgress}><TrendingUp size={20} /></button></div><div className="dashboard-week-days">{metrics.week.map((day, i) => <div className={`dashboard-weekday${day.today ? " today" : ""}`} key={day.date} data-done={day.attended} aria-label={`${day.date}: ${day.attended ? "trening oznaczony" : "brak treningu"}`}><small>{weekdays[i]}</small><span /><b>{Number(day.date.slice(-2))}</b></div>)}</div><p>Bieżący tydzień · zaznaczone dni treningowe</p></section>
     <nav className="dashboard-links" aria-label="Skróty pulpitu"><button type="button" onClick={onHistory}><History size={18} />Historia</button><button type="button" onClick={onPlans}><Dumbbell size={18} />Plany</button><button type="button" onClick={onProgress}><TrendingUp size={18} />Postęp</button></nav>
     <RewardsPanel rewards={rewards}/>
-    {calendar}
+    <details className="dashboard-calendar"><summary>Pełny kalendarz treningów</summary>{calendar}</details>
     <details className="dashboard-water"><summary><Droplets size={19} /><span>Nawodnienie</span><b>{format(water)} L</b></summary><div className="dashboard-water-body"><p>Dzisiaj · cel 2 L</p><div className="dashboard-water-actions"><button type="button" aria-label="Odejmij 0,2 litra" onClick={() => onWater(-0.2)}>− 0,2 L</button><button type="button" aria-label="Dodaj 0,2 litra" onClick={() => onWater(0.2)}><Plus size={17} /> 0,2 L</button></div><div className="dashboard-water-week" aria-label="Nawodnienie w bieżącym tygodniu">{weekWater.map((value, i) => <span key={i}><small>{weekdays[i]}</small><b>{format(value)} L</b></span>)}</div></div></details>
   </div>;
 }

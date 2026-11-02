@@ -12,7 +12,7 @@ try {
   assert.match(await page.locator('.dashboard-plan').innerText(),/Dół ciała — siła/);
   for(const [width,height] of [[320,568],[375,740],[390,844],[430,844]]) {
     await page.setViewportSize({width,height});
-    const layout=await page.evaluate(()=>{const b=document.querySelector('.dashboard-start'),r=b.getBoundingClientRect(),calendar=document.querySelector('.workout-calendar').getBoundingClientRect(),stats=document.querySelector('.dashboard-metrics');return {width:document.documentElement.scrollWidth,cta:r.bottom,nav:document.querySelector('.bottom-nav').getBoundingClientRect().top,hit:b.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)),columns:getComputedStyle(stats).gridTemplateColumns.split(' ').length,calendar:calendar.top,week:document.querySelector('.dashboard-week').getBoundingClientRect().bottom};});
+    const layout=await page.evaluate(()=>{const b=document.querySelector('.dashboard-start'),r=b.getBoundingClientRect(),calendar=document.querySelector('.dashboard-calendar').getBoundingClientRect(),stats=document.querySelector('.dashboard-metrics');return {width:document.documentElement.scrollWidth,cta:r.bottom,nav:document.querySelector('.bottom-nav').getBoundingClientRect().top,hit:b.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)),columns:getComputedStyle(stats).gridTemplateColumns.split(' ').length,calendar:calendar.top,week:document.querySelector('.dashboard-week').getBoundingClientRect().bottom};});
     assert.ok(layout.width<=width && layout.hit && layout.cta<layout.nav && layout.cta<400 && layout.columns===2 && layout.calendar>layout.week,JSON.stringify({width,...layout}));
   }
   await page.locator('.dashboard-water summary').click();await page.getByRole('button',{name:'Dodaj 0,2 litra'}).click();
@@ -31,10 +31,11 @@ try {
   await page.setViewportSize({width:390,height:844});
   await page.evaluate(()=>window.scrollTo(0,0));
   if(process.env.DASHBOARD_SCREENSHOT)await page.screenshot({path:process.env.DASHBOARD_SCREENSHOT});
+  await page.locator('.dashboard-calendar>summary').click();
   const beforeMark=await snapshot();
   await page.getByRole('button',{name:'Trening 2026-10-27',exact:true}).click();
   assert.equal(await page.getByTestId('training-count').innerText(),'5');assert.equal(await page.getByTestId('dashboard-set-count').innerText(),'3');assert.match(await page.getByTestId('dashboard-volume').innerText(),/310 kg/);
-  await page.reload();assert.equal(await page.getByTestId('training-count').innerText(),'5');
+  await page.reload();assert.equal(await page.getByTestId('training-count').innerText(),'5');await page.locator('.dashboard-calendar>summary').click();
   await page.getByRole('button',{name:'Trening 2026-10-27',exact:true}).click();
   assert.equal(await page.getByTestId('training-count').innerText(),'4');
   await page.getByRole('button',{name:'Trening 2026-10-30',exact:true}).click();
