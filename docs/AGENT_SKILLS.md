@@ -1,6 +1,6 @@
 # Umiejętności Pakierni na dwóch laptopach
 
-Umiejętności są zwykłymi plikami repozytorium w `.agents/skills/`. Pobranie tej gałęzi pobiera ten sam zestaw instrukcji. Nie są instalowane globalnie i nie wymagają Skills CLI do używania. Nie zmieniają kodu aplikacji ani `package.json`.
+Umiejętności są zwykłymi plikami repozytorium w `.agents/skills/`. Źródłem zatwierdzonej wersji jest GitHub `main`, a stałym adresem aplikacji https://pakierniaux.vercel.app. Gałęzie i Preview służą do pracy oraz testów. Skills nie są instalowane globalnie i nie wymagają Skills CLI do używania. Nie zmieniają kodu aplikacji ani `package.json`.
 
 ## Drugi laptop — dokładne kroki
 
@@ -9,18 +9,18 @@ Jeżeli repozytorium nie jest jeszcze pobrane:
 ```sh
 git clone https://github.com/KenyDeploy/PAKIERNIAUX.git
 cd PAKIERNIAUX
-git switch codex/pakiernia-design-skills
+git switch main
 ```
 
 Jeżeli repozytorium już jest na laptopie, najpierw `git status`; nie nadpisuj ani nie resetuj niezapisanych zmian. Po ich bezpiecznym zachowaniu:
 
 ```sh
 git fetch origin
-git switch codex/pakiernia-design-skills
+git switch main
 git pull --ff-only
 ```
 
-Do czasu scalenia PR pliki są na tej gałęzi, nie na `main`. Po osobno zatwierdzonym scaleniu pobierz `main` i twórz od niego nowe gałęzie robocze. Nie trzeba ponownie instalować umiejętności na drugim komputerze ani kopiować ich do katalogu użytkownika.
+Po pobraniu zatwierdzonego `main` twórz od niego osobne gałęzie robocze, np. `git switch -c codex/nazwa-zadania`. Nie trzeba ponownie instalować umiejętności na drugim komputerze ani kopiować ich do katalogu użytkownika. Zmiany trafiają na `main` i produkcję dopiero po weryfikacji oraz poleceniu obejmującym publikację.
 
 Otwórz **folder PAKIERNIAUX jako projekt** w Codexie, a nie nadrzędny folder Documents lub wygenerowany folder czatu. Repozytoryjne Skills są wykrywane w `.agents/skills` od katalogu roboczego do korzenia repozytorium. Codex wykrywa zmiany automatycznie; jeżeli lista nie odświeży się, otwórz ponownie projekt i rozpocznij nowy czat, a w razie potrzeby uruchom ponownie Codexa. Sprawdź selektor `$`/listę Skills; w CLI/IDE dostępne jest także `/skills`.
 
