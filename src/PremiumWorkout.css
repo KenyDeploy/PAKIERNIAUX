@@ -11,37 +11,55 @@
 .app-shell.is-workout .workout-quick-actions{order:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
 .workout-quick-actions button,.workout-skip-offer button{min-height:44px;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line);border-radius:10px;background:#111313;color:var(--text);font-size:12px}
 .workout-quick-actions button:first-child{color:var(--accent)}
-.app-shell.is-workout .workout-hero-photo{height:clamp(100px,17svh,145px);border-radius:12px}
+.app-shell.is-workout .workout-hero-photo{height:clamp(160px,28svh,240px);border-radius:14px;background:#101212}
+.app-shell.is-workout .workout-hero-photo .exercise-visual{width:100%;justify-content:center}
+.app-shell.is-workout .workout-hero-photo .exercise-photo{width:min(100%,calc(clamp(160px,28svh,240px) * 1.5));height:auto;max-height:100%;aspect-ratio:3/2;flex-shrink:0;background-color:#101212}
 .app-shell.is-workout .workout-last-result{padding:10px;min-height:54px;border-radius:12px;background:linear-gradient(115deg,var(--accent-soft),#101112)}
 .app-shell.is-workout .workout-last-result b{font-size:11px;line-height:1.4}
-.app-shell.is-workout .current-exercise{padding:10px;background:#0d0f0f;border-color:var(--line);box-shadow:none;border-radius:14px}
+.app-shell.is-workout .current-exercise{padding:0;background:transparent;border:0;box-shadow:none;border-radius:0}
 .app-shell.is-workout .exercise-title{margin-bottom:7px}
 .app-shell.is-workout .exercise-title small{font-size:10px}
 .app-shell.is-workout .series-status{font-size:11px;color:var(--muted);margin:0 0 8px}
 .app-shell.is-workout .growing-series-list .series-entry{scroll-margin-top:calc(94px + env(safe-area-inset-top));scroll-margin-bottom:100px}
-.app-shell.is-workout .growing-series-list .set-row{margin-top:0;gap:10px;background:linear-gradient(130deg,#161919,#101212);border-color:var(--line);box-shadow:none}
-.app-shell.is-workout .growing-series-list .set-row.active{border-color:var(--accent-border);box-shadow:0 0 14px var(--accent-glow)}
+.app-shell.is-workout .growing-series-list .set-row{margin-top:0;gap:12px;padding:14px;background:#111414;border-color:var(--line);box-shadow:none;border-radius:14px}
+.app-shell.is-workout .growing-series-list .set-row.active{border-color:var(--accent-border);box-shadow:inset 2px 0 var(--accent)}
 .app-shell.is-workout .growing-series-list .series-stepper{background:#212424;border-color:#303433}
 .app-shell.is-workout .growing-series-list .series-stepper input{font-size:24px}
 .app-shell.is-workout .growing-series-list .set-row.waiting .set-confirm{background:#1b1f1e;color:var(--text);border:1px solid var(--line);box-shadow:none}
-.app-shell.is-workout .growing-series-list .series-compact{padding:5px 8px;background:#111313;min-height:56px}
+.app-shell.is-workout .growing-series-list .series-compact{padding:3px 6px;background:transparent;min-height:50px;border:0;border-bottom:1px solid var(--line);border-radius:0;margin-bottom:6px}
+.app-shell.is-workout .growing-series-list .series-compact button{border:0;background:transparent}
 .app-shell.is-workout .series-result{flex-direction:row;align-items:center;justify-content:space-between;gap:8px}
 .app-shell.is-workout .series-result span{font-size:13px}
 .app-shell.is-workout .series-add-hint{font-size:10px;margin-top:8px}
-.compact-rest{margin:8px 0 10px;padding:8px;border:1px solid var(--line);border-radius:11px;background:#121515;scroll-margin-top:calc(94px + env(safe-area-inset-top))}
+.compact-rest{margin:6px 0 12px;padding:0 0 6px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;scroll-margin-top:calc(94px + env(safe-area-inset-top))}
 .compact-rest-heading{display:flex;align-items:center;gap:8px;min-height:44px;font-size:12px;color:var(--muted)}
 .compact-rest-heading b{margin-left:auto;color:var(--accent);font-size:23px;font-variant-numeric:tabular-nums}
 .compact-rest-heading>button{margin-left:auto;min-width:44px;min-height:44px;display:grid;place-items:center;border:0;border-radius:9px;background:transparent;color:var(--muted)}
 .compact-rest-heading b+button{margin-left:0}
 .app-shell.is-workout .compact-rest .rest-action-controls{gap:6px}
 .app-shell.is-workout .compact-rest .rest-action-controls button,.rest-quick-start{min-height:44px;border:1px solid var(--line);background:#1b1e1e;border-radius:9px;color:var(--text);font-size:11px}
-.rest-quick-start{display:flex;align-items:center;justify-content:center;gap:7px;width:100%}
-.app-shell.is-workout .workout-action-dock{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:22;display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,1fr);gap:7px;width:100%;max-width:520px;padding:9px max(12px,env(safe-area-inset-right)) max(9px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));background:#090b0bf5;backdrop-filter:blur(16px);border-top:1px solid var(--line)}
+.app-shell.is-workout .compact-rest .rest-quick-start{display:flex;align-items:center;justify-content:flex-start;gap:8px;flex:1;width:auto;background:transparent;border:0;color:var(--muted);font-size:12px;padding:0 4px}
+.app-shell.is-workout .compact-rest .rest-action-controls button{background:transparent;border-color:var(--line);font-size:12px}
+.compact-rest.is-idle .compact-rest-heading{gap:4px}
+.app-shell.is-workout .workout-action-dock{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:22;display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,1fr);gap:7px;width:100%;max-width:520px;padding:9px max(12px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));background:#090b0bf5;backdrop-filter:blur(16px);border-top:1px solid var(--line)}
 .app-shell.is-workout .workout-action-dock button{min-height:48px;padding:8px;font-size:12px;background:#181b1a;color:var(--text);box-shadow:none;gap:5px}
 .app-shell.is-workout .workout-action-dock .workout-next{border-color:var(--accent-border);color:var(--accent)}
 .app-shell.is-workout .workout-action-dock .workout-finish{background:transparent}
 .workout-skip-offer{order:2;display:flex;flex-wrap:wrap;gap:8px;padding:10px;border:1px solid var(--accent-border);border-radius:12px;background:#131615}
 .workout-skip-offer span{flex:1 1 100%;font-size:12px;line-height:1.4;color:var(--muted)}
 .workout-skip-offer button{flex:1;padding:8px;color:var(--accent)}
+/* A single quiet list rather than a stack of heavy action cards. */
+.app-shell .session-exercise-menu{background:#101212;border-color:var(--line)}
+.app-shell .session-exercise-menu .sheet-body{gap:12px}
+.app-shell .session-exercise-menu .session-menu-preview{padding:0 0 12px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent}
+.app-shell .session-exercise-menu .session-menu-preview .exercise-photo-thumb{width:60px;height:52px;flex-shrink:0;border-radius:9px}
+.app-shell .session-exercise-menu .session-menu-actions{display:flex;flex-direction:column}
+.app-shell .session-exercise-menu .workout-menu-action{min-height:48px;padding:10px 4px;border:0;border-radius:8px;background:transparent;font-size:14px;gap:12px}
+.app-shell .session-exercise-menu .session-menu-actions .workout-menu-action+.workout-menu-action{border-top:1px solid #ffffff08}
+.app-shell .session-exercise-menu .workout-menu-action>svg{padding:0;border:0;border-radius:0;width:20px;height:20px;box-sizing:border-box}
+.app-shell .session-exercise-menu .session-remove-action{color:var(--danger,#ff8585)}
+.app-shell .session-exercise-menu .exercise-jump{padding-top:8px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);display:grid;gap:8px}
+.app-shell .session-exercise-menu select{width:100%;min-width:0;background:#191c1b;border:1px solid var(--line);border-radius:10px;padding:10px;color:var(--text)}
+.app-shell .session-exercise-menu .sheet-footer .workout-menu-action{background:#1a1e1c;border:1px solid var(--line);justify-content:center}
 @media(max-width:350px){.app-shell.is-workout .growing-series-list .set-fields{grid-template-columns:1fr}.app-shell.is-workout .series-result{flex-direction:column;align-items:flex-start;gap:2px}.app-shell.is-workout .workout-quick-actions button{font-size:11px;gap:4px}}
 @media(prefers-reduced-motion:reduce){.app-shell.is-workout *{scroll-behavior:auto}}

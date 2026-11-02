@@ -24,3 +24,13 @@ Zrzuty 390 px w lokalnym Chromium, wyłącznie izolowane dane testowe. Nie stano
 Porównanie z approved-ui-reference.png: zachowano kompaktowe logo/zegar, ciemne neutralne tło, akcent motywu, zdjęcie, zwartą historię i duże pola/CTA. Wykonane serie pozostają w zwartej narastającej liście zgodnie z późniejszym wymaganiem użytkownika. Dodano jawne Zamień/Pomiń/Opcje i stale dostępne zakończenie zamiast ukrywania ich wyłącznie w menu. Użyto rzeczywistych istniejących zasobów ćwiczeń, dlatego nazwa i zdjęcie różnią się od przykładu z planszy; nie kopiowano fikcyjnej historii ani dat.
 
 Odtwarzanie: `tests/workout-premium-capture.mjs`, `SCREENSHOT` wskazuje plik wyjściowy; `APP_URL`, `PLAYWRIGHT_MODULE` i `CHROMIUM_PATH` wskazują lokalny preview i dostępny Chromium. Stan „przed” zarejestrowano przed edycją kodu. Testy oraz ograniczenia opisuje sekcja wdrożenia UX03–UX05 w UX_AUDIT.md. Fizycznego iPhone’a nie testowano.
+
+## Polish treningu — etap A
+
+[Before 390 px](polish-a-before-390.png) pochodzi z 900eea8, przed edycją kodu. [After 390 px](polish-a-after-390.png) i [panel opcji](polish-a-options-after-390.png) pokazują lokalne dane testowe, bez generowania nowych zasobów.
+
+Pełna klatka atlasu 3:2 mieści się w kontrolowanej wysokości 160–240 px bez obcinania sylwetki; własne zdjęcia treningu używają contain. Powiększanie pozostaje dostępne. Nieaktywna przerwa jest jednym wierszem, aktywna ma lekkie sterowanie. Opcje to lista akcji bez stosu ciężkich kart; wykonane serie są wierszami, a bieżąca karta ma subtelny akcent. Dolny pasek ma dodatkowy odstęp ponad safe-area i reaguje także na zmianę rozmiaru okna. Nie zmieniono zapisu wyników, planów ani synchronizacji.
+
+Walidacja: build PASS; 15 odpowiednich testów active-series/session-actions/training-clock PASS. Scenariusze workout-polish-a, workout-premium i timer-photo PASS: 320/375/390/430 px, różne ćwiczenia, pionowe/poziome zdjęcia własne, powiększenie, start/+15/pominięcie przerwy, menu, wykonane wiersze, wznowienie 10 serii i symulowany visualViewport klawiatury. Brak poziomego przewijania i błędów JS w tych próbach. iPhone Safari/PWA, natywna klawiatura i rzeczywisty pasek przeglądarki wymagają testu na urządzeniu — nie zastępuje go Chromium.
+
+Zrzut after odtwarza `tests/workout-polish-a.mjs`; before wykonano `tests/workout-premium-capture.mjs` przed zmianami z SCREENSHOT ustawionym na ścieżkę before. Nie scalano do main ani nie publikowano produkcji.

@@ -10,8 +10,8 @@ export function WorkoutNavigation({ index, count, onPrevious, onNext, onFinish }
       const covered=Math.max(0,window.innerHeight-(viewport?.offsetTop||0)-(viewport?.height||window.innerHeight));
       navigation.current.style.bottom=`${covered}px`;
     };
-    position(); viewport?.addEventListener("resize",position); viewport?.addEventListener("scroll",position);
-    return ()=>{viewport?.removeEventListener("resize",position);viewport?.removeEventListener("scroll",position);};
+    position(); viewport?.addEventListener("resize",position); viewport?.addEventListener("scroll",position); window.addEventListener("resize",position);
+    return ()=>{viewport?.removeEventListener("resize",position);viewport?.removeEventListener("scroll",position);window.removeEventListener("resize",position);};
   },[]);
   return <nav ref={navigation} className="workout-navigation workout-action-dock" aria-label="Nawigacja treningu">
     <button type="button" className="secondary-cta workout-previous" disabled={index===0} aria-label="Poprzednie ćwiczenie" onClick={onPrevious}><ArrowLeft size={20}/></button>

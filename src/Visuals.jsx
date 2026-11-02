@@ -45,9 +45,9 @@ export function TrendChart({ points, unit }) {
     <details className="chart-table"><summary>Pokaż wartości</summary>{points.map((p,i) => <div key={i}>{p.date}<b>{fmt(p.value)} {unit}</b></div>)}</details>
   </div>;
 }
-export function ExerciseVisual({ exercise }) {
+export function ExerciseVisual({ exercise, photoFit }) {
   const photo = exercisePhotoStyle(exercise);
-  if (photo) return <figure className="exercise-visual"><div className="exercise-photo" role="img" aria-label={exercise.name} style={photo} /><figcaption>{isCustomPhoto(exercise.customPhoto) ? "Twoje zdjęcie" : "Wizualizacja AI"}</figcaption></figure>;
+  if (photo) return <figure className="exercise-visual"><div className="exercise-photo" role="img" aria-label={exercise.name} style={{...photo,...(photoFit && isCustomPhoto(exercise.customPhoto) ? {backgroundSize:photoFit} : {})}} /><figcaption>{isCustomPhoto(exercise.customPhoto) ? "Twoje zdjęcie" : "Wizualizacja AI"}</figcaption></figure>;
   const isLeg = exercise.category === "Nogi", isBack = exercise.category === "Plecy";
   return <figure className="exercise-visual">
     <svg viewBox="0 0 320 150" role="img" aria-label={`Ilustracja partii: ${exercise.category}`}>
