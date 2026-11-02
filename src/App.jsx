@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import {
   Activity,
   ArrowRight,
@@ -65,6 +65,7 @@ import { SessionExerciseEditor } from "./SessionExerciseEditor";
 import { CompactRest } from "./CompactRest";
 import { WorkoutNavigation } from "./WorkoutNavigation";
 import "./PremiumWorkout.css";
+import "./UXRefinement.css";
 import { WorkoutTimerSheet } from "./WorkoutTimerSheet";
 import { ExercisePhotoViewer } from "./ExercisePhotoViewer";
 import { workoutElapsedSeconds, restRemainingSeconds, pauseWorkoutClock, resumeWorkoutClock, startSessionRest, pauseSessionRest, resumeSessionRest, extendSessionRest, skipSessionRest } from "./trainingClock.js";
@@ -120,7 +121,19 @@ function formatDuration(totalSeconds) {
   return `${String(Math.floor(totalSeconds / 60)).padStart(2, "0")}:${String(totalSeconds % 60).padStart(2, "0")}`;
 }
 export default function App() {
-  const [tab, setTab] = useState("home");
+  const [tab, setTabState] = useState("home");
+  const [navigationRequest, setNavigationRequest] = useState(0);
+  const setTab = next => {
+    setTabState(next);
+    setNavigationRequest(request => request + 1);
+  };
+  useLayoutEffect(() => {
+    // Main screens scroll the document. Workout owns an internal scroller and
+    // restores the persisted exercise/series in ActiveSetEditor on entry.
+    if (tab === "workout") return;
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    document.querySelector("main.content")?.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [tab, navigationRequest]);
   const [bodySetupOpen, setBodySetupOpen] = useState(false);
   const [bodySetupError, setBodySetupError] = useState("");
   const [themePreview, setThemePreview] = useState(null);
@@ -539,10 +552,10 @@ export default function App() {
             <label className="workout-session-picker">Ćwiczenia w sesji<select aria-label="Ćwiczenia w sesji" value={activeExerciseIndex} onChange={event=>setActiveExerciseIndex(Number(event.target.value))}>{activeSession.exercises.map((exercise,index)=><option key={exercise.id} value={index}>{index+1}. {exercise.name}{exercise.skipped?" · pominięte":exercise.sets.some(row=>row.completed)?" · są wykonane serie":""}</option>)}</select></label>
             <div className="workout-quick-actions"><button type="button" onClick={() => setWorkoutPanel("replace")}><RotateCcw size={16}/> Zamień</button><button type="button" disabled={currentExercise.skipped} onClick={() => setExerciseSkipped(true)}><SkipForward size={16}/> Pomiń</button><button type="button" onClick={() => setWorkoutPanel("exercise")}><Settings2 size={16}/> Opcje</button></div>
             {skipOffer != null && <div className="workout-skip-offer" role="status"><span>Pominięto: {activeSession.exercises.find(e => e.id === skipOffer)?.name}. Wyniki są zachowane do cofnięcia.</span><button type="button" onClick={undoSkipped}>Cofnij</button>{currentExercise.id === skipOffer && activeExerciseIndex < activeSession.exercises.length - 1 && <button type="button" onClick={() => setActiveExerciseIndex(activeExerciseIndex + 1)}>Następne ćwiczenie</button>}</div>}
-            <div className="workout-hero-photo">
+            <details className="workout-photo-preview"><summary>Zdjęcie ćwiczenia</summary><div className="workout-hero-photo">
               <ExerciseVisual exercise={currentExercise} photoFit="contain" />
               <button type="button" className="workout-photo-open" aria-label="Powiększ zdjęcie ćwiczenia" onClick={() => setWorkoutPanel("photo")}><Maximize2 size={20} /></button>
-            </div>
+            </div></details>
             <button type="button" className="workout-last-result" aria-label="Ostatni trening — szczegóły ćwiczenia" onClick={() => setWorkoutPanel("history")}><History size={21} /><span><small>{previousExercise ? `Ostatni trening · ${displayDate(previousExercise.date)}` : "Ostatni trening"}</small><b>{previousExercise ? `${seriesLabel(previousExercise.sets.length)} · ${previousExercise.sets.slice(0, 3).map(historySetLabel).join(" / ") + (previousExercise.sets.length > 3 ? " …" : "")}` : "Brak wyników — ustal punkt wyjściowy"}</b></span><ChevronRight size={20} /></button>
             <section className="workout-exercise current-exercise card">
               {currentExercise.skipped && <div className="session-skipped-banner" role="status"><p>Ćwiczenie pominięte. Jego serie nie trafią do wyniku treningu.</p><button type="button" onClick={() => setExerciseSkipped(false)}>Cofnij pominięcie</button></div>}

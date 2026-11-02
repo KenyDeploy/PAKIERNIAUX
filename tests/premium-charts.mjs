@@ -18,7 +18,7 @@ try{
   await chart.locator('svg [role=button]').first().click();assert.match(await chart.locator('.chart-value').innerText(),/50 kg/);
   for(const width of [320,375,390,430]){await page.setViewportSize({width,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));}
   await page.setViewportSize({width:390,height:844});
-  await page.locator('.bottom-nav').getByRole('button',{name:'Pomiary',exact:true}).click();await page.getByLabel('Wybierz pomiar').selectOption('weight');const body=page.locator('.body-list-panel .trend-chart');
+  await page.locator('.bottom-nav').getByRole('button',{name:'Pomiary',exact:true}).click();await page.getByRole('tab',{name:'Historia / analiza',exact:true}).click();await page.getByLabel('Wybierz pomiar').selectOption('weight');const body=page.locator('.body-list-panel .trend-chart');
   assert.equal(await body.locator('.chart-line').count(),1);await body.getByRole('button',{name:'7 dni',exact:true}).click();assert.equal(await body.locator('.chart-line').count(),0);assert.equal(await body.locator('svg [role=button]').count(),1);
   await body.getByRole('button',{name:'Cały okres',exact:true}).click();assert.equal(await body.locator('svg [role=button]').count(),3);
  }

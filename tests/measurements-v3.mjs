@@ -71,6 +71,7 @@ try {
   assert.match(await page.locator('.body-reading-deltas').innerText(), /-3/);
   assert.match(await page.locator('.body-reading-deltas').innerText(), /-6/);
   const stable = await snapshot();
+  await page.locator('.body-model-options summary').click();
   for (const [model, label] of [['male', 'Mężczyzna'], ['female', 'Kobieta']]) {
     await page.getByRole('button', { name: label, exact: true }).click();
     for (const side of ['Przód', 'Tył']) {
@@ -91,7 +92,7 @@ try {
   }
   await page.getByRole('button', { name: 'Biceps prawy: 38 cm', exact: true }).click();
   assert.equal(await page.getByLabel('Wybierz pomiar').inputValue(), 'bicepsRight');
-  await page.getByRole('tab', { name: 'Porównaj', exact: true }).click();
+  await page.getByRole('button', { name: 'Porównaj daty', exact: true }).click();
   await page.getByLabel('Data: Wtedy', { exact: true }).selectOption('2026-10-01');
   await page.getByLabel('Data: Teraz', { exact: true }).selectOption('2026-10-20');
   const slider = page.getByRole('slider', { name: 'Wtedy / Teraz — wybierz zapis' });

@@ -1,0 +1,52 @@
+/* Navigation owns scroll resets; details/dialogs leave their parent list intact. */
+.app-shell .content { overflow-anchor: none; }
+.app-shell .dashboard-welcome { padding-bottom: 8px; }
+.app-shell .dashboard-metric { padding: 12px; }
+.app-shell .dashboard-metric-main { min-height: 52px; }
+.app-shell .dashboard-metric .mini-chart-wrap:has(>.empty-state), .dashboard-metric:has(.empty-state) .dashboard-spark-caption { display: none; }
+.home-dashboard .body-setup-invite { padding: 12px; gap: 8px; }
+.home-dashboard .body-setup-invite>div { flex-basis: 100%; }
+.home-dashboard .body-setup-invite h2 { font-size: 16px; }
+.home-dashboard .body-setup-invite p { font-size: 12px; margin: 4px 0; line-height: 1.4; }
+.home-dashboard .body-setup-invite>.primary-cta { flex: 1; width: auto; min-height: 44px; }
+.home-dashboard .body-setup-invite>.secondary-cta { width: auto; min-height: 44px; }
+.app-shell .dashboard-progress-card { padding: 14px; }
+.dashboard-calendar { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.dashboard-calendar>summary, .body-profile-options>summary, .body-model-options>summary { min-height: 44px; padding: 12px; cursor: pointer; color: var(--text); font-size: 13px; }
+.dashboard-calendar .workout-calendar { border: 0; margin: 0; }
+.app-shell .trend-chart:has(>.empty-state) { min-height: 0; height: auto; padding: 8px 0; }
+.app-shell .trend-chart>.empty-state, .app-shell .chart-panel>.empty-state { min-height: 0; padding: 16px 8px; margin: 0; }
+.app-shell .stats-hero { min-height: 0; padding: 18px; }
+.app-shell .plan-card, .app-shell .exercise-card { scroll-margin-top: 90px; }
+.app-shell.is-workout .workout-action-dock { grid-template-columns: 1fr 1fr 76px; gap: 6px; padding-top: 8px; }
+.workout-finish-area { border-left: 1px solid var(--line); margin-left: 4px; padding-left: 8px; display: flex; justify-content: center; }
+.app-shell.is-workout .workout-finish-area .workout-finish { min-height: 44px; color: var(--muted); background: transparent; border: 0; }
+.app-shell.is-workout .workout-finish-area .workout-finish { flex-direction: column; font-size: 10px; line-height: 1.15; }
+.app-shell.is-workout .workout-action-dock .workout-next { background: var(--accent); color: var(--on-accent); }
+.app-shell.is-workout .growing-series-list .series-compact { padding: 4px 8px; border-radius: 8px; background: var(--surface); }
+.app-shell.is-workout .growing-series-list .series-result { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; align-items: center; }
+.app-shell.is-workout .series-result small { grid-column: 2; }
+.app-shell.is-workout .growing-series-list .series-stepper { border-color: var(--line); box-shadow: none; background: var(--surface); }
+.app-shell.is-workout .growing-series-list .series-stepper button { color: var(--muted); }
+.app-shell.is-workout .growing-series-list .series-entry { scroll-margin-top: 12px; }
+.app-shell.is-workout .compact-rest { background: var(--surface); }
+.app-shell.is-workout .compact-rest-heading b { font-size: 19px; }
+.app-shell.is-workout .workout-hero-photo { max-height: 210px; overflow: hidden; }
+.app-shell.is-workout .workout-hero-photo .exercise-photo { max-height: 210px; }
+.workout-photo-preview { order: 1; border-bottom: 1px solid var(--line); }
+.workout-photo-preview>summary { min-height: 44px; padding: 12px 4px; font-size: 12px; color: var(--muted); cursor: pointer; }
+.app-shell .measurements-page .body-view-modes { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.body-profile-options { margin-top: 16px; border: 1px solid var(--line); border-radius: 12px; padding: 0 10px 10px; }
+.body-profile-options:not([open]) { padding-bottom: 0; }
+.body-model-options { min-width: 0; flex: 1; }
+.body-model-options>summary { padding: 12px 4px; color: var(--muted); }
+.body-model-options[open] .body-toggle { flex-wrap: wrap; }
+.app-shell .body-model-toolbar { align-items: flex-start; }
+.body-compare-toggle { width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); margin: 4px 0 10px; }
+.body-compare-toggle[aria-pressed=true] { color: var(--accent); border-color: var(--accent-border); }
+.app-shell .body-reading { padding: 14px; }
+.app-shell button:focus-visible, .app-shell summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media(max-width:350px) {
+  .app-shell.is-workout .growing-series-list .set-fields { grid-template-columns: 1fr; }
+  .app-shell.is-workout .growing-series-list .series-result { display: flex; align-items: flex-start; }
+}
