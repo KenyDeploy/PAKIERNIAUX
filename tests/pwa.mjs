@@ -34,13 +34,16 @@ try {
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.exercises[0].sets[0].completed),true);
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data.activeSession.pausedAt),paused);
  await page.getByRole('button',{name:'Czas treningu i opcje'}).click();
-await page.getByRole('button',{name:'Zakończ trening',exact:true}).click();
+await page.getByRole('dialog',{name:'Czas i przerwa',exact:true}).getByRole('button',{name:'Zakończ trening',exact:true}).click();
  await page.getByRole('button',{name:'Zapisz trening',exact:true}).click();
  await page.getByText('Dobra robota!').waitFor();
  await page.reload();
  assert.equal(await page.getByTestId('training-count').innerText(),'1');
  const decoded=await page.evaluate(async()=>{const image=new Image();image.src='/exercise-photos-v1-12.webp';await image.decode();return image.naturalWidth>0;});
  assert.equal(decoded,true);
+ for(const name of ['male-front','male-back','female-front','female-back']) {
+  assert.equal(await page.evaluate(async name=>{const image=new Image();image.src=`/body-models/${name}.webp`;await image.decode();return image.naturalWidth===1024;},name),true);
+ }
  assert.deepEqual(errors,[]);
  console.log('PASS: production shell and photo cache -> offline reload -> restore draft -> save local workout -> reopen. Cloud account offline support is not covered.');
 } finally {await browser.close();}

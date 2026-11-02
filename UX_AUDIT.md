@@ -1,5 +1,7 @@
 # Pakiernia — audyt intuicyjności UX
 
+Aktualizacja 02.11.2026: [Pomiary 3.0](docs/MEASUREMENTS_V3.md) podłączają cztery finalne statyczne ilustracje, neutralny bez postaci, suwak wartości i opcjonalny kreator konta. Wcześniejsze obserwacje poniżej zachowują historyczny zakres. Próba fizycznego iPhone’a pozostaje otwarta.
+
 Data: 30.10.2026. Repozytorium KenyDeploy/PAKIERNIAUX, gałąź `codex/real-progress-mobile`, PR #1. Audytowany kod: `0bb095de8d1bd2304a6cfba6649a89906300131c` — narastająca lista kart serii.
 
 **Wniosek:** podstawowy start i zapis serii są krótkie. Najpierw należy zabezpieczyć utratę sesji i szkiców, następnie ułatwić wznowienie oraz dostęp do akcji treningu. Nie należy wracać do zakładek serii ani chować ich w rozwijanej liście. W tym etapie nie wdrożono poprawek aplikacji.

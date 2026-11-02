@@ -39,6 +39,8 @@ import { SettingsPage } from "./SettingsPage";
 import { themeTokens } from "./preferences.js";
 import "./theme.css";
 import { MeasurementsPage } from "./MeasurementsPage";
+import { BodySetupWizard } from "./BodySetupWizard";
+import { deferBodySetup } from "./bodySetup.js";
 import { HomeDashboard } from "./HomeDashboard";
 import { RewardsPanel } from "./RewardsPanel";
 import { premiumInsights } from "./motivation.js";
@@ -119,8 +121,11 @@ function formatDuration(totalSeconds) {
 }
 export default function App() {
   const [tab, setTab] = useState("home");
+  const [bodySetupOpen, setBodySetupOpen] = useState(false);
+  const [bodySetupError, setBodySetupError] = useState("");
   const [themePreview, setThemePreview] = useState(null);
   const { data, update, updateData, authUser, authLoading, cloudHydrated, syncStatus, retrySync, signOut } = useTrainingData(defaultData);
+  useEffect(() => { setBodySetupOpen(false); setBodySetupError(""); }, [authUser?.id]);
   useEffect(() => { setThemePreview(null); }, [tab, authUser?.id]);
   const { plans, exercises, measurements, workouts, completedDays, waterByDate, activeSession } = data;
   const setExercises = value => update("exercises", value);
@@ -378,7 +383,7 @@ export default function App() {
         {(!supabase || cloudHydrated) && <>
 
         {tab === "home" && <HomeDashboard plans={plans} selectedPlanId={selectedPlanId} activeSession={activeSession} workouts={workouts} completedDays={completedDays} measurements={measurements}
-          today={today} water={water} weekWater={weekWater} onStart={openWorkout} onPlans={() => setTab("plans")} onHistory={() => setTab("history")} onProgress={() => setTab("stats")} onWater={changeWater}
+          setup={data.bodySetup?.status === "pending" && !activeSession ? <section className="body-setup-invite"><div><h2>Twój punkt startowy</h2><p>Wybierz ilustrację i zapisz pierwszy pomiar. Możesz też od razu rozpocząć trening.</p></div><button type="button" className="primary-cta" onClick={() => setBodySetupOpen(true)}>Skonfiguruj profil</button><button type="button" className="secondary-cta" onClick={() => { if (!updateData(deferBodySetup)) setBodySetupError("Nie zapisano wyboru. Spróbuj ponownie."); }}>Później</button>{bodySetupError && <p role="alert" className="setup-error">{bodySetupError}</p>}</section> : null} today={today} water={water} weekWater={weekWater} onStart={openWorkout} onPlans={() => setTab("plans")} onHistory={() => setTab("history")} onProgress={() => setTab("stats")} onWater={changeWater}
           calendar={<section className="card workout-calendar">
               <div className="card-head"><div><span className="eyebrow">KALENDARZ TRENINGÓW</span><h2>{calendarMonthName}</h2></div><CalendarDays size={20} /></div>
               <div className="calendar-week-labels">{["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"].map((day) => <span key={day}>{day}</span>)}</div>
@@ -625,6 +630,7 @@ export default function App() {
         {tab === "body" && <MeasurementsPage key={authUser?.id || "local"} data={data} today={today} onPersist={updateData} />}
         </>}
       </main>
+      {bodySetupOpen && cloudHydrated && <BodySetupWizard key={authUser?.id || "local"} data={data} today={today} onPersist={updateData} onClose={() => setBodySetupOpen(false)}/>}
       {tab === "workout" && currentExercise && <WorkoutNavigation index={activeExerciseIndex} count={activeSession.exercises.length} onPrevious={() => setActiveExerciseIndex(value => value - 1)} onNext={() => setActiveExerciseIndex(value => value + 1)} onFinish={openFinishReview}/>}
       {tab !== "workout" && <nav className="bottom-nav">
         {nav.map(({ id, label, icon: NavIcon }) => (

@@ -1,5 +1,7 @@
 # Pakiernia u Matiego — przekazanie do niezależnego audytu
 
+Aktualizacja 02.11.2026: [raport Pomiarów 3.0](docs/MEASUREMENTS_V3.md) opisuje podłączone finalne ilustracje, neutralny, porównanie wartości i kreator. Testy: 71/71, build, scenariusz Chromium/WebKit i wskazane regresje PASS; fizyczny iPhone nadal nieweryfikowany. Poniższa tabela braków i wyniki dotyczą historycznego snapshotu, nie aktualnego stanu ilustracji.
+
 > Historyczny snapshot przekazania na 9ab3d92. Późniejsze poprawki i zastąpienie pojedynczego edytora narastającą listą opisują sekcje „Etap A” oraz „Narastająca lista serii” w IMPLEMENTATION_PLAN.md. Poniższe wyniki 45/45 i 9/12 odnoszą się do przekazania, a nie automatycznie do każdego późniejszego HEAD.
 
 Data: 30.10.2026. Ten dokument opisuje stan przekazywany do audytu, a nie deklarację gotowości produkcyjnej. Nie dodawano w tym kroku funkcji, poprawek UI ani zmian schematu. „Ukończona” oznacza wskazany zakres działania; nie oznacza weryfikacji na fizycznym iPhonie ani kompletnej zgodności pikselowej z planszą.

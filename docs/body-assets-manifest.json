@@ -1,0 +1,34 @@
+{
+  "generatedOn": "2026-11-02",
+  "method": "OpenAI image_gen; lossless geometry, WebP quality 88 encoding",
+  "files": [
+    {
+      "path": "public/body-models/female-back.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 50582,
+      "sha256": "ef761707b925b07b046c869a0697d994c098c50f93010be3f72e8e56bfd5b38d"
+    },
+    {
+      "path": "public/body-models/female-front.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 52520,
+      "sha256": "0336c4e76b5a9f59e58150e666d4d84a6cb8c1bf36b1c225b71ac8cb4ec31fa3"
+    },
+    {
+      "path": "public/body-models/male-back.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 61588,
+      "sha256": "eb274808335b0c16316609b32390fa0a75fee87f99af534806f507725324b3a6"
+    },
+    {
+      "path": "public/body-models/male-front.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 48702,
+      "sha256": "75a6b6235838f69650c0a8e46df5bdc8114e132208ea5667d1cd2de909902376"
+    }
+  ]
+}

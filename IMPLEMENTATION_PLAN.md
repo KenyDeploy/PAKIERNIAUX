@@ -1,5 +1,7 @@
 # Pakiernia — plan dalszej implementacji
 
+Aktualizacja 02.11.2026, baza d5b4af5: [Pomiary 3.0](docs/MEASUREMENTS_V3.md) podłączają cztery finalne statyczne ilustracje, punkty, dwupozycyjny suwak Wtedy/Teraz i opcjonalny kreator konta. Profil, daty, wykresy i historia zachowane. Neutralny pokazuje wartości bez postaci. Deformacja nie należy do obecnego zakresu. Poniższe checklisty opisują historię etapów; aktualna walidacja jest w nowym raporcie. Etapów treningu i pulpitu nie implementowano ponownie.
+
 Stan: 30.10.2026. Główna referencja kolejnych etapów: zaakceptowana plansza `8436c1c4-738b-4dd1-8367-d3d1241bab0f.png` z tego czatu. Docelowo: ciemne powierzchnie, limonkowy akcent, kompaktowy mobile-first, jedna aktywna seria, spójne panele i pomiary przód/tył. Liczby na planszy są przykładami, nie danymi do wprowadzenia.
 
 ## Punkt wyjścia i granice

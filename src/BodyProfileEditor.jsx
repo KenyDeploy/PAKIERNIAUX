@@ -21,6 +21,7 @@ export function BodyProfileEditor({ profile, current, onPersist, onClose, onMeas
     <header className="sheet-header"><h2 id="body-profile-title">Profil sylwetki</h2><button type="button" className="icon-button" aria-label="Zamknij profil" onClick={requestClose}><X size={20} /></button></header>
     <div className="sheet-body">
       <p className="body-hint">Model to wybór grafiki. Nie określa płci biologicznej ani składu ciała. Budowa bazowa jest ustawieniem użytkownika, nie wynikiem analizy.</p>
+      <p className="body-hint">Ilustracje są statyczne. Wariant neutralny pokazuje punkty i wartości bez postaci. Pomiar masy początkowej zmienisz w historii pomiarów.</p>
       <label>Model sylwetki<select aria-label="Model sylwetki" value={draft.model} onChange={e => change("model", e.target.value)}>{Object.entries(modelNames).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       <label>Wyjściowa budowa<select aria-label="Wyjściowa budowa" value={draft.build} onChange={e => change("build", e.target.value)}>{Object.entries(bodyBuilds).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       <label>Wzrost (cm)<input inputMode="decimal" type="text" value={draft.heightCm} onChange={e => change("heightCm", e.target.value)} /></label>
