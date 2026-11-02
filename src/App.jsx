@@ -47,6 +47,7 @@ import { PlanEditor } from "./PlanEditor";
 import { newPlanDraft } from "./formDrafts.js";
 import { ActiveSetEditor } from "./ActiveSetEditor";
 import { confirmSeries } from "./activeSeries.js";
+import { confirmationRow, navigateSession, seriesResultLabel, sessionTotals } from "./workoutSession.js";
 import "./WorkoutHistory.css";
 import { supabase } from "./supabase";
 import { catalog, starterExercises } from "./catalog";
@@ -148,12 +149,11 @@ export default function App() {
   const [modal, setModal] = useState(null);
   const [workoutPanel, setWorkoutPanel] = useState(null);
   const [skipOffer, setSkipOffer] = useState(null);
-  const [includeFilled, setIncludeFilled] = useState(false);
   const [finishError, setFinishError] = useState("");
   const [discardSessionId, setDiscardSessionId] = useState(null);
   const [exerciseError, setExerciseError] = useState("");
   const [photoBusy, setPhotoBusy] = useState(false);
-  const openFinishReview = () => { setIncludeFilled(false); setFinishError(""); setModal("finish"); };
+  const openFinishReview = () => { setFinishError(""); setModal("finish"); };
   const discardWorkout = (confirmed = false, expectedId = activeSession?.id) => {
     try {
       if (!updateData(current => discardStartedSession(current, expectedId, confirmed))) {
@@ -169,7 +169,12 @@ export default function App() {
     equipment: "Hantle",
   });
   const activeExerciseIndex = activeSession?.index || 0;
-  const setActiveExerciseIndex = value => update("activeSession", current => ({ ...current, index: typeof value === "function" ? value(current.index) : value }));
+  const setActiveExerciseIndex = value => {
+    try {return updateData(current=>{
+      if(!current.activeSession || current.activeSession.id!==activeSession?.id)throw new Error("Sesja zmieniła się. Otwórz ją ponownie.");
+      return {...current,activeSession:navigateSession(current.activeSession,value)};
+    });}catch(cause){setNotice(cause.message);return false;}
+  };
   const [clockNow, setClockNow] = useState(Date.now);
   const restSeconds = restRemainingSeconds(activeSession, clockNow);
   const elapsedWorkoutSeconds = workoutElapsedSeconds(activeSession, clockNow);
@@ -231,10 +236,11 @@ export default function App() {
     if (currentExercise.skipped) return false;
     const now = Date.now();
     const saved = changeSession(session => {
-      const exercise = session.exercises[session.index], row = exercise.sets[index];
+      const exercise = session.exercises[activeExerciseIndex], row = exercise.sets[index];
       if (exercise.skipped) return session;
-      if (!row.completed && !validSet(row)) throw new Error("Podaj ciężar (0 dla masy ciała) i pełną liczbę powtórzeń większą od zera.");
-      const next = { ...session, exercises: session.exercises.map((e, i) => i === session.index ? confirmSeries(e, index) : e) };
+      const prepared = confirmationRow(exercise,row);
+      if (!row.completed && !validSet(prepared)) throw new Error("Sprawdź obciążenie i liczbę powtórzeń.");
+      const next = { ...session, exercises: session.exercises.map((e, i) => i === activeExerciseIndex ? confirmSeries({...e,sets:e.sets.map((set,i)=>i===index?prepared:set)}, index) : e) };
       return row.completed ? next : startSessionRest(next, exercise.rest ?? 90, exercise.name, now);
     });
     if (saved) { setClockNow(now); setNotice(""); }
@@ -295,8 +301,8 @@ export default function App() {
     }
     setCompletedDays(current => current.includes(key) ? current.filter(item => item !== key) : [...current, key]);
   };
-  const finishWorkout = (includeFilled = false) => {
-    const session = activeSession && (includeFilled ? { ...activeSession, exercises: activeSession.exercises.map(e => e.skipped ? e : ({ ...e, sets: e.sets.map(s => ({ ...s, completed: s.completed || (!s.skipped && validSet(s)) })) })) } : activeSession);
+  const finishWorkout = () => {
+    const session = activeSession;
     const result = session && completeSession(session);
     if (!result) { setNotice("Zatwierdź przynajmniej jedną serię przed zakończeniem."); return; }
     const saved = updateData(current => ({ ...current,
@@ -326,8 +332,9 @@ export default function App() {
   const calendarDays = [...Array(calendarLeadingDays).fill(null), ...Array.from({ length: new Date(calendarNow.getFullYear(), calendarNow.getMonth() + 1, 0).getDate() }, (_, i) => i + 1)];
   const calendarKey = day => dateKey(new Date(calendarNow.getFullYear(), calendarNow.getMonth(), day));
   const { dates: trainingDates, manualDays, count: trainingCount } = trainingAttendance(workouts, completedDays);
-  const completedSetCount = activeSession?.exercises.filter(e => !e.skipped).reduce((sum,e) => sum + e.sets.filter(s => s.completed && !s.skipped && validSet(s)).length, 0) || 0;
-  const filledSetCount = activeSession?.exercises.filter(e => !e.skipped).reduce((sum,e) => sum + e.sets.filter(s => !s.skipped && validSet(s)).length, 0) || 0;
+  const totals = sessionTotals(activeSession);
+  const completedSetCount = totals.sets;
+  const filledSetCount = totals.sets + totals.drafts;
   const last7 = workouts.filter(w => w.completedAt >= Date.now() - 7 * 86400000);
   const prior7 = workouts.filter(w => w.completedAt >= Date.now() - 14 * 86400000 && w.completedAt < Date.now() - 7 * 86400000);
   const last7Volume = last7.reduce((sum, w) => sum + w.volume, 0);
@@ -524,6 +531,7 @@ export default function App() {
                 ćwiczeń
               </small>
             </div>
+            <label className="workout-session-picker">Ćwiczenia w sesji<select aria-label="Ćwiczenia w sesji" value={activeExerciseIndex} onChange={event=>setActiveExerciseIndex(Number(event.target.value))}>{activeSession.exercises.map((exercise,index)=><option key={exercise.id} value={index}>{index+1}. {exercise.name}{exercise.skipped?" · pominięte":exercise.sets.some(row=>row.completed)?" · są wykonane serie":""}</option>)}</select></label>
             <div className="workout-quick-actions"><button type="button" onClick={() => setWorkoutPanel("replace")}><RotateCcw size={16}/> Zamień</button><button type="button" disabled={currentExercise.skipped} onClick={() => setExerciseSkipped(true)}><SkipForward size={16}/> Pomiń</button><button type="button" onClick={() => setWorkoutPanel("exercise")}><Settings2 size={16}/> Opcje</button></div>
             {skipOffer != null && <div className="workout-skip-offer" role="status"><span>Pominięto: {activeSession.exercises.find(e => e.id === skipOffer)?.name}. Wyniki są zachowane do cofnięcia.</span><button type="button" onClick={undoSkipped}>Cofnij</button>{currentExercise.id === skipOffer && activeExerciseIndex < activeSession.exercises.length - 1 && <button type="button" onClick={() => setActiveExerciseIndex(activeExerciseIndex + 1)}>Następne ćwiczenie</button>}</div>}
             <div className="workout-hero-photo">
@@ -577,7 +585,7 @@ export default function App() {
               </div>
             </div>
             <p className="history-data-note">Ręczne wpisy z kalendarza liczą się jako odbyte treningi. Czas, serie i objętość obliczamy tylko z sesji, w których zapisano te dane.</p>
-            {summary && <section className="card workout-summary"><span className="eyebrow">TRENING ZAPISANY</span><h2>Dobra robota!</h2><p>{displayNumber(summary.volume)} kg · {summary.exercises.reduce((sum,e) => sum + e.sets.length, 0)} serii · {Math.floor(summary.durationSeconds / 60)} min</p><button type="button" className="back-link" onClick={() => setSummary(null)}>Zamknij podsumowanie</button></section>}
+            {summary && <section className="card workout-summary"><span className="eyebrow">TRENING ZAPISANY</span><h2>Dobra robota!</h2><p>{displayNumber(sessionTotals(summary).volume)} kg · {sessionTotals(summary).sets} serii · {sessionTotals(summary).reps} powtórzeń · {Math.floor(summary.durationSeconds / 60)} min</p><button type="button" className="back-link" onClick={() => setSummary(null)}>Zamknij podsumowanie</button></section>}
             {!history.length && <div className="empty-state">Ukończ pierwszy trening, aby zobaczyć prawdziwe wyniki.</div>}
             <div className="history-list">
               {history.map((item) => (
@@ -648,17 +656,17 @@ export default function App() {
       {modal === "finish" && activeSession && <DialogSheet labelledBy="finish-title" onClose={() => setModal(null)} className="finish-review">
         <header className="sheet-header"><h2 id="finish-title">Zakończyć trening?</h2><IconButton label="Wróć do treningu" onClick={() => setModal(null)}><X size={18} /></IconButton></header>
         <div className="sheet-body">
-          <div className="finish-counts"><div><b>{completedSetCount}</b><span>zatwierdzonych serii</span></div><div><b>{filledSetCount - completedSetCount}</b><span>do potwierdzenia</span></div></div>
+          <div className="finish-counts"><div><b data-testid="finish-set-count">{totals.sets}</b><span>zatwierdzonych serii</span></div><div><b data-testid="finish-rep-count">{totals.reps}</b><span>powtórzeń</span></div><div><b data-testid="finish-volume">{displayNumber(totals.volume)} kg</b><span>objętość obciążenia</span></div></div>
           {activeSession.exercises.some(e => e.skipped) && <p className="sheet-hint">Pominięte ćwiczenia: {activeSession.exercises.filter(e => e.skipped).length}. Ich serie nie będą zapisane w wyniku.</p>}
-          {filledSetCount > completedSetCount && <><label className="finish-checkbox"><input type="checkbox" checked={includeFilled} onChange={event => setIncludeFilled(event.target.checked)} /><span>{completedSetCount ? "Zapisz też niezaznaczone serie" : "Potwierdzam wykonanie wypełnionych serii"}</span></label><p className="sheet-hint">Sprawdź wartości — część może pochodzić z poprzedniego treningu.</p></>}
+          {totals.drafts > 0 && <p className="sheet-hint">Niezatwierdzone serie: {totals.drafts}. Nie będą zapisane. Wróć do treningu, aby je zatwierdzić.</p>}
           {filledSetCount === 0 && <p className="sheet-hint">Brak serii do zapisania. Możesz wrócić do ćwiczeń albo odrzucić sesję.</p>}
-          {filledSetCount > 0 && <details className="finish-set-list"><summary>Sprawdź serie</summary>{activeSession.exercises.filter(e => !e.skipped && e.sets.some(s => !s.skipped && validSet(s))).map(e => <div key={e.id}><b>{e.name}</b>{e.sets.map((s,i) => !s.skipped && validSet(s) && <p key={i}>{i + 1}. {s.weight} kg × {s.reps} · {s.completed ? "✓" : "niezatwierdzona"}</p>)}</div>)}</details>}
+          {filledSetCount > 0 && <details className="finish-set-list"><summary>Sprawdź serie</summary>{activeSession.exercises.filter(e => !e.skipped && e.sets.some(s => !s.skipped && validSet(s))).map(e => <div key={e.id}><b>{e.name}</b>{e.sets.map((s,i) => !s.skipped && validSet(s) && <p key={i}>{i + 1}. {seriesResultLabel(e,s)} · {s.completed ? "✓" : "niezatwierdzona — nie zapisujemy"}</p>)}</div>)}</details>}
           {finishError && <p className="form-error" role="alert">{finishError}</p>}
         </div>
         <footer className="sheet-footer">
-          {filledSetCount > 0 ? <button type="button" className="primary-cta" disabled={!completedSetCount && !includeFilled} onClick={() => finishWorkout(includeFilled)}>Zapisz trening</button> : <button type="button" className="primary-cta" onClick={() => setModal(null)}>Wróć do treningu</button>}
+          {completedSetCount > 0 ? <button type="button" className="primary-cta" onClick={finishWorkout}>Zapisz trening</button> : <button type="button" className="primary-cta" onClick={() => setModal(null)}>Wróć do treningu</button>}
           <div className="sheet-secondary-actions">
-            {filledSetCount > 0 && <button type="button" onClick={() => setModal(null)}>Kontynuuj</button>}
+            {completedSetCount > 0 && <button type="button" onClick={() => setModal(null)}>Kontynuuj</button>}
             <button type="button" className="danger-action" aria-label="Odrzuć trening bez zapisu" onClick={() => {
               setFinishError("");
               if (confirmedSessionSetCount(activeSession) > 0) { setDiscardSessionId(activeSession.id); setModal("discard"); }

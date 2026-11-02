@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { ArrowLeft, ArrowRight, Square } from "lucide-react";
+import { ArrowRight, Square } from "lucide-react";
 
 export function WorkoutNavigation({ index, count, onPrevious, onNext, onFinish }) {
   const navigation = useRef(null);
@@ -17,7 +17,7 @@ export function WorkoutNavigation({ index, count, onPrevious, onNext, onFinish }
     return ()=>{viewport?.removeEventListener("resize",position);viewport?.removeEventListener("scroll",position);window.removeEventListener("resize",position);document.removeEventListener("focusin",position);document.removeEventListener("focusout",position);shell?.style.removeProperty("--workout-height");shell?.style.removeProperty("--workout-top");shell?.classList.remove("is-typing");};
   },[]);
   return <nav ref={navigation} className="workout-navigation workout-action-dock" aria-label="Nawigacja treningu">
-    <button type="button" className="secondary-cta workout-previous" disabled={index===0} aria-label="Poprzednie ćwiczenie" onClick={onPrevious}><ArrowLeft size={20}/></button>
+    <button type="button" className="secondary-cta workout-previous" disabled={index===0} aria-label="Poprzednie ćwiczenie" onClick={onPrevious}>Poprzednie</button>
     <button type="button" className="secondary-cta workout-next" disabled={index>=count-1} aria-label="Następne ćwiczenie" onClick={onNext}>Następne <ArrowRight size={18}/></button>
     <button type="button" className="secondary-cta workout-finish" aria-label="Zakończ trening" onClick={onFinish}><Square size={16}/> Zakończ</button>
   </nav>;

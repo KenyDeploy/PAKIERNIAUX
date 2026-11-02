@@ -80,3 +80,15 @@
 .app-shell .session-exercise-editor{background:#101413}
 .app-shell .session-exercise-editor .session-exercise-picker>button{background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:10px 0}
 .app-shell .session-exercise-editor .session-current-exercise{border:0;border-left:2px solid var(--accent-border);border-radius:0;background:transparent}
+.app-shell.is-workout .workout-action-dock{grid-template-columns:repeat(3,minmax(0,1fr))}
+.app-shell.is-workout .workout-action-dock button{font-size:11px;padding:8px 5px;gap:4px}
+.app-shell.is-workout .workout-action-dock button svg{width:14px;flex-shrink:0}
+.workout-session-picker{order:1;display:grid;gap:5px;font-size:10px;color:var(--muted)}
+.workout-session-picker select{width:100%;min-width:0;min-height:44px;padding:9px;border:1px solid var(--line);border-radius:10px;background:#141918;color:var(--text);font-size:16px;text-overflow:ellipsis}
+.bodyweight-set-hint{font-size:10px;line-height:1.4;color:var(--muted);margin:0}
+.series-result small{font-size:9px;color:var(--success)}
+.app-shell.is-workout .growing-series-list .set-row.waiting{border-style:dashed;border-color:var(--line)}
+.app-shell.is-workout .growing-series-list .set-row.active .set-row-heading small{color:var(--accent)}
+.finish-review .finish-counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.finish-review .finish-counts b{font-size:20px;overflow-wrap:anywhere}
+.finish-review .finish-counts span{font-size:10px}

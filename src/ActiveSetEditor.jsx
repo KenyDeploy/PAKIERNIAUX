@@ -4,6 +4,7 @@ import { validSet } from "./training.js";
 import { activeSeriesIndex, appendSeries, changeExerciseSeries, confirmSeries, removeSeries, selectSeries, seriesNeedsConfirmation, seriesReference, steppedSeriesValue, updateSeriesField } from "./activeSeries.js";
 import { DialogSheet } from "./DialogSheet";
 import "./ActiveSetEditor.css";
+import { confirmationRow, isBodyweightExercise, seriesResultLabel } from "./workoutSession.js";
 
 export function ActiveSetEditor({ exercise, targetSets = exercise.targetSets, exerciseIndex, sessionId, onPersist, onConfirm, restModule }) {
   const [editing, setEditing] = useState(null);
@@ -13,6 +14,7 @@ export function ActiveSetEditor({ exercise, targetSets = exercise.targetSets, ex
   const previousLength = useRef(exercise.sets.length);
   const keyFor = (row,index) => row.id ?? `legacy-${index}`;
   const currentIndex = editing == null ? activeSeriesIndex(exercise) : exercise.sets.findIndex((row,index)=>keyFor(row,index)===editing);
+  const bodyweight = isBodyweightExercise(exercise);
   // Only restore position on entry, not on every keystroke or clock tick.
   useEffect(() => {
     const pending = activeSeriesIndex(exercise);
@@ -73,7 +75,7 @@ export function ActiveSetEditor({ exercise, targetSets = exercise.targetSets, ex
     catch(cause){setError(cause.message);}
   };
   const confirm = index => {
-    if (!validSet(exercise.sets[index])) {setError("Podaj ciężar (0 dla masy ciała) i pełną liczbę powtórzeń większą od zera.");return;}
+    if (!validSet(confirmationRow(exercise,exercise.sets[index]))) {setError(bodyweight?"Wpisz pełną liczbę powtórzeń większą od zera i poprawne dodatkowe obciążenie (lub pozostaw puste dla 0 kg).":"Wpisz ciężar i pełną liczbę powtórzeń większą od zera.");return;}
     if (onConfirm(index) === false) {setError("Nie udało się zapisać serii. Twoje wpisy pozostają w karcie.");return;}
     setEditing(null);setError("");
     const next = activeSeriesIndex(confirmSeries(exercise,index));
@@ -95,9 +97,10 @@ export function ActiveSetEditor({ exercise, targetSets = exercise.targetSets, ex
       return <Fragment key={keyFor(row,index)}>{index===currentIndex && restModule}<div className={`series-entry ${editable?`set-row ${index===currentIndex || editing===keyFor(row,index)?"active":"waiting"}`:"series-compact completed"}`} data-series-index={index} data-series-id={row.id}>
         {editable ? <>
           <div className="set-row-heading"><b>Seria {index+1}</b><small>{exercise.skipped?"Pominięta":row.completed?"Edycja wyniku":index===currentIndex?"Bieżąca":"Oczekująca"}</small><button type="button" className="series-delete" disabled={exercise.skipped} aria-label={`Usuń serię ${index+1}`} onClick={()=>requestDelete(index)}><Trash2 size={18}/></button></div>
-          <div className="set-fields">{[["weight","Ciężar (kg)","decimal"],["reps","Powtórzenia","numeric"]].map(([field,label,inputMode])=><label key={field}>{label}<span className="series-stepper"><button type="button" disabled={exercise.skipped} aria-label={`Zmniejsz ${field==="weight"?"ciężar":"powtórzenia"} serii ${index+1}`} onClick={()=>step(index,field,-1)}><Minus size={18}/></button><input disabled={exercise.skipped} aria-label={`${field==="weight"?"Ciężar":"Powtórzenia"} serii ${index+1}`} autoComplete="off" inputMode={inputMode} type="text" value={row[field]??""} onChange={event=>change(index,field,event.target.value)} placeholder={field==="weight"?"0":""}/><button type="button" disabled={exercise.skipped} aria-label={`Zwiększ ${field==="weight"?"ciężar":"powtórzenia"} serii ${index+1}`} onClick={()=>step(index,field,1)}><Plus size={18}/></button></span></label>)}</div>
+          <div className="set-fields">{[["weight",bodyweight?"Dodatkowe kg":"Ciężar (kg)","decimal"],["reps","Powtórzenia","numeric"]].map(([field,label,inputMode])=><label key={field}>{label}<span className="series-stepper"><button type="button" disabled={exercise.skipped} aria-label={`Zmniejsz ${field==="weight"?"ciężar":"powtórzenia"} serii ${index+1}`} onClick={()=>step(index,field,-1)}><Minus size={18}/></button><input disabled={exercise.skipped} aria-label={`${field==="weight"?"Ciężar":"Powtórzenia"} serii ${index+1}`} aria-describedby={bodyweight?`bodyweight-${index}`:undefined} autoComplete="off" inputMode={inputMode} type="text" value={row[field]??""} onChange={event=>change(index,field,event.target.value)} placeholder={field==="weight"?(bodyweight?"0":"kg"):""}/><button type="button" disabled={exercise.skipped} aria-label={`Zwiększ ${field==="weight"?"ciężar":"powtórzenia"} serii ${index+1}`} onClick={()=>step(index,field,1)}><Plus size={18}/></button></span></label>)}</div>
+          {bodyweight && <p id={`bodyweight-${index}`} className="bodyweight-set-hint">Masa ciała · dodatkowy ciężar opcjonalny. Puste pole = 0 kg przy zapisie serii.</p>}
           <button type="button" className="set-confirm" disabled={exercise.skipped} aria-label={`Zatwierdź serię ${index+1}`} onClick={()=>confirm(index)}><Check size={20}/>{row.completed?"Zapisz zmiany":"Zapisz serię"}</button>
-        </> : <><Check className="series-done-icon" size={18}/><div className="series-result"><b>Seria {index+1}</b><span>{row.weight} kg × {row.reps}</span></div><button type="button" disabled={exercise.skipped} aria-label={`Edytuj serię ${index+1}`} onClick={()=>{if(persist(current=>selectSeries(current,index))){setEditing(keyFor(row,index));setError("");scrollTo(index);}}}><Pencil size={18}/></button><button type="button" disabled={exercise.skipped} aria-label={`Usuń serię ${index+1}`} onClick={()=>requestDelete(index)}><Trash2 size={18}/></button></>}
+        </> : <><Check className="series-done-icon" size={18}/><div className="series-result"><b>Seria {index+1}</b><span>{seriesResultLabel(exercise,row)}</span><small>Wykonana</small></div><button type="button" disabled={exercise.skipped} aria-label={`Edytuj serię ${index+1}`} onClick={()=>{if(persist(current=>selectSeries(current,index))){setEditing(keyFor(row,index));setError("");scrollTo(index);}}}><Pencil size={18}/></button><button type="button" disabled={exercise.skipped} aria-label={`Usuń serię ${index+1}`} onClick={()=>requestDelete(index)}><Trash2 size={18}/></button></>}
       </div></Fragment>;
     })}
     {currentIndex<0 && restModule}

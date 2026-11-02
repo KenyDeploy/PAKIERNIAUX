@@ -145,7 +145,7 @@ await page.reload();
 assert.equal(await page.getByTestId('training-count').innerText(),'3');
 await page.getByRole('button',{name:`Trening ${manualDate}`,exact:true}).click();
 assert.equal(await page.getByTestId('training-count').innerText(),'2');
-// The finish dialog lets the user explicitly confirm filled, unchecked sets.
+// Filled drafts stay unconfirmed at finish; explicitly save the row in its editor.
 await page.locator('.bottom-nav').getByRole('button',{name:'Plany',exact:true}).click();
 await page.locator('.plan-card').filter({hasText:'Góra ciała — siła'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();
 await page.getByRole('textbox',{name:'Ciężar serii 1',exact:true}).fill('30,5');
@@ -154,7 +154,11 @@ await page.getByRole('dialog').getByRole('button',{name:'Zakończ trening',exact
 const dialog=page.getByRole('dialog',{name:'Zakończyć trening?'});
 assert.equal(await dialog.locator('.finish-counts b').first().innerText(),'0');
 await page.screenshot({path:screenshotPath('pakiernia-finish-review.png'),fullPage:true});
-await dialog.getByRole('checkbox',{name:'Potwierdzam wykonanie wypełnionych serii'}).check();
+assert.equal(await dialog.getByRole('checkbox').count(),0);
+assert.equal(await dialog.getByRole('button',{name:'Zapisz trening',exact:true}).count(),0);
+await dialog.locator('.sheet-footer .primary-cta').click();
+await page.getByRole('button',{name:'Zatwierdź serię 1',exact:true}).click();
+await page.locator('.workout-action-dock').getByRole('button',{name:'Zakończ trening',exact:true}).click();
 await dialog.getByRole('button',{name:'Zapisz trening',exact:true}).click();
 await page.getByText('Dobra robota!').waitFor();
 const finished=await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data);

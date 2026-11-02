@@ -46,3 +46,7 @@ Pulpit [przed](premium-c-home-before-390.png) / [po](premium-c-home-after-390.pn
 ## Naprawa po nagraniu i standard wykresów
 
 [Raport i wszystkie pary 390 px](../IPHONE_REPAIR_AND_CHARTS.md): stopka poza przewijaną listą, pełne źródła zdjęć, lżejsza baza oraz wspólne monotoniczne krzywe dla Lime/Blue/nowego Classic Mono. Przed pochodzi z ba39efe; zrzuty nie zawierają nagrania ani danych użytkownika. Testy obejmują przecięcia widocznych prostokątów i hit-testy, nie tylko overflow; nie zastępują ponownej próby fizycznego iPhone’a.
+
+## Pilna poprawka serii i nawigacji
+
+[Raport i cztery screenshoty 390 px](../URGENT_WORKOUT_FIX.md): jasne dodatkowe obciążenie dla masy ciała, widoczne Poprzednie/Następne, lista sesji i podsumowanie 2 serii / 20 powtórzeń / 75 kg. Baza 623cd6b. Tylko izolowane fixtures; bez publikacji nagrania użytkownika.
