@@ -49,7 +49,7 @@ export function SessionExerciseEditor({ mode, session, exercise, exercises, onCl
         <h3>{selected.name}</h3>
         <div className="session-target-fields">{[["sets", "Docelowe serie", 1, 50], ["reps", "Docelowe powtórzenia", 1, 1000], ["rest", "Przerwa (sekundy)", 0, 3600]].map(([key, label, min, max]) => <label key={key}>{label}<input name={key} inputMode="numeric" type="number" min={min} max={max} step="1" required value={values[key]} onChange={e => setValues(current => ({ ...current, [key]: e.target.value }))} /></label>)}</div>
         {mode === "parameters" && <p className="sheet-hint">Nowy cel nie nadpisuje wpisanych wyników. Mniejsza liczba docelowych serii nie usuwa istniejących. Dodatkowe serie korzystają z nowego celu powtórzeń.</p>}
-        {needsConfirmation && <div className="session-replacement-warning"><p>Zamiana usunie serie tego ćwiczenia z bieżącej sesji, w tym wpisane, podpowiedziane i zatwierdzone wartości. Nie zostaną przypisane do nowego ćwiczenia. Zapisana historia pozostaje zachowana.</p><label><input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} />Potwierdzam zamianę i usunięcie bieżących serii</label></div>}
+        {needsConfirmation && <div className="session-replacement-warning"><p>Zamiana usunie wpisane i zatwierdzone serie tego ćwiczenia z bieżącej sesji. Nie zostaną przypisane do nowego ćwiczenia. Zapisana historia pozostaje zachowana.</p><label><input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} />Potwierdzam zamianę i usunięcie bieżących serii</label></div>}
       </>}
       {error && <p className="form-error" role="alert">{error}</p>}
     </div>

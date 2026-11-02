@@ -18,6 +18,19 @@ Kreator/edycja planu, nowy/edytowany pomiar i profil używają wspólnego DraftD
 
 Walidacja UX02: 11/11 odpowiednich testów form-drafts/draft-guard/app/body-measurements, poprawny build; form-drafts.mjs, body-measurements.mjs, browser.mjs i session-discard.mjs — PASS w lokalnym Chromium. Sprawdzono brak planu po anulowaniu, błędy localStorage i ponowienie, zachowane pola, przypadkowe zamknięcie, świadome odrzucenie, edycję istniejących rekordów, podwójne wysłanie bez duplikatów, 320/375/390/430 px i stopki od 360 px wysokości. Fizyczny iPhone/Safari i natywna klawiatura wymagają próby. Nie zmieniano synchronizacji Supabase, schematu bazy, zależności ani danych produkcyjnych. UX03–UX10 pozostają niewdrożone.
 
+## Wdrożenie UX03–UX05 i wyglądu treningu
+
+Wdrożono na tej samej gałęzi PR #1, po UX01 i UX02:
+
+- **UX03:** wznowienie pokazuje zapisaną edytowaną/niewykonaną serię (fallback: pierwsza niewykonana, a przy komplecie ostatni wiersz). Zachowano indeks ćwiczenia, wszystkie wiersze i ich ID. Przewijanie nie powtarza się przy tyknięciu zegara. Stały pasek udostępnia poprzednie/następne ćwiczenie i zakończenie przez istniejące podsumowanie. Reakcja na visualViewport uwzględnia pasek i miejsce na przewinięcie nad klawiaturą.
+- **UX04:** jawne Zamień/Pomiń/Opcje przy nazwie; po pominięciu propozycja następnego ćwiczenia i Cofnij, także po przejściu dalej. Wyniki pominiętego ćwiczenia pozostają do cofnięcia. Zamiana wymaga zgody dla faktycznych wpisów, notatek, zatwierdzonych i niejednoznacznych starych serii; same oznaczone sugestie powtórzeń nie wymagają zgody. Plan źródłowy nie jest zmieniany.
+- **UX05:** jeden kompaktowy moduł przy bieżącej serii: odliczanie, +15 s, pauza/wznowienie, pominięcie i ręczny start. Usunięto dwa dawne powtarzające się widoki przerwy z ekranu treningu. Ustawienia pozostają w istniejącym panelu zegara. Bez zmiany mechanizmu zegarów i synchronizacji.
+- **Wygląd:** prawie czarne powierzchnie tylko aktywnego treningu, kontrolowana wysokość zdjęcia, zwarta historia, kompaktowe wykonane wiersze, wyraźna bieżąca karta i spokojniejsze karty oczekujące. Akcent pochodzi z motywu. Narastająca lista zastępuje pojedynczą serię z referencji zgodnie z późniejszą decyzją UX użytkownika; pozostałe zakładki nie zostały przebudowane.
+
+Walidacja: `npm test` **57/57 PASS**, `npm run build` PASS. Scenariusze `workout-premium.mjs`, `growing-series.mjs`, `timer-photo.mjs`, `session-discard.mjs` i `browser.mjs` PASS. Obejmują 10 serii i właściwe przewinięcie po reload/ponownym wejściu, ID, dodanie/edycję/usunięcie, zamianę z/bez potwierdzenia, pominięcie/następne/cofnięcie, trwałą przerwę, błędy lokalnego zapisu, podsumowanie/historię, 320/375/390/430 px i symulowany visualViewport klawiatury. W sprawdzonych ścieżkach brak błędów JS i poziomego przewijania. Aktualizacje starych selektorów testów wynikają z jawnych nazw nawigacji i zastąpienia dużej karty przerwy kompaktowym modułem.
+
+Zrzuty 390 px: [przed](docs/audit/ux03-05-before-390.png), [po](docs/audit/ux03-05-after-390.png). Są to lokalne dane testowe, bez generowanych grafik. Pozostaje ręczna próba Safari/PWA na fizycznym iPhonie, natywnej klawiatury i safe-area urządzenia; symulacja Chromium nie rozstrzyga ich zachowania. Nie wykonano migracji, zmian Supabase, scalenia ani publikacji produkcyjnej. UX06–UX10 pozostają poza tym wdrożeniem.
+
 ## Metoda i granice
 
 - Analiza bieżącego kodu oraz istniejących IMPLEMENTATION_PLAN.md i FINAL_AUDIT_HANDOFF.md, bez ponownego audytu bazy/architektury.

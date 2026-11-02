@@ -1,18 +1,35 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Check, Minus, Pencil, Plus, Trash2, X } from "lucide-react";
 import { validSet } from "./training.js";
-import { appendSeries, changeExerciseSeries, removeSeries, seriesNeedsConfirmation, seriesReference, steppedSeriesValue, updateSeriesField } from "./activeSeries.js";
+import { activeSeriesIndex, appendSeries, changeExerciseSeries, confirmSeries, removeSeries, selectSeries, seriesNeedsConfirmation, seriesReference, steppedSeriesValue, updateSeriesField } from "./activeSeries.js";
 import { DialogSheet } from "./DialogSheet";
 import "./ActiveSetEditor.css";
 
-export function ActiveSetEditor({ exercise, targetSets = exercise.targetSets, exerciseIndex, sessionId, onPersist, onConfirm }) {
+export function ActiveSetEditor({ exercise, targetSets = exercise.targetSets, exerciseIndex, sessionId, onPersist, onConfirm, restModule }) {
   const [editing, setEditing] = useState(null);
   const [removing, setRemoving] = useState(null);
   const [error, setError] = useState("");
   const list = useRef(null);
   const previousLength = useRef(exercise.sets.length);
   const keyFor = (row,index) => row.id ?? `legacy-${index}`;
-  const scrollTo = index => window.requestAnimationFrame(() => list.current?.querySelector(`[data-series-index="${index}"]`)?.scrollIntoView?.({block:"start",behavior:"auto"}));
+  const currentIndex = editing == null ? activeSeriesIndex(exercise) : exercise.sets.findIndex((row,index)=>keyFor(row,index)===editing);
+  // Only restore position on entry, not on every keystroke or clock tick.
+  useEffect(() => {
+    const pending = activeSeriesIndex(exercise);
+    const index = pending >= 0 ? pending : exercise.sets.length - 1;
+    const frame = window.requestAnimationFrame(() => {
+      const row = list.current?.querySelector(`[data-series-index="${index}"]`);
+      const adjacent = row?.previousElementSibling;
+      const target = index > 0 && !exercise.skipped ? adjacent?.classList.contains("compact-rest") ? adjacent : row : document.querySelector(".workout-heading");
+      target?.scrollIntoView?.({ block: "start", behavior: "auto" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+  const scrollTo = index => window.requestAnimationFrame(() => {
+    const row = list.current?.querySelector(`[data-series-index="${index}"]`);
+    const target = row?.previousElementSibling?.classList.contains("compact-rest") ? row.previousElementSibling : row;
+    target?.scrollIntoView?.({block:"start",behavior:"auto"});
+  });
   useEffect(() => {
     if (exercise.sets.length > previousLength.current) scrollTo(exercise.sets.length - 1);
     previousLength.current = exercise.sets.length;
@@ -28,13 +45,15 @@ export function ActiveSetEditor({ exercise, targetSets = exercise.targetSets, ex
       list.current.style.paddingBottom = inside ? `${covered}px` : "0px";
       if (!inside) return;
       const top = Math.max(visual?.offsetTop || 0, document.querySelector(".topbar")?.getBoundingClientRect().bottom || 0) + 12;
-      const bottom = (visual?.offsetTop || 0) + (visual?.height || window.innerHeight) - 20;
+      const bottom = (visual?.offsetTop || 0) + (visual?.height || window.innerHeight) - (document.querySelector(".workout-action-dock")?.getBoundingClientRect().height || 0) - 16;
       const rect = focused.getBoundingClientRect();
       const delta = rect.bottom > bottom ? rect.bottom - bottom : rect.top < top ? rect.top - top : 0;
       if (delta) window.scrollBy({top:delta,behavior:"auto"});
     };
     visual?.addEventListener("resize",reveal); visual?.addEventListener("scroll",reveal);
-    return () => { visual?.removeEventListener("resize",reveal); visual?.removeEventListener("scroll",reveal); };
+    list.current?.addEventListener("focusin",reveal); list.current?.addEventListener("focusout",reveal);
+    const node = list.current;
+    return () => { visual?.removeEventListener("resize",reveal); visual?.removeEventListener("scroll",reveal); node?.removeEventListener("focusin",reveal);node?.removeEventListener("focusout",reveal); };
   }, []);
   const persist = transform => {
     try {
@@ -43,7 +62,11 @@ export function ActiveSetEditor({ exercise, targetSets = exercise.targetSets, ex
       return saved;
     } catch(cause) { setError(cause.message); return false; }
   };
-  const change = (index,field,value) => persist(current=>updateSeriesField(current,index,field,value));
+  const change = (index,field,value) => {
+    const saved = persist(current=>updateSeriesField(current,index,field,value));
+    if(saved && editing != null && editing!==keyFor(exercise.sets[index],index))setEditing(null);
+    return saved;
+  };
   const step = (index,field,direction) => {
     try { change(index,field,steppedSeriesValue(exercise.sets[index][field],field,direction)); }
     catch(cause){setError(cause.message);}
@@ -52,6 +75,8 @@ export function ActiveSetEditor({ exercise, targetSets = exercise.targetSets, ex
     if (!validSet(exercise.sets[index])) {setError("Podaj ciężar (0 dla masy ciała) i pełną liczbę powtórzeń większą od zera.");return;}
     if (onConfirm(index) === false) {setError("Nie udało się zapisać serii. Twoje wpisy pozostają w karcie.");return;}
     setEditing(null);setError("");
+    const next = activeSeriesIndex(confirmSeries(exercise,index));
+    scrollTo(next >= 0 ? next : index);
     if(list.current?.contains(document.activeElement) && document.activeElement?.tagName === "INPUT")document.activeElement.blur();
   };
   const erase = (reference,confirmed=false) => {
@@ -63,16 +88,18 @@ export function ActiveSetEditor({ exercise, targetSets = exercise.targetSets, ex
     else erase(reference);
   };
   return <div className="active-set-editor growing-series-list" ref={list}>
+    <p className="series-status" role="status">{exercise.sets.filter(row=>row.completed).length} wykonanych · {exercise.sets.filter(row=>!row.completed && !row.skipped).length} do wykonania</p>
     {exercise.sets.map((row,index)=>{
       const editable=!row.completed || editing===keyFor(row,index);
-      return <div className={`series-entry ${editable?"set-row active":"series-compact completed"}`} key={keyFor(row,index)} data-series-index={index} data-series-id={row.id}>
+      return <Fragment key={keyFor(row,index)}>{index===currentIndex && restModule}<div className={`series-entry ${editable?`set-row ${index===currentIndex || editing===keyFor(row,index)?"active":"waiting"}`:"series-compact completed"}`} data-series-index={index} data-series-id={row.id}>
         {editable ? <>
-          <div className="set-row-heading"><b>Seria {index+1}</b><small>{exercise.skipped?"Pominięta":row.completed?"Edycja wyniku":"Do wykonania"}</small><button type="button" className="series-delete" disabled={exercise.skipped} aria-label={`Usuń serię ${index+1}`} onClick={()=>requestDelete(index)}><Trash2 size={18}/></button></div>
+          <div className="set-row-heading"><b>Seria {index+1}</b><small>{exercise.skipped?"Pominięta":row.completed?"Edycja wyniku":index===currentIndex?"Bieżąca":"Oczekująca"}</small><button type="button" className="series-delete" disabled={exercise.skipped} aria-label={`Usuń serię ${index+1}`} onClick={()=>requestDelete(index)}><Trash2 size={18}/></button></div>
           <div className="set-fields">{[["weight","Ciężar (kg)","decimal"],["reps","Powtórzenia","numeric"]].map(([field,label,inputMode])=><label key={field}>{label}<span className="series-stepper"><button type="button" disabled={exercise.skipped} aria-label={`Zmniejsz ${field==="weight"?"ciężar":"powtórzenia"} serii ${index+1}`} onClick={()=>step(index,field,-1)}><Minus size={18}/></button><input disabled={exercise.skipped} aria-label={`${field==="weight"?"Ciężar":"Powtórzenia"} serii ${index+1}`} autoComplete="off" inputMode={inputMode} type="text" value={row[field]??""} onChange={event=>change(index,field,event.target.value)} placeholder={field==="weight"?"0":""}/><button type="button" disabled={exercise.skipped} aria-label={`Zwiększ ${field==="weight"?"ciężar":"powtórzenia"} serii ${index+1}`} onClick={()=>step(index,field,1)}><Plus size={18}/></button></span></label>)}</div>
           <button type="button" className="set-confirm" disabled={exercise.skipped} aria-label={`Zatwierdź serię ${index+1}`} onClick={()=>confirm(index)}><Check size={20}/>{row.completed?"Zapisz zmiany":"Zapisz serię"}</button>
-        </> : <><Check className="series-done-icon" size={18}/><div className="series-result"><b>Seria {index+1}</b><span>{row.weight} kg × {row.reps}</span></div><button type="button" disabled={exercise.skipped} aria-label={`Edytuj serię ${index+1}`} onClick={()=>{setEditing(keyFor(row,index));setError("");scrollTo(index);}}><Pencil size={18}/></button><button type="button" disabled={exercise.skipped} aria-label={`Usuń serię ${index+1}`} onClick={()=>requestDelete(index)}><Trash2 size={18}/></button></>}
-      </div>;
+        </> : <><Check className="series-done-icon" size={18}/><div className="series-result"><b>Seria {index+1}</b><span>{row.weight} kg × {row.reps}</span></div><button type="button" disabled={exercise.skipped} aria-label={`Edytuj serię ${index+1}`} onClick={()=>{if(persist(current=>selectSeries(current,index))){setEditing(keyFor(row,index));setError("");scrollTo(index);}}}><Pencil size={18}/></button><button type="button" disabled={exercise.skipped} aria-label={`Usuń serię ${index+1}`} onClick={()=>requestDelete(index)}><Trash2 size={18}/></button></>}
+      </div></Fragment>;
     })}
+    {currentIndex<0 && restModule}
     {!exercise.sets.length && <p className="series-all-complete">Brak serii. Dodaj serię albo przejdź do kolejnego ćwiczenia.</p>}
     {error && !removing && <p className="form-error" role="alert">{error}</p>}
     <button type="button" className="add-set" disabled={exercise.skipped} onClick={()=>{if(persist(appendSeries)){if(document.activeElement?.tagName==="INPUT")document.activeElement.blur();}}}><Plus size={18}/> Dodaj serię</button>

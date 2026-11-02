@@ -12,7 +12,7 @@ try {
   const start=async()=>{await page.locator('.bottom-nav').getByRole('button',{name:'Plany',exact:true}).click();await page.locator('.plan-card').filter({hasText:'Góra ciała — siła'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();};
   const add=()=>page.getByRole('button',{name:'Dodaj serię',exact:true}).click();
   const save=async(n,weight,reps='8')=>{await page.getByLabel(`Ciężar serii ${n}`,{exact:true}).fill(weight);await page.getByLabel(`Powtórzenia serii ${n}`,{exact:true}).fill(reps);await page.getByRole('button',{name:`Zatwierdź serię ${n}`,exact:true}).click();};
-  const finish=async()=>{await page.getByRole('button',{name:'Czas treningu i opcje'}).click();await page.getByRole('button',{name:'Zakończ trening',exact:true}).click();};
+  const finish=async()=>{await page.getByRole('button',{name:'Czas treningu i opcje'}).click();await page.getByRole('dialog').getByRole('button',{name:'Zakończ trening',exact:true}).click();};
   await start();const initial=await data();assert.equal((await rows()).length,1);assert.equal(await page.locator('.series-entry').count(),1);assert.equal(await page.locator('.series-picker, .series-history').count(),0);
   assert.equal((await data()).activeSession.exercises[0].targetSets,3);
   for(let i=0;i<5;i++)await add();assert.equal((await rows()).length,6);

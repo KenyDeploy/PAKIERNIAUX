@@ -1,5 +1,5 @@
 import { createSession } from "./training.js";
-import { appendSeries } from "./activeSeries.js";
+import { appendSeries, seriesNeedsConfirmation } from "./activeSeries.js";
 
 // Discarding destroys the whole draft, including results in skipped exercises.
 export const confirmedSessionSetCount = session => (session?.exercises || []).reduce((sum, exercise) => sum + (exercise.sets || []).filter(row => row?.completed).length, 0);
@@ -21,8 +21,7 @@ export function sessionTargets(values) {
   }));
 }
 
-export const hasSessionSets = exercise => exercise.sets.some(row => row.completed ||
-  String(row.weight ?? "").trim() !== "" || String(row.reps ?? "").trim() !== "");
+export const hasSessionSets = exercise => exercise.sets.some(seriesNeedsConfirmation);
 
 function rebuild(session, exercises, index = session.index) {
   return { ...session, exercises, index, plan: { ...session.plan, exercises: exercises.map(e => e.id) } };

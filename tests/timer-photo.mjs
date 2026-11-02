@@ -30,7 +30,7 @@ try {
     assert.equal(await page.getByRole('button',{name,exact:true}).getAttribute('aria-pressed'),'true');
   }
   await page.getByRole('button',{name:'01:30',exact:true}).click();
-  await page.getByRole('button',{name:/^Rozpocznij przerwę/}).click();
+  await page.getByRole('dialog').getByRole('button',{name:/^Rozpocznij przerwę/}).click();
   const deadline=(await snapshot()).activeSession.restUntil;
   await page.clock.fastForward(31000);
   assert.equal(await headerSeconds(),frozen);
@@ -56,14 +56,14 @@ try {
   await page.clock.fastForward(75000);await page.bringToFront();
   await page.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
   assert.equal(await headerSeconds(),frozen);
-  assert.equal(await page.locator('.rest-card').count(),0);
+  assert.equal(await page.locator('.compact-rest [role=timer]').count(),0);
   await background.close();
   await openTimer();await page.getByRole('button',{name:'Wznów licznik treningu'}).click();
   await page.clock.fastForward(5000);
   assert.ok(await headerSeconds()>=frozen+5);
   await page.getByRole('button',{name:'Własny czas przerwy'}).click();
   await page.getByLabel('Czas przerwy (sekundy)').fill('7');
-  await page.getByRole('button',{name:'Rozpocznij przerwę',exact:true}).click();
+  await page.getByRole('dialog').getByRole('button',{name:'Rozpocznij przerwę',exact:true}).click();
   await page.clock.fastForward(2000);
   assert.match(await page.locator('.timer-current-rest').innerText(),/00:05/);
   // A failed rest pause leaves its running deadline intact.
@@ -110,10 +110,10 @@ try {
   assert.equal(await page.locator('.exercise-photo-viewer').count(),0,'A deliberate downward swipe closes the viewer');
   await page.setViewportSize({width:390,height:844});
   await page.getByRole('button',{name:'Dodaj serię',exact:true}).click();
-  const placement=await page.evaluate(()=>({fields:document.querySelector('.set-fields').getBoundingClientRect().bottom,rest:document.querySelector('.rest-card').getBoundingClientRect().top}));
-  assert.ok(placement.rest>placement.fields,'Rest must not cover series inputs');
-  await page.locator('.rest-card').getByRole('button',{name:'Pomiń przerwę',exact:true}).click();
-  assert.equal(await page.locator('.rest-card').count(),0);
+  const placement=await page.evaluate(()=>({fields:document.querySelector('.set-fields').getBoundingClientRect().top,rest:document.querySelector('.compact-rest').getBoundingClientRect().bottom}));
+  assert.ok(placement.rest<=placement.fields,'Compact rest stays in flow before the active series inputs');
+  await page.locator('.compact-rest').getByRole('button',{name:'Pomiń przerwę',exact:true}).click();
+  assert.equal(await page.locator('.compact-rest [role=timer]').count(),0);
   // Storage failure must not visually pause a clock whose snapshot was not saved.
   await openTimer();
   await page.evaluate(()=>{window.__setItem=Storage.prototype.setItem;Storage.prototype.setItem=function(){throw new Error('QuotaExceededError');};});
@@ -123,11 +123,11 @@ try {
   await page.evaluate(()=>{Storage.prototype.setItem=window.__setItem;delete window.__setItem;});
   await page.getByRole('button',{name:'Wstrzymaj licznik treningu'}).click();
   const savedDuration=await headerSeconds();
-  await page.getByRole('button',{name:'Zakończ trening',exact:true}).click();
+  await page.getByRole('dialog').getByRole('button',{name:'Zakończ trening',exact:true}).click();
   assert.equal((await snapshot()).workouts.length,0);
   assert.ok(await page.getByRole('dialog',{name:'Zakończyć trening?'}).isVisible());
   await page.keyboard.press('Escape');assert.ok((await snapshot()).activeSession);
-  await openTimer();await page.getByRole('button',{name:'Zakończ trening',exact:true}).click();
+  await openTimer();await page.getByRole('dialog').getByRole('button',{name:'Zakończ trening',exact:true}).click();
   await page.getByRole('button',{name:'Zapisz trening',exact:true}).click();
   const saved=await snapshot();assert.equal(saved.workouts.length,1);assert.equal(saved.workouts[0].durationSeconds,savedDuration);assert.equal(saved.workouts[0].volume,160);
   assert.deepEqual(errors,[]);

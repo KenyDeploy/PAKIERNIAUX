@@ -1,0 +1,47 @@
+/* Active training only. Other tabs retain their existing surfaces and layout. */
+.app-shell.is-workout{--surface:#101112;--surface2:#1b1d1d;--line:#2b2e2d;background:#080909}
+.app-shell.is-workout .topbar{background:#080909f5;min-height:70px;padding-top:calc(9px + env(safe-area-inset-top));padding-bottom:9px}
+.app-shell.is-workout .workout-clock{background:#101112;border-color:var(--line);border-top-color:var(--accent);border-right-color:var(--accent)}
+.app-shell.is-workout .icon-button{background:#111313}
+.app-shell.is-workout .content{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+.app-shell.is-workout .workout-screen{gap:9px}
+.app-shell.is-workout .workout-heading h1{font-size:clamp(22px,5.8vw,26px);line-height:1.18;letter-spacing:-.035em}
+.app-shell.is-workout .workout-heading small{color:var(--muted)}
+.app-shell.is-workout .workout-progress{background:#242727}
+.app-shell.is-workout .workout-quick-actions{order:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.workout-quick-actions button,.workout-skip-offer button{min-height:44px;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line);border-radius:10px;background:#111313;color:var(--text);font-size:12px}
+.workout-quick-actions button:first-child{color:var(--accent)}
+.app-shell.is-workout .workout-hero-photo{height:clamp(100px,17svh,145px);border-radius:12px}
+.app-shell.is-workout .workout-last-result{padding:10px;min-height:54px;border-radius:12px;background:linear-gradient(115deg,var(--accent-soft),#101112)}
+.app-shell.is-workout .workout-last-result b{font-size:11px;line-height:1.4}
+.app-shell.is-workout .current-exercise{padding:10px;background:#0d0f0f;border-color:var(--line);box-shadow:none;border-radius:14px}
+.app-shell.is-workout .exercise-title{margin-bottom:7px}
+.app-shell.is-workout .exercise-title small{font-size:10px}
+.app-shell.is-workout .series-status{font-size:11px;color:var(--muted);margin:0 0 8px}
+.app-shell.is-workout .growing-series-list .series-entry{scroll-margin-top:calc(94px + env(safe-area-inset-top));scroll-margin-bottom:100px}
+.app-shell.is-workout .growing-series-list .set-row{margin-top:0;gap:10px;background:linear-gradient(130deg,#161919,#101212);border-color:var(--line);box-shadow:none}
+.app-shell.is-workout .growing-series-list .set-row.active{border-color:var(--accent-border);box-shadow:0 0 14px var(--accent-glow)}
+.app-shell.is-workout .growing-series-list .series-stepper{background:#212424;border-color:#303433}
+.app-shell.is-workout .growing-series-list .series-stepper input{font-size:24px}
+.app-shell.is-workout .growing-series-list .set-row.waiting .set-confirm{background:#1b1f1e;color:var(--text);border:1px solid var(--line);box-shadow:none}
+.app-shell.is-workout .growing-series-list .series-compact{padding:5px 8px;background:#111313;min-height:56px}
+.app-shell.is-workout .series-result{flex-direction:row;align-items:center;justify-content:space-between;gap:8px}
+.app-shell.is-workout .series-result span{font-size:13px}
+.app-shell.is-workout .series-add-hint{font-size:10px;margin-top:8px}
+.compact-rest{margin:8px 0 10px;padding:8px;border:1px solid var(--line);border-radius:11px;background:#121515;scroll-margin-top:calc(94px + env(safe-area-inset-top))}
+.compact-rest-heading{display:flex;align-items:center;gap:8px;min-height:44px;font-size:12px;color:var(--muted)}
+.compact-rest-heading b{margin-left:auto;color:var(--accent);font-size:23px;font-variant-numeric:tabular-nums}
+.compact-rest-heading>button{margin-left:auto;min-width:44px;min-height:44px;display:grid;place-items:center;border:0;border-radius:9px;background:transparent;color:var(--muted)}
+.compact-rest-heading b+button{margin-left:0}
+.app-shell.is-workout .compact-rest .rest-action-controls{gap:6px}
+.app-shell.is-workout .compact-rest .rest-action-controls button,.rest-quick-start{min-height:44px;border:1px solid var(--line);background:#1b1e1e;border-radius:9px;color:var(--text);font-size:11px}
+.rest-quick-start{display:flex;align-items:center;justify-content:center;gap:7px;width:100%}
+.app-shell.is-workout .workout-action-dock{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:22;display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,1fr);gap:7px;width:100%;max-width:520px;padding:9px max(12px,env(safe-area-inset-right)) max(9px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));background:#090b0bf5;backdrop-filter:blur(16px);border-top:1px solid var(--line)}
+.app-shell.is-workout .workout-action-dock button{min-height:48px;padding:8px;font-size:12px;background:#181b1a;color:var(--text);box-shadow:none;gap:5px}
+.app-shell.is-workout .workout-action-dock .workout-next{border-color:var(--accent-border);color:var(--accent)}
+.app-shell.is-workout .workout-action-dock .workout-finish{background:transparent}
+.workout-skip-offer{order:2;display:flex;flex-wrap:wrap;gap:8px;padding:10px;border:1px solid var(--accent-border);border-radius:12px;background:#131615}
+.workout-skip-offer span{flex:1 1 100%;font-size:12px;line-height:1.4;color:var(--muted)}
+.workout-skip-offer button{flex:1;padding:8px;color:var(--accent)}
+@media(max-width:350px){.app-shell.is-workout .growing-series-list .set-fields{grid-template-columns:1fr}.app-shell.is-workout .series-result{flex-direction:column;align-items:flex-start;gap:2px}.app-shell.is-workout .workout-quick-actions button{font-size:11px;gap:4px}}
+@media(prefers-reduced-motion:reduce){.app-shell.is-workout *{scroll-behavior:auto}}

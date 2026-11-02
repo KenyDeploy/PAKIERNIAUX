@@ -15,3 +15,12 @@ Bieżące wyniki testów i ograniczenia są w FINAL_AUDIT_HANDOFF.md w katalogu 
 - [Po zmianie](series-after.png): trzy zwarte wykonane serie i dwie niezależne karty do wypełnienia, bez zakładek i głównego formularza w dropdownie.
 
 Zrzuty 390 px w lokalnym Chromium, wyłącznie izolowane dane testowe. Nie stanowią testu fizycznego iPhone’a. Screenshot „po” odtwarza tests/growing-series.mjs z AFTER_SCREENSHOT ustawionym na ścieżkę pliku. Przed zmianą plik zarejestrowano przed modyfikacją kodu, bez generowania grafiki.
+
+## UX03–UX05 / premium trening
+
+- [Przed](ux03-05-before-390.png): bazowy commit 27ef367; powtórzone informacje o przerwie i nawigacja na końcu dokumentu.
+- [Po](ux03-05-after-390.png): ten sam scenariusz dwóch zatwierdzonych serii i trzeciej otwartej, jawne akcje ćwiczenia, pojedynczy moduł przerwy i stała nawigacja. Zrzut całej strony pokazuje stałą stopkę na wysokości początkowego viewportu; dalszą kartę można przewinąć nad nią.
+
+Porównanie z approved-ui-reference.png: zachowano kompaktowe logo/zegar, ciemne neutralne tło, akcent motywu, zdjęcie, zwartą historię i duże pola/CTA. Wykonane serie pozostają w zwartej narastającej liście zgodnie z późniejszym wymaganiem użytkownika. Dodano jawne Zamień/Pomiń/Opcje i stale dostępne zakończenie zamiast ukrywania ich wyłącznie w menu. Użyto rzeczywistych istniejących zasobów ćwiczeń, dlatego nazwa i zdjęcie różnią się od przykładu z planszy; nie kopiowano fikcyjnej historii ani dat.
+
+Odtwarzanie: `tests/workout-premium-capture.mjs`, `SCREENSHOT` wskazuje plik wyjściowy; `APP_URL`, `PLAYWRIGHT_MODULE` i `CHROMIUM_PATH` wskazują lokalny preview i dostępny Chromium. Stan „przed” zarejestrowano przed edycją kodu. Testy oraz ograniczenia opisuje sekcja wdrożenia UX03–UX05 w UX_AUDIT.md. Fizycznego iPhone’a nie testowano.

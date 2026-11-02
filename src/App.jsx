@@ -55,7 +55,9 @@ import { exerciseHistory, historySetLabel } from "./exerciseHistory.js";
 import { ExerciseHistorySheet, seriesLabel } from "./ExerciseHistorySheet";
 import { SessionExerciseMenu } from "./SessionExerciseMenu";
 import { SessionExerciseEditor } from "./SessionExerciseEditor";
-import { RestControls } from "./RestControls";
+import { CompactRest } from "./CompactRest";
+import { WorkoutNavigation } from "./WorkoutNavigation";
+import "./PremiumWorkout.css";
 import { WorkoutTimerSheet } from "./WorkoutTimerSheet";
 import { ExercisePhotoViewer } from "./ExercisePhotoViewer";
 import { workoutElapsedSeconds, restRemainingSeconds, pauseWorkoutClock, resumeWorkoutClock, startSessionRest, pauseSessionRest, resumeSessionRest, extendSessionRest, skipSessionRest } from "./trainingClock.js";
@@ -119,7 +121,7 @@ export default function App() {
   const setExercises = value => update("exercises", value);
   
   const setCompletedDays = value => update("completedDays", value);
-  useEffect(() => { setTab("home"); setModal(null); setWorkoutPanel(null); setPlanEditor(null); setExerciseEditor(null); setSummary(null); setNotice(""); setNewExercise({ name: "", category: "Klatka", equipment: "Hantle" }); setExerciseError(""); }, [authUser?.id]);
+  useEffect(() => { setTab("home"); setModal(null); setWorkoutPanel(null); setSkipOffer(null); setPlanEditor(null); setExerciseEditor(null); setSummary(null); setNotice(""); setNewExercise({ name: "", category: "Klatka", equipment: "Hantle" }); setExerciseError(""); }, [authUser?.id]);
   const [notice, setNotice] = useState("");
   const [summary, setSummary] = useState(null);
   const [statsExercise, setStatsExercise] = useState("");
@@ -140,6 +142,7 @@ export default function App() {
   const [equipment, setEquipment] = useState("Wszystkie");
   const [modal, setModal] = useState(null);
   const [workoutPanel, setWorkoutPanel] = useState(null);
+  const [skipOffer, setSkipOffer] = useState(null);
   const [includeFilled, setIncludeFilled] = useState(false);
   const [finishError, setFinishError] = useState("");
   const [discardSessionId, setDiscardSessionId] = useState(null);
@@ -161,14 +164,9 @@ export default function App() {
     equipment: "Hantle",
   });
   const activeExerciseIndex = activeSession?.index || 0;
-  useEffect(() => {
-    if (tab !== "workout") return;
-    document.querySelector(".workout-heading")?.scrollIntoView?.({ block: "start", behavior: "auto" });
-  }, [activeExerciseIndex, activeSession?.id, activeSession?.exercises[activeExerciseIndex]?.id, tab]);
   const setActiveExerciseIndex = value => update("activeSession", current => ({ ...current, index: typeof value === "function" ? value(current.index) : value }));
   const [clockNow, setClockNow] = useState(Date.now);
   const restSeconds = restRemainingSeconds(activeSession, clockNow);
-  const isResting = restSeconds > 0;
   const elapsedWorkoutSeconds = workoutElapsedSeconds(activeSession, clockNow);
   const [planEditor, setPlanEditor] = useState(null);
   const filteredExercises = useMemo(
@@ -188,7 +186,7 @@ export default function App() {
     const session = createSession(plan, exercises, workouts);
     if (!session) { setNotice("Dodaj ćwiczenia do planu przed rozpoczęciem."); setTab("plans"); return; }
     update("activeSession", session);
-    setClockNow(Date.now()); setSummary(null); setNotice(""); setTab("workout");
+    setClockNow(Date.now()); setSummary(null); setSkipOffer(null); setNotice(""); setTab("workout");
   };
   const currentExercise = activeSession?.exercises[activeExerciseIndex];
   const currentSetGoal = currentExercise?.targetSets ?? activeSession?.plan.targets?.[currentExercise?.id]?.sets ?? exercises.find(e => e.id === currentExercise?.id)?.sets;
@@ -210,7 +208,19 @@ export default function App() {
     return saved;
   };
   const setExerciseSkipped = skipped => {
-    if (changeSession(session => skipSessionExercise(session, activeExerciseIndex, skipped))) setWorkoutPanel(null);
+    if (changeSession(session => skipSessionExercise(session, activeExerciseIndex, skipped))) {
+      setWorkoutPanel(null); setSkipOffer(skipped ? currentExercise.id : null);
+    }
+  };
+  const undoSkipped = () => {
+    const index = activeSession.exercises.findIndex(exercise => exercise.id === skipOffer);
+    if (index >= 0 && changeSession(session => ({ ...skipSessionExercise(session, index, false), index }))) setSkipOffer(null);
+  };
+  const startQuickRest = () => {
+    const now = Date.now();
+    const saved = changeSession(session => startSessionRest(session, session.manualRestSeconds ?? (currentExercise.rest > 0 ? currentExercise.rest : 90), currentExercise.name, now));
+    if (saved) setClockNow(now);
+    return saved;
   };
   const toggleSet = index => {
     if (currentExercise.skipped) return false;
@@ -511,13 +521,14 @@ export default function App() {
                 ćwiczeń
               </small>
             </div>
+            <div className="workout-quick-actions"><button type="button" onClick={() => setWorkoutPanel("replace")}><RotateCcw size={16}/> Zamień</button><button type="button" disabled={currentExercise.skipped} onClick={() => setExerciseSkipped(true)}><SkipForward size={16}/> Pomiń</button><button type="button" onClick={() => setWorkoutPanel("exercise")}><Settings2 size={16}/> Opcje</button></div>
+            {skipOffer != null && <div className="workout-skip-offer" role="status"><span>Pominięto: {activeSession.exercises.find(e => e.id === skipOffer)?.name}. Wyniki są zachowane do cofnięcia.</span><button type="button" onClick={undoSkipped}>Cofnij</button>{currentExercise.id === skipOffer && activeExerciseIndex < activeSession.exercises.length - 1 && <button type="button" onClick={() => setActiveExerciseIndex(activeExerciseIndex + 1)}>Następne ćwiczenie</button>}</div>}
             <div className="workout-hero-photo">
               <ExerciseVisual exercise={currentExercise} />
               <button type="button" className="workout-photo-open" aria-label="Powiększ zdjęcie ćwiczenia" onClick={() => setWorkoutPanel("photo")}><Maximize2 size={20} /></button>
             </div>
             <button type="button" className="workout-last-result" aria-label="Ostatni trening — szczegóły ćwiczenia" onClick={() => setWorkoutPanel("history")}><History size={21} /><span><small>{previousExercise ? `Ostatni trening · ${displayDate(previousExercise.date)}` : "Ostatni trening"}</small><b>{previousExercise ? `${seriesLabel(previousExercise.sets.length)} · ${previousExercise.sets.slice(0, 3).map(historySetLabel).join(" / ") + (previousExercise.sets.length > 3 ? " …" : "")}` : "Brak wyników — ustal punkt wyjściowy"}</b></span><ChevronRight size={20} /></button>
             <section className="workout-exercise current-exercise card">
-              {isResting && <button type="button" className="workout-rest-preview" aria-label="Aktywna przerwa — otwórz ustawienia" onClick={() => setWorkoutPanel("timer")}><span>Przerwa{activeSession.restPausedRemainingMs != null ? " · wstrzymana" : " między seriami"}</span><b role="timer" aria-live="off">{formatDuration(restSeconds)}</b></button>}
               {currentExercise.skipped && <div className="session-skipped-banner" role="status"><p>Ćwiczenie pominięte. Jego serie nie trafią do wyniku treningu.</p><button type="button" onClick={() => setExerciseSkipped(false)}>Cofnij pominięcie</button></div>}
               <div className="exercise-title">
                 <span className={`exercise-icon ${currentExercise.color}`}>
@@ -533,46 +544,9 @@ export default function App() {
                 </div>
                 <IconButton label="Menu ćwiczenia" onClick={() => setWorkoutPanel("exercise")}><span aria-hidden="true">•••</span></IconButton>
               </div>
-              <ActiveSetEditor key={activeSession.id + ":" + currentExercise.id} exercise={currentExercise} targetSets={currentSetGoal} exerciseIndex={activeExerciseIndex} sessionId={activeSession.id} onPersist={updateData} onConfirm={toggleSet} />
+              <ActiveSetEditor key={activeSession.id + ":" + currentExercise.id} exercise={currentExercise} targetSets={currentSetGoal} exerciseIndex={activeExerciseIndex} sessionId={activeSession.id} onPersist={updateData} onConfirm={toggleSet} restModule={<CompactRest session={activeSession} seconds={restSeconds} onStart={startQuickRest} onAction={changeRest} onSettings={() => setWorkoutPanel("timer")} />} />
             </section>
-            {isResting && (
-              <section className="rest-card">
-                <span className="eyebrow">
-                  PRZERWA · {activeSession.restExerciseName || currentExercise.name}{activeSession.restPausedRemainingMs != null ? " · WSTRZYMANA" : ""}
-                </span>
-                <strong>
-                  {Math.floor(restSeconds / 60)}:
-                  {String(restSeconds % 60).padStart(2, "0")}
-                </strong>
-                <RestControls session={activeSession} onAction={changeRest} />
-              </section>
-            )}
-            <div className="workout-navigation">
-              <button
-                className="secondary-cta"
-                disabled={activeExerciseIndex === 0}
-                onClick={() => setActiveExerciseIndex((value) => value - 1)}
-              >
-                Poprzednie
-              </button>
-              {activeExerciseIndex < activeSession.exercises.length - 1 ? (
-                <button
-                  className="primary-cta"
-                  onClick={() => {
-                    setActiveExerciseIndex((value) => value + 1);
-                  }}
-                >
-                  Następne <ArrowRight size={17} />
-                </button>
-              ) : (
-                <button
-                  className="finish-button"
-                  onClick={openFinishReview}
-                >
-                  Zakończ <Check size={17} />
-                </button>
-              )}
-            </div>
+            <WorkoutNavigation index={activeExerciseIndex} count={activeSession.exercises.length} onPrevious={() => setActiveExerciseIndex(value => value - 1)} onNext={() => setActiveExerciseIndex(value => value + 1)} onFinish={openFinishReview}/>
           </div>
         )}
         {tab === "history" && (

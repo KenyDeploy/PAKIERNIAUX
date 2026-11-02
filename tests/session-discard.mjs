@@ -9,7 +9,7 @@ try {
  const data=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data);
  const start=async(name='Góra ciała — siła')=>{await page.locator('.bottom-nav').getByRole('button',{name:'Plany',exact:true}).click();await page.locator('.plan-card').filter({hasText:name}).getByRole('button',{name:'Rozpocznij',exact:true}).click();};
  const three=async()=>{for(const n of [1,2,3]){if(n>1)await page.getByRole('button',{name:'Dodaj serię',exact:true}).click();await page.getByLabel(`Ciężar serii ${n}`,{exact:true}).fill(String(n*10));await page.getByLabel(`Powtórzenia serii ${n}`,{exact:true}).fill('8');await page.getByRole('button',{name:`Zatwierdź serię ${n}`,exact:true}).click();}};
- const review=async()=>{await page.getByRole('button',{name:'Czas treningu i opcje'}).click();await page.getByRole('button',{name:'Zakończ trening',exact:true}).click();};
+ const review=async()=>{await page.getByRole('button',{name:'Czas treningu i opcje'}).click();await page.getByRole('dialog').getByRole('button',{name:'Zakończ trening',exact:true}).click();};
  const request=async()=>{await review();await page.getByRole('button',{name:'Odrzuć trening bez zapisu',exact:true}).click();};
  const confirmation=()=>page.getByRole('dialog',{name:'Usunąć cały rozpoczęty trening?',exact:true});
  await start();await three();const before=await data();assert.equal(before.activeSession.exercises[0].sets.filter(row=>row.completed).length,3);
