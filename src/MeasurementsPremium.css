@@ -1,0 +1,38 @@
+/* Measurements 2.0: static illustrations and actual readings, independent of training UI. */
+.measurements-page{gap:16px}
+.app-shell .measurements-page .body-profile-summary{padding:0 0 12px;border:0;border-bottom:1px solid var(--line);background:transparent;border-radius:0}
+.measurements-page .body-view-modes{gap:3px;padding:4px;background:#111414;border:1px solid var(--line);border-radius:13px}
+.measurements-page .body-view-modes button{font-size:11px;border:0;background:transparent;border-radius:9px}
+.measurements-page .body-view-modes button[aria-selected=true]{background:var(--accent);color:var(--on-accent)}
+.app-shell .measurements-page .body-reading{border:0;border-bottom:1px solid var(--line);border-radius:0;padding:6px 0 16px;background:transparent}
+.measurements-page .body-reading>b{font-size:44px;letter-spacing:-.045em;line-height:1.2}
+.body-reading-deltas{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.body-reading-deltas>div{display:grid;gap:6px}
+.body-reading-deltas span{font-size:11px;color:var(--muted)}
+.body-reading-deltas b{font-size:19px;font-variant-numeric:tabular-nums;font-weight:600}
+.body-reading-deltas small{font-size:12px;color:var(--muted)}
+.measurements-page .body-reading [data-testid=measurement-change]{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.body-model-toolbar{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
+.body-model-toolbar>.body-toggle{flex:1 1 180px}
+.body-model-toolbar>.body-side-toggle{flex:1 1 100px}
+.body-model-toolbar button{font-size:12px}
+.body-model-view{background:radial-gradient(ellipse at 50% 50%,#1c2420,#0b0e0c 75%);border:1px solid var(--line);border-radius:20px;overflow:hidden}
+.measurements-page .body-model-canvas{width:min(100%,320px);aspect-ratio:320/500;margin:auto}
+.body-silhouette{display:block;width:100%;height:100%}
+.body-point-position{position:absolute;transform:translate(-50%,-50%);width:44px;height:44px;display:grid;place-items:center}
+.app-shell .body-model-canvas .body-hotspot{position:static;transform:none;width:44px;height:44px;min-height:44px;padding:0;display:grid;place-items:center;border:0;border-radius:50%;background:transparent}
+.app-shell .body-model-canvas .body-hotspot.selected{background:color-mix(in srgb,var(--accent) 13%,transparent);box-shadow:0 0 0 1px var(--accent-border)}
+.body-model-canvas .body-hotspot-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.body-model-canvas .body-hotspot-dot{width:13px;height:13px;background:#0c1410;box-shadow:0 0 0 4px #080c0aa0}
+.body-model-canvas .selected .body-hotspot-dot{background:var(--accent);box-shadow:0 0 15px var(--accent-glow)}
+.body-illustration-caption{text-align:center;font-size:10px;line-height:1.5;color:var(--muted);padding:4px 12px 14px}
+.body-static-note{font-size:10px}
+.body-compare-controls{display:grid;gap:12px}
+.body-compare-controls h2,.body-section-title h2{font-size:16px}
+.body-section-title{display:flex;justify-content:space-between;gap:12px;align-items:center;padding-top:14px;border-top:1px solid var(--line)}
+.body-section-title>span{font-size:11px;color:var(--muted);white-space:nowrap}
+.body-trend{font-size:12px;line-height:1.6;color:var(--muted);padding:0 0 10px;border-bottom:1px solid var(--line)}
+.measurements-page .body-measurement-table td:last-child{white-space:nowrap}
+.measurements-page .body-measurement-table .body-icon-action{border:0;background:transparent;padding:8px;border-radius:8px}
+.measurements-page .body-date-controls select{background:#171c19}
+@media(max-width:350px){.measurements-page .body-view-modes button{font-size:10px;padding:4px}.body-model-toolbar>.body-toggle{flex-basis:100%}.body-model-toolbar>.body-side-toggle{flex-basis:100%}.body-reading-deltas{gap:10px}}

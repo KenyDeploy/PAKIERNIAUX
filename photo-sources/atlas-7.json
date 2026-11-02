@@ -1,0 +1,44 @@
+{
+  "atlas": 7,
+  "generator": "OpenAI Image Generation",
+  "date": "2026-10-29",
+  "sourceArtifact": "exec-1946ad89-f252-4aae-83c9-ff66fbf9adfd.png",
+  "grid": {
+    "columns": 2,
+    "rows": 3
+  },
+  "exercises": [
+    {
+      "id": 130,
+      "name": "Wyciskanie hantli na ławce poziomej"
+    },
+    {
+      "id": 131,
+      "name": "Wiosłowanie na maszynie z podparciem klatki"
+    },
+    {
+      "id": 132,
+      "name": "Ściąganie uchwytu wyciągu chwytem neutralnym"
+    },
+    {
+      "id": 133,
+      "name": "Ściąganie prostych ramion na wyciągu"
+    },
+    {
+      "id": 134,
+      "name": "Podciąganie na maszynie z odciążeniem"
+    },
+    {
+      "id": 135,
+      "name": "Wiosłowanie końcem sztangi"
+    }
+  ],
+  "scenes": [
+    "Flat DUMBBELL bench press, athlete lying supine on horizontal bench with one dumbbell in each hand at chest height.",
+    "Chest-supported seated lever row MACHINE, chest resting on pad, two handles pulled toward ribs.",
+    "Neutral-grip seated lat pulldown, parallel close grip handle attached to overhead cable pulled toward chest.",
+    "Standing straight-arm cable pulldown, arms nearly straight pulling high pulley straight bar down to thighs.",
+    "Assisted pull-up machine, athlete kneeling on a counterweighted pad gripping high fixed handles.",
+    "Landmine T-bar row, straddling a barbell fixed at one end with plates on free end, pulling close-grip handle near abdomen while hinged forward."
+  ]
+}

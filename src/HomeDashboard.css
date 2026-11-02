@@ -1,0 +1,65 @@
+.is-home .topbar { height:auto; min-height:64px; padding:calc(10px + env(safe-area-inset-top)) 16px 10px; background:#090d09ee; }
+.is-home .brand-mark { width:36px; height:36px; box-shadow:none; }
+.is-home .icon-button { min-width:44px; min-height:44px; }
+.is-home .content { gap:8px; padding:8px 14px calc(24px + env(safe-area-inset-bottom)); }
+.is-home .sync-status { padding:0; font-size:10px; }
+.home-dashboard { display:flex; flex-direction:column; gap:14px; min-width:0; }
+.dashboard-welcome { padding:5px 2px 0; }
+.dashboard-welcome h1 { font-size:29px; line-height:1.12; letter-spacing:-.04em; font-weight:800; }
+.dashboard-welcome p { margin-top:10px; font-size:12px; line-height:1.5; color:var(--muted); }
+.dashboard-plan { padding:10px; border:1px solid #495d28; border-radius:17px; background:linear-gradient(120deg,#18220f,#101710); }
+.dashboard-plan-link { display:flex; align-items:center; gap:10px; width:100%; min-height:68px; border:0; background:none; text-align:left; padding:3px 3px 10px; }
+.dashboard-plan-link > span:nth-child(2) { flex:1; min-width:0; }
+.dashboard-plan-link small,.dashboard-plan-link b,.dashboard-plan-link > span > span { display:block; line-height:1.4; }
+.dashboard-plan-link small { font-size:10px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:4px; }
+.dashboard-plan-link b { font-size:15px; overflow-wrap:anywhere; }
+.dashboard-plan-link > span > span { font-size:11px; color:var(--muted); margin-top:4px; }
+.dashboard-plan-icon { display:grid; place-items:center; flex-shrink:0; width:38px; height:38px; border:1px solid #425828; border-radius:50%; color:var(--accent); background:#202e15; }
+.dashboard-plan-link > svg { flex-shrink:0; color:var(--accent); }
+.home-dashboard .dashboard-start { width:100%; min-height:48px; border-radius:11px; padding:12px; font-size:14px; justify-content:center; box-shadow:0 5px 18px #b3f60018; }
+.dashboard-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.dashboard-metric { display:flex; align-items:flex-start; gap:9px; min-width:0; min-height:86px; padding:12px 10px; border:1px solid var(--line); border-radius:13px; background:linear-gradient(130deg,#161d14,#101510); text-align:left; }
+.dashboard-metric > span:last-child { min-width:0; flex:1; }
+.dashboard-metric small,.dashboard-metric b,.dashboard-metric-period { display:block; line-height:1.4; }
+.dashboard-metric small { font-size:11px; color:var(--muted); }
+.dashboard-metric b { font-size:19px; margin:3px 0 2px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.dashboard-metric-period { font-size:9px; color:var(--muted); }
+.dashboard-metric-icon { flex-shrink:0; display:grid; place-items:center; width:29px; height:29px; border-radius:9px; }
+.dashboard-metric-icon.cyan { color:#65d8f6; background:#153b42; }
+.dashboard-metric-icon.magenta { color:#f36ef1; background:#3d1743; }
+.dashboard-metric-icon.orange { color:#ffb14d; background:#402d12; }
+.dashboard-metric-icon.red { color:#ff8065; background:#422217; }
+.dashboard-section-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.dashboard-section-heading h2 { font-size:17px; }
+.dashboard-section-heading button { display:grid; place-items:center; min-width:44px; min-height:44px; border:0; background:none; color:var(--accent); }
+.dashboard-week-days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; }
+.dashboard-weekday { display:flex; flex-direction:column; align-items:center; gap:8px; padding:2px 0; }
+.dashboard-weekday small { font-size:10px; color:var(--muted); }
+.dashboard-weekday > span { width:100%; max-width:24px; height:6px; border-radius:8px; background:#303c22; }
+.dashboard-weekday[data-done="true"] > span { background:var(--accent); }
+.dashboard-weekday.today > span { box-shadow:0 0 10px #bdfc0038; }
+.dashboard-weekday.today small { color:var(--text); }
+.dashboard-weekday b { font-size:10px; font-weight:500; color:var(--muted); }
+.dashboard-week > p { font-size:10px; color:var(--muted); margin-top:8px; }
+.dashboard-links { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.dashboard-links button { display:flex; align-items:center; justify-content:center; gap:6px; min-width:0; min-height:44px; border:1px solid var(--line); border-radius:11px; background:#151c13; font-size:12px; }
+.dashboard-links svg { flex-shrink:0; color:var(--accent); }
+.home-dashboard .workout-calendar { margin-top:4px; padding:14px; }
+.home-dashboard .calendar-day { min-height:44px; }
+.home-dashboard .calendar-caption { flex-wrap:wrap; gap:8px; line-height:1.5; }
+.dashboard-water { padding:0 12px; border:1px solid var(--line); border-radius:13px; background:#111911; }
+.dashboard-water summary { display:flex; align-items:center; gap:8px; min-height:48px; cursor:pointer; list-style:none; font-size:13px; }
+.dashboard-water summary::-webkit-details-marker { display:none; }
+.dashboard-water summary:after { content:"⌄"; color:var(--muted); }
+.dashboard-water[open] summary:after { content:"⌃"; }
+.dashboard-water summary > span { flex:1; }
+.dashboard-water summary > svg { color:#65d8f6; }
+.dashboard-water summary b { font-size:13px; }
+.dashboard-water-body { padding:4px 0 12px; }
+.dashboard-water-body > p { font-size:11px; color:var(--muted); margin-bottom:10px; }
+.dashboard-water-actions { display:flex; gap:8px; }
+.dashboard-water-actions button { flex:1; display:flex; align-items:center; justify-content:center; gap:6px; min-height:44px; border:1px solid #324735; border-radius:10px; background:#1c2c22; font-size:13px; }
+.dashboard-water-week { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; margin-top:12px; }
+.dashboard-water-week span { min-width:0; text-align:center; }
+.dashboard-water-week small,.dashboard-water-week b { display:block; font-size:9px; color:var(--muted); font-weight:500; margin-top:4px; }
+@media(max-width:340px) { .is-home .content { padding-left:10px; padding-right:10px; } .dashboard-metric { gap:7px; padding:10px 8px; } .dashboard-metric b { font-size:17px; } .dashboard-plan-link b { font-size:14px; } }

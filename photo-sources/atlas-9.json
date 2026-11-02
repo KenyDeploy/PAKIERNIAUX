@@ -1,0 +1,44 @@
+{
+  "atlas": 9,
+  "generator": "OpenAI Image Generation",
+  "date": "2026-10-29",
+  "sourceArtifact": "exec-0a9d79a0-cdea-414e-920d-7dedb3ddb7f2.png",
+  "grid": {
+    "columns": 2,
+    "rows": 3
+  },
+  "exercises": [
+    {
+      "id": 142,
+      "name": "Odwodzenie nóg na maszynie"
+    },
+    {
+      "id": 143,
+      "name": "Przywodzenie nóg na maszynie"
+    },
+    {
+      "id": 144,
+      "name": "Unoszenie bioder na maszynie"
+    },
+    {
+      "id": 145,
+      "name": "Wspięcia na palce na maszynie siedząc"
+    },
+    {
+      "id": 146,
+      "name": "Wspięcia na palce na maszynie stojąc"
+    },
+    {
+      "id": 147,
+      "name": "Wejścia na podest z hantlami"
+    }
+  ],
+  "scenes": [
+    "Seated hip ABDUCTION machine, pads against outside knees and legs opened apart.",
+    "Seated hip ADDUCTION machine, pads against inside knees and legs drawn inward.",
+    "Glute drive hip thrust MACHINE, back on padded support, padded belt lever over hips, feet on plate and hips extended.",
+    "Seated calf raise MACHINE, padded lever across thighs above knees, forefeet on raised block and heels lifted.",
+    "Standing calf raise MACHINE, padded shoulder yoke, forefeet on raised footplate and heels lifted.",
+    "Dumbbell step-up onto sturdy knee-height box, one foot on top and one dumbbell held at each side."
+  ]
+}

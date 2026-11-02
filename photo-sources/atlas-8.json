@@ -1,0 +1,45 @@
+{
+  "atlas": 8,
+  "generator": "OpenAI Image Generation",
+  "date": "2026-10-29",
+  "sourceArtifact": "exec-8052d084-7e3b-442b-91ff-c67e39c09d5e.png",
+  "grid": {
+    "columns": 2,
+    "rows": 3
+  },
+  "exercises": [
+    {
+      "id": 136,
+      "name": "Prostowanie tułowia na ławce rzymskiej"
+    },
+    {
+      "id": 137,
+      "name": "Przysiad na maszynie skośnej"
+    },
+    {
+      "id": 138,
+      "name": "Przysiad w suwnicy Smitha"
+    },
+    {
+      "id": 139,
+      "name": "Przysiad przedni ze sztangą"
+    },
+    {
+      "id": 140,
+      "name": "Przysiad z hantlem przy klatce"
+    },
+    {
+      "id": 141,
+      "name": "Uginanie nóg na maszynie siedząc"
+    }
+  ],
+  "scenes": [
+    "Back extension on 45-degree Roman chair, hips on angled pad and feet secured, body straight with arms folded.",
+    "Hack squat angled sled MACHINE, back and shoulders on moving sled pads, knees bent and feet on platform.",
+    "Back squat in SMITH machine, barbell on upper back guided along two visible rails.",
+    "Barbell FRONT squat, barbell across front of shoulders and elbows forward/upward.",
+    "Goblet squat holding a single dumbbell vertically against chest in both hands.",
+    "SEATED leg curl machine with thigh pad and roller behind ankles, athlete seated upright and pulling heels down beneath seat."
+  ],
+  "correction": "Seated leg curl: added thigh hold-down and corrected lower-leg roller placement."
+}

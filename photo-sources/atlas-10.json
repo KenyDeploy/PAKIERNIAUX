@@ -1,0 +1,44 @@
+{
+  "atlas": 10,
+  "generator": "OpenAI Image Generation",
+  "date": "2026-10-29",
+  "sourceArtifact": "exec-61409922-349d-4f0c-a91d-32451b39d329.png",
+  "grid": {
+    "columns": 2,
+    "rows": 3
+  },
+  "exercises": [
+    {
+      "id": 148,
+      "name": "Odwodzenie nogi w tył na wyciągu"
+    },
+    {
+      "id": 149,
+      "name": "Wyciskanie barków na maszynie"
+    },
+    {
+      "id": 150,
+      "name": "Unoszenie ramion bokiem na maszynie"
+    },
+    {
+      "id": 151,
+      "name": "Odwrotne rozpiętki na maszynie"
+    },
+    {
+      "id": 152,
+      "name": "Unoszenie ramienia bokiem na wyciągu"
+    },
+    {
+      "id": 153,
+      "name": "Wznosy barków z hantlami"
+    }
+  ],
+  "scenes": [
+    "Low cable glute kickback, ankle cuff attached to low pulley, standing on one leg with other leg extending behind, hand holds machine.",
+    "Seated shoulder press MACHINE, back supported, machine handles pushed upward above shoulders.",
+    "Seated lateral raise MACHINE, padded levers under outer elbows and arms raised sideways.",
+    "Reverse pec deck rear delt fly MACHINE, seated facing chest pad with arms spread backward horizontally.",
+    "Single arm LOW CABLE lateral raise, standing sideways to pulley, one hand lifts handle out to shoulder level.",
+    "Dumbbell shoulder shrug, athlete standing holding dumbbells with straight arms at sides, shoulders elevated."
+  ]
+}

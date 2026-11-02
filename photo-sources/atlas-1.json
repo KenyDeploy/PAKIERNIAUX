@@ -1,0 +1,36 @@
+{
+  "atlas": 1,
+  "generator": "OpenAI Image Generation",
+  "date": "2026-10-29",
+  "sourceArtifact": "exec-87579551-aa70-4a10-aee7-92f62790d296.png",
+  "grid": {
+    "columns": 2,
+    "rows": 3
+  },
+  "exercises": [
+    {
+      "id": 1,
+      "name": "Wyciskanie hantli na skosie"
+    },
+    {
+      "id": 2,
+      "name": "Ściąganie drążka wyciągu"
+    },
+    {
+      "id": 3,
+      "name": "Przysiad ze sztangą"
+    },
+    {
+      "id": 4,
+      "name": "Wyciskanie żołnierskie"
+    },
+    {
+      "id": 5,
+      "name": "Uginanie przedramion z hantlami"
+    },
+    {
+      "id": 6,
+      "name": "Prostowanie ramion na wyciągu"
+    }
+  ]
+}

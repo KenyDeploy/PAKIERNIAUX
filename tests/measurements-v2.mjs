@@ -1,0 +1,50 @@
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE||'playwright');
+const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
+try{
+ const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+ await page.goto(process.env.APP_URL||'http://127.0.0.1:4182');
+ const nav=()=>page.locator('.bottom-nav').getByRole('button',{name:'Pomiary',exact:true}).click();
+ const data=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data);
+ await nav();assert.ok(await page.getByTestId('temporary-body-model').isVisible());
+ assert.match(await page.locator('.body-reading').innerText(),/Brak zapisanego pomiaru/);
+ await page.getByRole('tab',{name:'Poprzedni',exact:true}).click();assert.match(await page.locator('.body-reading').innerText(),/Brak wcześniejszego/);
+ await page.getByRole('tab',{name:'Aktualnie',exact:true}).click();
+ await page.getByRole('button',{name:'Mężczyzna',exact:true}).click();
+ const baseline=await data();
+ await page.evaluate(()=>{const key='pakiernia.v2.local',s=JSON.parse(localStorage.getItem(key));s.data.measurements=[{id:'first',date:'2026-10-01',waist:90,biceps:35},{id:'middle',date:'2026-10-10',waist:87,bicepsRight:36},{id:'latest',date:'2026-10-20',waist:84,bicepsRight:38,note:'Rano'},{id:'partial',date:'2026-10-25',weight:80}];localStorage.setItem(key,JSON.stringify(s));});
+ await page.reload();await nav();
+ assert.match(await page.locator('.body-reading').innerText(),/84/);assert.match(await page.locator('.body-reading-deltas').innerText(),/-3/);assert.match(await page.locator('.body-reading-deltas').innerText(),/-6/);
+ assert.match(await page.locator('.body-reading').innerText(),/20.10.2026/);
+ assert.ok(await page.locator('.body-list-panel .trend-chart').isVisible());assert.equal(await page.locator('.body-measurement-table tbody tr').count(),4);
+ const capture=async name=>{await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(120);await page.screenshot({path:`docs/audit/measurements-v2-${name}-390.png`,fullPage:true});};
+ await capture('male');
+ await page.evaluate(()=>{window.__modelSet=Storage.prototype.setItem;Storage.prototype.setItem=()=>{throw Error('quota');};});
+ await page.getByRole('button',{name:'Kobieta',exact:true}).click();assert.equal((await data()).bodyProfile.model,'male');assert.ok(await page.getByRole('alert').isVisible());
+ await page.evaluate(()=>{Storage.prototype.setItem=window.__modelSet;});
+ await page.getByRole('button',{name:'Kobieta',exact:true}).click();assert.equal((await data()).bodyProfile.model,'female');
+ assert.ok(await page.getByRole('img',{name:'Schemat kobiecy — przód',exact:true}).isVisible());
+ await page.getByRole('button',{name:'Tył',exact:true}).click();assert.ok(await page.getByRole('img',{name:'Schemat kobiecy — tył',exact:true}).isVisible());
+ await page.getByRole('button',{name:'Biceps prawy: 38 cm',exact:true}).click();
+ assert.equal(await page.getByLabel('Wybierz pomiar').inputValue(),'bicepsRight');assert.match(await page.locator('.body-reading-deltas').innerText(),/2/);
+ await page.waitForFunction(()=>{const r=document.querySelector('.body-reading').getBoundingClientRect(),nav=document.querySelector('.bottom-nav').getBoundingClientRect(),header=document.querySelector('.topbar').getBoundingClientRect();return r.top>=header.bottom && r.bottom<=nav.top;});
+ await capture('female-back');
+ for(const width of [320,375,390,430]){
+  await page.setViewportSize({width,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  const hotspots=await page.locator('.body-model-canvas .body-hotspot').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return {w:r.width,h:r.height};}));assert.ok(hotspots.every(r=>r.w>=44 && r.h>=44));
+ }
+ await page.setViewportSize({width:390,height:844});
+ await page.getByRole('tab',{name:'Poprzedni',exact:true}).click();assert.match(await page.locator('.body-reading>b').innerText(),/36/);assert.match(await page.locator('.body-reading').innerText(),/10.10.2026/);
+ await page.getByRole('tab',{name:'Porównaj',exact:true}).click();
+ await page.getByLabel('Data: Wtedy',{exact:true}).selectOption('2026-10-01');await page.getByLabel('Data: Teraz',{exact:true}).selectOption('2026-10-20');
+ await page.getByRole('button',{name:'Wtedy',exact:true}).click();assert.match(await page.locator('.body-reading').innerText(),/Brak zapisanego/);
+ const right=page.locator('.body-comparison-table tbody tr').filter({hasText:'Biceps prawy'});assert.match(await right.innerText(),/—/);
+ await page.getByRole('button',{name:'Teraz',exact:true}).click();assert.match(await page.locator('.body-reading>b').innerText(),/38/);
+ await page.getByLabel('Wybierz pomiar').selectOption('waist');await capture('comparison');
+ await page.getByRole('tab',{name:'Historia',exact:true}).click();assert.equal(await page.locator('.body-model-canvas').count(),0);assert.equal(await page.locator('.body-measurement-table tbody tr').count(),4);
+ const before=await data();await page.getByRole('button',{name:'Usuń pomiar 2026-10-25 (1)',exact:true}).click();await page.getByRole('button',{name:'Anuluj usuwanie pomiaru'}).click();assert.deepEqual((await data()).measurements,before.measurements);
+ await page.reload();await nav();assert.equal((await data()).bodyProfile.model,'female');assert.deepEqual((await data()).measurements,before.measurements);assert.deepEqual((await data()).plans,baseline.plans);assert.equal((await data()).bodyProfile.sex,undefined);assert.deepEqual(errors,[]);
+ console.log('Measurements 2.0: male/female front/back SVG, hotspots, actual/previous/baseline deltas, exact compare missing fields, chart/list, history, model persistence, cancel deletion; 320–430px PASS.');
+}finally{await browser.close();}

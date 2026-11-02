@@ -1,0 +1,36 @@
+{
+  "atlas": 4,
+  "generator": "OpenAI Image Generation",
+  "date": "2026-10-29",
+  "sourceArtifact": "exec-dc5efc72-913e-40ef-8acb-783f17480566.png",
+  "grid": {
+    "columns": 2,
+    "rows": 3
+  },
+  "exercises": [
+    {
+      "id": 112,
+      "name": "Wypychanie nóg na suwnicy"
+    },
+    {
+      "id": 113,
+      "name": "Prostowanie nóg na maszynie"
+    },
+    {
+      "id": 114,
+      "name": "Uginanie nóg na maszynie"
+    },
+    {
+      "id": 115,
+      "name": "Unoszenie bioder ze sztangą"
+    },
+    {
+      "id": 116,
+      "name": "Wspięcia na palce"
+    },
+    {
+      "id": 117,
+      "name": "Unoszenie hantli bokiem"
+    }
+  ]
+}

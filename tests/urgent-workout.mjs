@@ -1,0 +1,53 @@
+import assert from 'node:assert/strict';import {createRequire} from 'node:module';
+const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE||'playwright');
+const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
+try{
+ const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+ await page.goto(process.env.APP_URL||'http://127.0.0.1:4182');await page.getByRole('button',{name:'Rozpocznij trening',exact:true}).click();
+ await page.evaluate(()=>{const k='pakiernia.v2.local',s=JSON.parse(localStorage.getItem(k)),exercise=s.data.exercises.find(e=>e.name==='Podciąganie nachwytem');s.data.plans[0]={...s.data.plans[0],exercises:[exercise.id]};s.data.activeSession={...s.data.activeSession,index:0,plan:{...s.data.plans[0]},exercises:[{...exercise,targetSets:3,sets:[{id:'first-bodyweight',weight:'',reps:'10',repsSuggested:true,completed:false}]}]};localStorage.setItem(k,JSON.stringify(s));});
+ const data=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.local')).data);
+ const current=async()=>{const d=await data();return d.activeSession.exercises[d.activeSession.index];};
+ const resume=()=>page.getByRole('button',{name:'Wznów rozpoczęty trening',exact:true}).click();
+ await page.reload();await resume();const original=await data();
+ const review=()=>page.locator('.workout-action-dock').getByRole('button',{name:'Zakończ trening',exact:true}).click();
+ const quota=()=>page.evaluate(()=>{window.__urgentSet=Storage.prototype.setItem;Storage.prototype.setItem=()=>{throw Error('quota');};});
+ const restore=()=>page.evaluate(()=>{Storage.prototype.setItem=window.__urgentSet;});
+ await review();assert.equal(await page.getByRole('button',{name:'Zapisz trening',exact:true}).count(),0);await page.locator('.finish-review .sheet-footer .primary-cta').click();
+ assert.match(await page.locator('.bodyweight-set-hint').innerText(),/Puste pole = 0 kg/);
+ for(const width of [320,375,390,430]){
+  await page.setViewportSize({width,height:844});await page.getByLabel('Powtórzenia serii 1',{exact:true}).focus();
+  await page.evaluate(()=>{Object.defineProperty(visualViewport,'height',{value:340,configurable:true});Object.defineProperty(visualViewport,'offsetTop',{value:35,configurable:true});visualViewport.dispatchEvent(new Event('resize'));});await page.waitForTimeout(100);
+  assert.ok(await page.getByLabel('Powtórzenia serii 1',{exact:true}).evaluate(input=>{const r=input.getBoundingClientRect(),save=input.closest('.series-entry').querySelector('.set-confirm'),s=save.getBoundingClientRect(),a=input.closest('.content').getBoundingClientRect(),dock=document.querySelector('.workout-action-dock').getBoundingClientRect();return r.top>=a.top && s.bottom<=a.bottom && a.bottom<=dock.top && save.contains(document.elementFromPoint(s.x+s.width/2,s.y+s.height/2));}));
+  await page.evaluate(()=>{document.activeElement?.blur();delete visualViewport.height;delete visualViewport.offsetTop;visualViewport.dispatchEvent(new Event('resize'));});
+ }
+ await page.setViewportSize({width:390,height:844});await page.locator('.series-entry').first().scrollIntoViewIfNeeded();await page.waitForTimeout(100);await page.screenshot({path:'docs/audit/urgent-bodyweight-390.png'});
+ await quota();await page.getByRole('button',{name:'Zatwierdź serię 1',exact:true}).click();assert.equal((await current()).sets[0].weight,'');assert.equal((await current()).sets[0].completed,false);await restore();
+ await page.getByRole('button',{name:'Zatwierdź serię 1',exact:true}).click();assert.equal((await current()).sets[0].weight,'0');assert.match(await page.locator('.series-compact').innerText(),/masa ciała/);
+ await page.getByRole('button',{name:'Dodaj serię',exact:true}).click();assert.equal(await page.locator('.series-entry').count(),2);assert.ok(await page.getByLabel('Ciężar serii 2',{exact:true}).isVisible());
+ await page.getByLabel('Ciężar serii 2',{exact:true}).fill('2,5');await page.getByRole('button',{name:'Zatwierdź serię 2',exact:true}).click();
+ await page.getByRole('button',{name:'Edytuj serię 1',exact:true}).click();await page.getByLabel('Ciężar serii 1',{exact:true}).fill('5');assert.equal((await current()).sets[0].completed,false);await page.getByRole('button',{name:'Zatwierdź serię 1',exact:true}).click();
+ const ids=(await current()).sets.map(r=>r.id);assert.equal(ids[0],'first-bodyweight');
+ await page.locator('.series-compact').first().scrollIntoViewIfNeeded();await page.waitForTimeout(100);await page.screenshot({path:'docs/audit/urgent-two-sets-390.png'});
+ await page.getByRole('button',{name:'Dodaj serię',exact:true}).click();await page.getByLabel('Ciężar serii 3',{exact:true}).fill('999');await page.getByLabel('Powtórzenia serii 3',{exact:true}).fill('100');
+ const checkSummary=async()=>{assert.equal(await page.getByTestId('finish-set-count').innerText(),'2');assert.equal(await page.getByTestId('finish-rep-count').innerText(),'20');assert.equal(await page.getByTestId('finish-volume').innerText(),'75 kg');assert.equal(await page.locator('.finish-review input[type=checkbox]').count(),0);};
+ await review();await checkSummary();await page.screenshot({path:'docs/audit/urgent-summary-390.png'});await page.getByRole('button',{name:'Kontynuuj',exact:true}).click();
+ const addExercise=async name=>{await page.locator('.workout-quick-actions').getByRole('button',{name:'Opcje',exact:true}).click();await page.getByRole('button',{name:'Dodaj inne ćwiczenie',exact:true}).click();await page.getByRole('button',{name:`Wybierz: ${name}`,exact:true}).click();await page.getByRole('button',{name:'Dodaj do treningu',exact:true}).click();};
+ await addExercise('Przysiad ze sztangą');assert.equal((await data()).activeSession.index,1);await page.getByLabel('Ciężar serii 1',{exact:true}).fill('40');
+ await addExercise('Wyciskanie sztangi na ławce poziomej');assert.equal((await data()).activeSession.index,2);await page.getByLabel('Ciężar serii 1',{exact:true}).fill('60');
+ const picker=page.getByLabel('Ćwiczenia w sesji',{exact:true});assert.equal(await picker.locator('option').count(),3);
+ await page.getByRole('button',{name:'Poprzednie ćwiczenie',exact:true}).click();assert.equal(await page.getByLabel('Ciężar serii 1',{exact:true}).inputValue(),'40');
+ await quota();await page.getByRole('button',{name:'Następne ćwiczenie',exact:true}).click();assert.equal((await data()).activeSession.index,1);await restore();
+ await page.getByRole('button',{name:'Następne ćwiczenie',exact:true}).click();assert.equal(await page.getByLabel('Ciężar serii 1',{exact:true}).inputValue(),'60');
+ await picker.selectOption('0');assert.deepEqual((await current()).sets.slice(0,2).map(r=>r.id),ids);
+ await page.getByRole('button',{name:'Usuń serię 3',exact:true}).click();await page.getByRole('button',{name:'Anuluj usuwanie serii'}).click();assert.equal((await current()).sets.length,3);
+ await page.getByRole('button',{name:'Usuń serię 3',exact:true}).click();await page.getByRole('button',{name:'Potwierdź usunięcie serii'}).click();
+ await page.getByRole('button',{name:'Dodaj serię',exact:true}).click();await page.getByRole('button',{name:'Usuń serię 3',exact:true}).click();assert.equal(await page.getByRole('dialog').count(),0);
+ await picker.selectOption('2');await page.reload();await resume();assert.equal((await data()).activeSession.index,2);assert.equal(await page.getByLabel('Ćwiczenia w sesji').locator('option').count(),3);
+ await page.getByRole('button',{name:'Poprzednie ćwiczenie',exact:true}).click();assert.equal(await page.getByLabel('Ciężar serii 1',{exact:true}).inputValue(),'40');await page.getByRole('button',{name:'Poprzednie ćwiczenie',exact:true}).click();assert.equal(await page.locator('.series-compact').count(),2);
+ await page.getByRole('button',{name:'Następne ćwiczenie',exact:true}).click();await page.getByRole('button',{name:'Następne ćwiczenie',exact:true}).click();
+ await page.locator('.workout-session-picker').scrollIntoViewIfNeeded();await page.waitForTimeout(100);await page.screenshot({path:'docs/audit/urgent-session-navigation-390.png'});
+ await review();await checkSummary();await page.getByRole('button',{name:'Zapisz trening',exact:true}).click();
+ const finished=await data();assert.equal(finished.activeSession,null);assert.equal(finished.workouts.length,1);assert.equal(finished.workouts[0].volume,75);assert.equal(finished.workouts[0].exercises.length,1);assert.equal(finished.workouts[0].exercises[0].sets.length,2);assert.equal(finished.workouts[0].exercises[0].sets.reduce((n,r)=>n+Number(r.reps),0),20);assert.deepEqual(finished.plans,original.plans);
+ assert.match(await page.locator('.workout-summary').innerText(),/20 powtórzeń/);assert.deepEqual(errors,[]);
+ console.log('Urgent workout: bodyweight blank only becomes zero on Save, quota/retry, two-set 20-rep 75kg totals, pending exclusion, edit/delete, two added exercises, prev/next/list/reload, source-plan integrity, 320–430px keyboard geometry PASS.');
+}finally{await browser.close();}

@@ -1,0 +1,36 @@
+{
+  "atlas": 3,
+  "generator": "OpenAI Image Generation",
+  "date": "2026-10-29",
+  "sourceArtifact": "exec-af57c47a-3a03-441c-b1f0-35561be99b6d.png",
+  "grid": {
+    "columns": 2,
+    "rows": 3
+  },
+  "exercises": [
+    {
+      "id": 106,
+      "name": "Wiosłowanie hantlem"
+    },
+    {
+      "id": 107,
+      "name": "Podciąganie nachwytem"
+    },
+    {
+      "id": 108,
+      "name": "Przyciąganie uchwytu wyciągu siedząc"
+    },
+    {
+      "id": 109,
+      "name": "Martwy ciąg rumuński"
+    },
+    {
+      "id": 110,
+      "name": "Wykroki z hantlami"
+    },
+    {
+      "id": 111,
+      "name": "Przysiad bułgarski"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+/* A date is a complete row, never a narrow column next to a wrapping title. */
+.history-list .history-row { display:flex; flex-direction:column; align-items:stretch; gap:8px; padding:14px; min-width:0; }
+.history-list .history-row .history-entry-date { display:block; width:auto; border:0; font-size:.875rem; line-height:1.5; color:var(--muted); overflow-wrap:anywhere; }
+.history-list .history-row .history-entry-content { flex:none; min-width:0; }
+.history-list .history-row h2 { font-size:1rem; line-height:1.5; margin:0; overflow-wrap:anywhere; }
+.history-list .history-row p { font-size:.875rem; line-height:1.6; margin:4px 0 0; overflow-wrap:anywhere; }
+.history-list .history-row .history-entry-volume { font-size:.875rem; line-height:1.5; white-space:normal; overflow-wrap:anywhere; }
+.history-list .history-row .session-details { width:100%; min-width:0; }
+.history-list .history-row .session-details summary { min-height:44px; padding:10px 0; }
+/* Actions stay in document flow, ahead of the larger optional rest card. */
+.app-shell.is-workout { padding-bottom:0; }
+.is-workout .workout-navigation { order:5; position:static; margin-bottom:12px; padding-bottom:max(20px,env(safe-area-inset-bottom)); }
+.is-workout .rest-card { order:6; }
+.is-workout .workout-hero-photo { height:clamp(80px,12vh,110px); }
