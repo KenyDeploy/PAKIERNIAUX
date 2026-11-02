@@ -1,0 +1,8 @@
+# Keep skill integrity hashes stable across Windows/macOS checkouts.
+/.agents/** text eol=lf
+/AGENTS.md text eol=lf
+/docs/AGENT_SKILLS.md text eol=lf
+/docs/SKILLS_VALIDATION.md text eol=lf
+
+# Preserve upstream Markdown hard line breaks in vendored React documentation.
+/.agents/skills/vercel-react-best-practices/** whitespace=-blank-at-eol
