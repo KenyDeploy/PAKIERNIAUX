@@ -34,3 +34,7 @@ Pełna klatka atlasu 3:2 mieści się w kontrolowanej wysokości 160–240 px be
 Walidacja: build PASS; 15 odpowiednich testów active-series/session-actions/training-clock PASS. Scenariusze workout-polish-a, workout-premium i timer-photo PASS: 320/375/390/430 px, różne ćwiczenia, pionowe/poziome zdjęcia własne, powiększenie, start/+15/pominięcie przerwy, menu, wykonane wiersze, wznowienie 10 serii i symulowany visualViewport klawiatury. Brak poziomego przewijania i błędów JS w tych próbach. iPhone Safari/PWA, natywna klawiatura i rzeczywisty pasek przeglądarki wymagają testu na urządzeniu — nie zastępuje go Chromium.
 
 Zrzut after odtwarza `tests/workout-polish-a.mjs`; before wykonano `tests/workout-premium-capture.mjs` przed zmianami z SCREENSHOT ustawionym na ścieżkę before. Nie scalano do main ani nie publikowano produkcji.
+
+## Pomiary 2.0 — etap B
+
+[Mężczyzna — przód](measurements-v2-male-390.png), [kobieta — tył](measurements-v2-female-back-390.png), [porównanie dat](measurements-v2-comparison-390.png): 390 px, izolowane lokalne dane testowe. Autorskie schematy SVG są tymczasowymi ilustracjami statycznymi, a nie finalnymi modelami anatomicznymi. Dokumentacja funkcji, testów, ograniczeń i adaptera: [MEASUREMENTS_V2.md](../MEASUREMENTS_V2.md). Zrzuty odtwarza tests/measurements-v2.mjs. Nie wykonywano fizycznego testu iPhone’a.
