@@ -1,0 +1,15 @@
+.smooth-chart{display:block;width:100%;height:auto;color:var(--muted);overflow:visible}
+.chart-line{stroke-linecap:round;stroke-linejoin:round;filter:none}
+.chart-ranges{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.chart-ranges button{min-height:44px;padding:8px 10px;font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:9px;background:transparent}
+.chart-ranges button[aria-pressed=true]{color:var(--accent);border-color:var(--accent-border)}
+.mini-chart-wrap{min-width:0;color:var(--accent)}
+.mini-chart-value{font-size:9px;line-height:1.4;color:var(--muted);margin-top:4px}
+.mini-chart-wrap .empty-state{font-size:10px;line-height:1.4;padding:6px 0;text-align:left}
+.mini-chart-wrap .mini-chart{color:var(--accent);overflow:visible;display:block;width:100%}
+.trend-chart svg [role=button]:focus-visible,.mini-chart [role=button]:focus-visible{outline:1px solid var(--accent)}
+.dashboard-metric .dashboard-metric-main{display:flex;align-items:flex-start;gap:9px;width:100%;min-height:44px;padding:0;border:0;background:transparent;text-align:left;color:inherit}
+.dashboard-metric .dashboard-metric-main>span:last-child{min-width:0;flex:1}
+.home-dashboard .dashboard-metric{display:block}
+.dashboard-progress-card>.mini-chart-wrap{width:80px;flex:0 0 80px}
+.dashboard-progress-card .progress-open{min-width:44px;min-height:44px;display:grid;place-items:center;background:transparent;border:0;color:var(--muted)}

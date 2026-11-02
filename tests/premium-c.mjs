@@ -24,10 +24,10 @@ try{
  const normal=(await page.locator('.exercise-row').first().boundingBox()).height;
  await page.getByRole('button',{name:'Kompaktowa lista',exact:true}).click();assert.equal(await page.getByRole('button',{name:'Kompaktowa lista'}).getAttribute('aria-pressed'),'true');
  assert.ok((await page.locator('.exercise-row').first().boundingBox()).height<normal);
- assert.equal(await page.locator('.exercise-edit-button').first().innerText(),'');
- for(const width of [320,375,390,430]){await page.setViewportSize({width,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));const b=await page.locator('.exercise-edit-button').first().boundingBox();assert.ok(b.width>=44 && b.height>=44);}
+ assert.equal(await page.locator('.exercise-edit-button').count(),0);
+ for(const width of [320,375,390,430]){await page.setViewportSize({width,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));const b=await page.locator('.exercise-row').first().boundingBox();assert.ok(b.width>=44 && b.height>=44);}
  await page.setViewportSize({width:390,height:844});await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(100);await page.screenshot({path:'docs/audit/premium-c-catalog-compact-390.png'});
- const edit=page.locator('.exercise-edit-button').first();await edit.click();assert.ok(await page.getByRole('heading',{name:'Edytuj ćwiczenie',exact:true}).isVisible());await page.getByRole('button',{name:'Zamknij',exact:true}).click();
+ await page.locator('.exercise-row').first().click();await page.getByRole('button',{name:'Edytuj ćwiczenie i zdjęcie',exact:true}).click();assert.ok(await page.getByRole('heading',{name:'Edytuj ćwiczenie',exact:true}).isVisible());await page.getByRole('button',{name:'Zamknij',exact:true}).click();
  await page.getByPlaceholder('Szukaj ćwiczenia...',{exact:true}).fill('wyciskanie');assert.ok(await page.locator('.exercise-row').count()>0);await page.getByPlaceholder('Szukaj ćwiczenia...',{exact:true}).fill('');
  await page.getByLabel('Filtr sprzętu').selectOption('Maszyna');await page.locator('.category-scroll').getByRole('button',{name:'Nogi',exact:true}).click();assert.ok(await page.locator('.exercise-row').count()>0);
  assert.deepEqual((await snapshot()).workouts,before.workouts);assert.deepEqual((await snapshot()).exercises,before.exercises);assert.equal((await snapshot()).xp,undefined);

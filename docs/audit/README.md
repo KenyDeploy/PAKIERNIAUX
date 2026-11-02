@@ -42,3 +42,7 @@ Zrzut after odtwarza `tests/workout-polish-a.mjs`; before wykonano `tests/workou
 ## Pulpit, baza i odznaki — etap C
 
 Pulpit [przed](premium-c-home-before-390.png) / [po](premium-c-home-after-390.png), baza [przed](premium-c-catalog-before-390.png) / [po](premium-c-catalog-after-390.png), [lista kompaktowa](premium-c-catalog-compact-390.png), [odznaki](premium-c-rewards-after-390.png). Lokalne fixtures, 390 px Chromium. Raport porównania, zasady punktów i testy: [PREMIUM_C.md](../PREMIUM_C.md). Stan before pochodzi z d598c21, bez generowania nowych grafik.
+
+## Naprawa po nagraniu i standard wykresów
+
+[Raport i wszystkie pary 390 px](../IPHONE_REPAIR_AND_CHARTS.md): stopka poza przewijaną listą, pełne źródła zdjęć, lżejsza baza oraz wspólne monotoniczne krzywe dla Lime/Blue/nowego Classic Mono. Przed pochodzi z ba39efe; zrzuty nie zawierają nagrania ani danych użytkownika. Testy obejmują przecięcia widocznych prostokątów i hit-testy, nie tylko overflow; nie zastępują ponownej próby fizycznego iPhone’a.

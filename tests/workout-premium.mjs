@@ -25,7 +25,7 @@ try {
   const field=await page.getByLabel('Ciężar serii 10',{exact:true}).boundingBox();
   const dock=await page.locator('.workout-action-dock').boundingBox();
   assert.ok(field.y>=0 && field.y+field.height<dock.y,'Resume reveals the tenth row above the dock');
-  assert.ok(await page.evaluate(()=>scrollY>200),'Resume does not jump to the heading');
+  assert.ok(await page.evaluate(()=>document.querySelector('.is-workout .content').scrollTop>200),'Resume does not jump to the heading');
   assert.equal(await page.locator('.compact-rest').count(),1);
   assert.equal(await page.locator('.rest-card,.workout-rest-preview').count(),0);
   const deadline=(await data()).activeSession.restUntil;

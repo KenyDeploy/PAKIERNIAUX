@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { SmoothChart } from "./SmoothChart";
 import { measurementChange } from "./training";
 import { exercisePhotoStyle } from "./exercisePhotos";
 import { isCustomPhoto } from "./photoUpload.js";
@@ -28,23 +29,7 @@ export function BodyProgress({ measurements }) {
     </div><p className="muted body-note">Zmiana oznacza różnicę między dwoma ostatnimi dostępnymi pomiarami danej partii. Kierunek zmiany oceniaj zgodnie ze swoim celem.</p>
   </section>;
 }
-export function TrendChart({ points, unit }) {
-  const [active, setActive] = useState(null);
-  if (!points.length) return <p className="empty-state">Brak zapisanych wyników w tym okresie.</p>;
-  const values = points.map(p => Number(p.value)), low = Math.min(...values), high = Math.max(...values);
-  const padding = Math.max(1, (high - low) * .15), min = Math.max(0, low - padding), max = high + padding;
-  const x = i => points.length === 1 ? 160 : 35 + i / (points.length - 1) * 260;
-  const y = value => 135 - (value - min) / (max - min || 1) * 100;
-  const selected = points[Math.min(active ?? points.length - 1, points.length - 1)];
-  return <div className="trend-chart"><div className="chart-value" aria-live="polite">{selected.date} · <b>{fmt(selected.value)} {unit}</b></div>
-    <svg viewBox="0 0 320 160" role="img" aria-label={`Wykres ${unit}: ${points.map(p => `${p.date}: ${p.value}`).join(", ")}`}>
-      {[min, (min + max)/2, max].map((v,i) => <g key={i}><line x1="35" x2="300" y1={y(v)} y2={y(v)} stroke="#303b2c"/><text x="0" y={y(v)+4} fill="#98a58e" fontSize="9">{fmt(v)}</text></g>)}
-      <polyline points={points.map((p,i) => `${x(i)},${y(p.value)}`).join(" ")} fill="none" stroke="var(--accent)" strokeWidth="2.5" />
-      {points.map((p,i) => <g key={i}><circle cx={x(i)} cy={y(p.value)} r="5" fill="var(--accent)"/><circle cx={x(i)} cy={y(p.value)} r="14" fill="transparent" tabIndex="0" role="button" aria-label={`${p.date}: ${p.value} ${unit}`} onFocus={() => setActive(i)} onClick={() => setActive(i)} onKeyDown={e => { if(e.key === "Enter" || e.key === " ") { e.preventDefault(); setActive(i); } }} /></g>)}
-    </svg><div className="chart-dates"><span>{points[0].date}</span><span>{points.at(-1).date}</span></div>
-    <details className="chart-table"><summary>Pokaż wartości</summary>{points.map((p,i) => <div key={i}>{p.date}<b>{fmt(p.value)} {unit}</b></div>)}</details>
-  </div>;
-}
+export function TrendChart(props) { return <SmoothChart {...props}/>; }
 export function ExerciseVisual({ exercise, photoFit }) {
   const photo = exercisePhotoStyle(exercise);
   if (photo) return <figure className="exercise-visual"><div className="exercise-photo" role="img" aria-label={exercise.name} style={{...photo,...(photoFit && isCustomPhoto(exercise.customPhoto) ? {backgroundSize:photoFit} : {})}} /><figcaption>{isCustomPhoto(exercise.customPhoto) ? "Twoje zdjęcie" : "Wizualizacja AI"}</figcaption></figure>;

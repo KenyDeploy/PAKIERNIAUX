@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import "./styles.css";
 import { recordedWeights } from "./dashboard.js";
+import { exerciseChartPoints, workoutVolumePoints } from "./chartData.js";
 import { SettingsPage } from "./SettingsPage";
 import { themeTokens } from "./preferences.js";
 import "./theme.css";
@@ -337,7 +338,7 @@ export default function App() {
   const monthVolume = workouts.filter(w => dateKey(w.completedAt).slice(0,7) === today.slice(0,7)).reduce((sum,w) => sum + w.volume, 0);
   const records = [...new Map(workouts.flatMap(w => w.exercises.filter(e => recordedWeights(e).length).map(e => [e.id, { id: e.id, name: e.name }]))).values()].map(e => ({ ...e, weight: Math.max(...workouts.flatMap(w => w.exercises.filter(x => x.id === e.id).flatMap(recordedWeights))) }));
   const chartExerciseId = statsExercise || String(records[0]?.id || "");
-  const strengthPoints = [...workouts].reverse().filter(w => w.completedAt >= Date.now() - statsRange * 86400000).flatMap(w => w.exercises.filter(e => String(e.id) === chartExerciseId).flatMap(e => { const weights = recordedWeights(e); return weights.length ? [{ date: displayDate(w.completedAt), value: Math.max(...weights) }] : []; }));
+  const strengthPoints = exerciseChartPoints(exerciseHistory(workouts,records.find(e=>String(e.id)===chartExerciseId)?.id)).filter(p=>p.time<=Date.now() && (statsRange===3650 || p.time>=Date.now()-statsRange*86400000));
   const changeWater = amount => update("waterByDate", current => ({ ...current, [today]: Math.max(0, Number(((current[today] || 0) + amount).toFixed(1))) }));
   if (supabase && authLoading) return <div className="auth-screen"><div className="auth-card"><span className="brand-mark"><Zap size={20} fill="currentColor" /></span><h1>Ładowanie profilu</h1><p>Sprawdzam Twoje dane treningowe.</p></div></div>;
   if (supabase && !authUser) return <div className="auth-screen"><form className="auth-card" onSubmit={submitAuth}><span className="brand-mark"><Zap size={20} fill="currentColor" /></span><span className="eyebrow">PAKIERNIA U MATIEGO</span><h1>{authMode === "login" ? "Wróć do swojego progresu" : "Załóż konto"}</h1><p>{authMode === "login" ? "Zaloguj się, aby mieć swoje plany, wyniki i odznaki na każdym urządzeniu." : "Twoje treningi i pomiary będą prywatne i zsynchronizowane."}</p><label>Email<input type="email" value={authForm.email} onChange={(event) => setAuthForm({ ...authForm, email: event.target.value })} required /></label><label>Hasło<input type="password" minLength={6} value={authForm.password} onChange={(event) => setAuthForm({ ...authForm, password: event.target.value })} required /></label>{authError && <div className="auth-error">{authError}</div>}<button className="primary-cta" type="submit">{authMode === "login" ? "Zaloguj się" : "Utwórz konto"}</button><button className="auth-switch" type="button" onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthError(""); }}>{authMode === "login" ? "Nie mam jeszcze konta" : "Mam już konto"}</button></form></div>;
@@ -476,13 +477,13 @@ export default function App() {
             <div className={`exercise-list premium-catalog${compactCatalog?" is-compact":""}`}>
               {[...new Set(filteredExercises.map(e => e.category))].map(group => <section className="exercise-group" key={group}><div className="exercise-group-heading"><h2>{group === "Klatka" ? "Klatka piersiowa" : group}</h2><span>{filteredExercises.filter(e => e.category === group).length} ćwiczeń</span></div>{filteredExercises.filter(e => e.category === group).map((exercise) => (
                 <section
-                  className="exercise-row"
+                  className="exercise-row" role="button" tabIndex={0} aria-label={`Szczegóły: ${exercise.name}`} onKeyDown={event=>{if(event.key==="Enter" || event.key===" "){event.preventDefault();setModal(`rest-${exercise.id}`);}}}
                   key={exercise.id}
                   onClick={() => setModal(`rest-${exercise.id}`)}
                 >
                   {exercisePhotoStyle(exercise) ? <span className="exercise-photo-thumb" role="img" aria-label={exercise.name} style={exercisePhotoStyle(exercise)} /> : <span className={`exercise-icon ${exercise.color}`}><Dumbbell size={18} /></span>}
                   <div>
-                    <button type="button" className="exercise-open" onClick={event => { event.stopPropagation(); setModal(`rest-${exercise.id}`); }}>{exercise.name}</button>
+                    <span className="exercise-open">{exercise.name}</span>
                     <small>
                       {exercise.category} · {exercise.equipment} ·{" "}
                       {exercise.sets} serie × {exercise.reps} · przerwa{" "}
@@ -490,9 +491,7 @@ export default function App() {
                       {String(exercise.rest % 60).padStart(2, "0")}
                     </small>
                   </div>
-                  <div className="exercise-actions">
-                    <button type="button" className="exercise-edit-button" aria-label={`Edytuj: ${exercise.name}`} onClick={(event) => { event.stopPropagation(); openExerciseEditor(exercise); }}><Pencil size={18} /></button>
-                  </div>
+                  <ChevronRight size={18} aria-hidden="true"/>
                 </section>
               ))}</section>)}
               {filteredExercises.length === 0 && (
@@ -550,7 +549,7 @@ export default function App() {
               </div>
               <ActiveSetEditor key={activeSession.id + ":" + currentExercise.id} exercise={currentExercise} targetSets={currentSetGoal} exerciseIndex={activeExerciseIndex} sessionId={activeSession.id} onPersist={updateData} onConfirm={toggleSet} restModule={<CompactRest session={activeSession} seconds={restSeconds} onStart={startQuickRest} onAction={changeRest} onSettings={() => setWorkoutPanel("timer")} />} />
             </section>
-            <WorkoutNavigation index={activeExerciseIndex} count={activeSession.exercises.length} onPrevious={() => setActiveExerciseIndex(value => value - 1)} onNext={() => setActiveExerciseIndex(value => value + 1)} onFinish={openFinishReview}/>
+
           </div>
         )}
         {tab === "history" && (
@@ -606,9 +605,10 @@ export default function App() {
             </div>
             <section className="stats-hero card"><div><span className="eyebrow">OBJĘTOŚĆ · OSTATNIE 7 DNI</span><h2>{displayNumber(last7Volume)} <small>kg</small></h2><span className="muted">{weekChange}</span></div></section>
             <section className="card chart-panel"><div className="card-head"><h2>Ciężar w ćwiczeniu</h2></div>
-              <div className="chart-controls"><select aria-label="Ćwiczenie na wykresie" value={chartExerciseId} onChange={e => setStatsExercise(e.target.value)}><option value="">Wybierz ćwiczenie</option>{records.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</select><select aria-label="Zakres wykresu" value={statsRange} onChange={e => setStatsRange(Number(e.target.value))}><option value={30}>30 dni</option><option value={90}>90 dni</option><option value={3650}>Cała historia</option></select></div>
+              <div className="chart-controls"><select aria-label="Ćwiczenie na wykresie" value={chartExerciseId} onChange={e => setStatsExercise(e.target.value)}><option value="">Wybierz ćwiczenie</option>{records.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</select><select aria-label="Zakres wykresu" value={statsRange} onChange={e => setStatsRange(Number(e.target.value))}><option value={7}>7 dni</option><option value={30}>30 dni</option><option value={90}>90 dni</option><option value={3650}>Cała historia</option></select></div>
               <TrendChart points={strengthPoints} unit="kg" />
             </section>
+            <section className="card chart-panel"><h2>Historia objętości</h2><TrendChart points={workoutVolumePoints(workouts)} unit="kg" ranges/></section>
             <section className="card chart-panel"><h2>Największy zapisany ciężar</h2>{!records.length && <p className="empty-state">Wyniki pojawią się po pierwszym treningu.</p>}{records.map(record => <div className="record" key={record.id}><div><span>{record.name}</span><b>{displayNumber(record.weight)} kg</b></div></div>)}</section>
             <RewardsPanel rewards={premiumInsights(workouts,completedDays,measurements)} expanded/>
           </>
@@ -617,6 +617,7 @@ export default function App() {
         {tab === "body" && <MeasurementsPage key={authUser?.id || "local"} data={data} today={today} onPersist={updateData} />}
         </>}
       </main>
+      {tab === "workout" && currentExercise && <WorkoutNavigation index={activeExerciseIndex} count={activeSession.exercises.length} onPrevious={() => setActiveExerciseIndex(value => value - 1)} onNext={() => setActiveExerciseIndex(value => value + 1)} onFinish={openFinishReview}/>}
       {tab !== "workout" && <nav className="bottom-nav">
         {nav.map(({ id, label, icon: NavIcon }) => (
           <button

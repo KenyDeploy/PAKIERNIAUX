@@ -26,7 +26,7 @@ await page.locator('.bottom-nav').getByRole('button',{name:'Pulpit',exact:true})
 await page.locator('.bottom-nav').getByRole('button',{name:'Plany',exact:true}).click();
 await page.locator('.plan-card').filter({hasText:'Góra ciała — siła'}).getByRole('button',{name:'Rozpocznij',exact:true}).click();
 assert.equal(await page.locator('.bottom-nav').count(),0);
-assert.equal(await page.locator('.workout-navigation').evaluate(el=>getComputedStyle(el).position),'fixed');
+assert.equal(await page.locator('.workout-navigation').evaluate(el=>getComputedStyle(el).position),'relative');
 assert.equal(await page.locator('.current-exercise').evaluate(el=>getComputedStyle(el,'::before').content),'none');
 for(const width of [320,390,768]){
  await page.setViewportSize({width,height:844});
@@ -67,7 +67,7 @@ let data=await page.evaluate(()=>JSON.parse(localStorage.getItem('pakiernia.v2.l
 assert.equal(data.workouts.length,1);assert.equal(data.workouts[0].volume,680);assert.equal(data.activeSession,null);
 await page.locator('.bottom-nav').getByRole('button',{name:'Postęp'}).click();
 await page.getByLabel('Ćwiczenie na wykresie').selectOption('1');
-assert.ok((await page.locator('.chart-value').innerText()).includes('22,5'));
+assert.ok((await page.locator('.chart-panel').first().locator('.chart-value').innerText()).includes('22,5'));
 await page.locator('.bottom-nav').getByRole('button',{name:'Pomiary'}).click();
 for (const [date,biceps,weight] of [['2026-10-22','37','86'],['2026-10-29','38','87']]) {
   await page.getByRole("button",{name:"Dodaj pomiar",exact:true}).click();

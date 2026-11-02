@@ -40,20 +40,21 @@ export function ActiveSetEditor({ exercise, targetSets = exercise.targetSets, ex
       const focused = document.activeElement;
       if (!list.current) return;
       const inside = list.current.contains(focused) && focused?.tagName === "INPUT";
-      // A long list needs real scroll room when iOS keeps the layout viewport tall.
-      const covered = Math.max(0, window.innerHeight - (visual?.offsetTop || 0) - (visual?.height || window.innerHeight));
-      list.current.style.paddingBottom = inside ? `${covered}px` : "0px";
+      list.current.style.paddingBottom = inside ? "20px" : "0px";
       if (!inside) return;
-      const top = Math.max(visual?.offsetTop || 0, document.querySelector(".topbar")?.getBoundingClientRect().bottom || 0) + 12;
-      const bottom = (visual?.offsetTop || 0) + (visual?.height || window.innerHeight) - (document.querySelector(".workout-action-dock")?.getBoundingClientRect().height || 0) - 16;
-      const rect = focused.getBoundingClientRect();
-      const delta = rect.bottom > bottom ? rect.bottom - bottom : rect.top < top ? rect.top - top : 0;
-      if (delta) window.scrollBy({top:delta,behavior:"auto"});
+      const scroller=list.current.closest(".content"), bounds=scroller.getBoundingClientRect();
+      const top=bounds.top+8, bottom=bounds.bottom-8;
+      const field=focused.getBoundingClientRect(), save=focused.closest(".series-entry")?.querySelector(".set-confirm")?.getBoundingClientRect();
+      const end=save?.bottom||field.bottom;
+      const delta=end>bottom ? end-bottom : field.top<top ? field.top-top : 0;
+      if(delta)scroller.scrollBy({top:delta,behavior:"auto"});
     };
-    visual?.addEventListener("resize",reveal); visual?.addEventListener("scroll",reveal);
-    list.current?.addEventListener("focusin",reveal); list.current?.addEventListener("focusout",reveal);
+    let frame;
+    const queue=()=>{window.cancelAnimationFrame(frame);frame=window.requestAnimationFrame(reveal);};
+    visual?.addEventListener("resize",queue); visual?.addEventListener("scroll",queue);
+    list.current?.addEventListener("focusin",queue); list.current?.addEventListener("focusout",queue);
     const node = list.current;
-    return () => { visual?.removeEventListener("resize",reveal); visual?.removeEventListener("scroll",reveal); node?.removeEventListener("focusin",reveal);node?.removeEventListener("focusout",reveal); };
+    return () => {window.cancelAnimationFrame(frame); visual?.removeEventListener("resize",queue); visual?.removeEventListener("scroll",queue); node?.removeEventListener("focusin",queue);node?.removeEventListener("focusout",queue); };
   }, []);
   const persist = transform => {
     try {

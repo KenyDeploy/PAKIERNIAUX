@@ -15,3 +15,12 @@
 .premium-catalog.is-compact .exercise-row .exercise-open{font-size:12px}
 .premium-catalog.is-compact .exercise-row small{display:none}
 @media(max-width:350px){.premium-catalog .exercise-row{grid-template-columns:72px minmax(0,1fr) 44px;gap:8px}.premium-catalog .exercise-row .exercise-photo-thumb{width:72px;height:48px}}
+.premium-catalog .exercise-row,.premium-catalog.is-compact .exercise-row{grid-template-columns:84px minmax(0,1fr) 20px;align-items:center;cursor:pointer}
+.premium-catalog .exercise-row .exercise-open{min-height:0;overflow-wrap:anywhere;font-size:14px}
+.premium-catalog .exercise-row small{font-size:11px;line-height:1.5}
+.premium-catalog.is-compact .exercise-row .exercise-open{font-size:13px}
+.premium-catalog .exercise-row>svg{color:var(--muted)}
+.premium-catalog.is-compact .exercise-row{grid-template-columns:60px minmax(0,1fr) 20px;min-height:64px}
+.premium-catalog.is-compact .exercise-row small{display:block}
+.is-catalog .search-box{position:sticky;top:74px;z-index:5;background:#111514}
+.premium-catalog .exercise-row:focus-visible{outline:2px solid var(--accent);outline-offset:3px}

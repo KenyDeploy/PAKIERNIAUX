@@ -63,3 +63,20 @@
 .app-shell .session-exercise-menu .sheet-footer .workout-menu-action{background:#1a1e1c;border:1px solid var(--line);justify-content:center}
 @media(max-width:350px){.app-shell.is-workout .growing-series-list .set-fields{grid-template-columns:1fr}.app-shell.is-workout .series-result{flex-direction:column;align-items:flex-start;gap:2px}.app-shell.is-workout .workout-quick-actions button{font-size:11px;gap:4px}}
 @media(prefers-reduced-motion:reduce){.app-shell.is-workout *{scroll-behavior:auto}}
+/* The footer owns space outside the scroll area; no series can pass behind it. */
+.app-shell.is-workout{position:fixed;top:var(--workout-top,0px);left:0;right:0;height:var(--workout-height,100dvh);min-height:0;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;border-radius:0}
+.app-shell.is-workout .topbar{position:relative;top:auto;flex-shrink:0}
+.app-shell.is-workout .content{flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;padding-bottom:24px;scroll-padding:12px}
+.app-shell.is-workout .workout-action-dock{position:relative;left:auto;bottom:auto;transform:none;flex-shrink:0;max-width:none;margin:0;z-index:2}
+.app-shell.is-workout.is-typing .workout-action-dock{padding-bottom:10px}
+.app-shell.is-workout.is-typing .growing-series-list .set-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+.app-shell.is-workout.is-typing .growing-series-list .series-stepper input{font-size:20px}
+.app-shell.is-workout .workout-hero-photo{height:auto;aspect-ratio:3/2;flex-shrink:0;max-height:none}
+.app-shell.is-workout .workout-hero-photo .exercise-photo{width:100%;height:auto;max-height:none;aspect-ratio:3/2}
+.app-shell.is-workout .growing-series-list .set-row{padding:12px;border-color:#303635;background:#111414;box-shadow:none}
+.app-shell.is-workout .growing-series-list .set-row.active{border-color:var(--accent-border);box-shadow:none}
+.app-shell.is-workout .compact-rest{border-bottom:0;margin-bottom:8px}
+.app-shell.is-workout .compact-rest .rest-action-controls button{border:0;background:#171b1a}
+.app-shell .session-exercise-editor{background:#101413}
+.app-shell .session-exercise-editor .session-exercise-picker>button{background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:10px 0}
+.app-shell .session-exercise-editor .session-current-exercise{border:0;border-left:2px solid var(--accent-border);border-radius:0;background:transparent}

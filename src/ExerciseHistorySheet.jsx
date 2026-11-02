@@ -3,6 +3,8 @@ import { ArrowRight, Check, X } from "lucide-react";
 import { DialogSheet } from "./DialogSheet";
 import { historySetLabel, historyVolumeLabel } from "./exerciseHistory.js";
 import "./ExerciseSessionPanels.css";
+import { TrendChart } from "./Visuals";
+import { exerciseChartPoints } from "./chartData.js";
 
 const dateLabel = value => new Date(value).toLocaleDateString("pl-PL");
 const seriesLabel = count => `${count} ${count === 1 ? "seria" : count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 12 || count % 100 > 14) ? "serie" : "serii"}`;
@@ -23,6 +25,7 @@ export function ExerciseHistorySheet({ exercise, sessions, onClose, onProgress }
         {session.durationSeconds != null && <p className="history-exercise-time">Czas ćwiczenia: {Math.floor(session.durationSeconds / 60)}:{String(Math.floor(session.durationSeconds % 60)).padStart(2, "0")}</p>}
         {recent.length > 0 && <section className="exercise-history-sessions" aria-label="Ostatnie pięć wykonań ćwiczenia"><h3>Ostatnie {recent.length === 1 ? "wykonanie" : "wykonania"} ({recent.length})</h3>{recent.map((item, index) => <button type="button" key={`${item.sessionId}-${index}`} aria-pressed={index === selected} onClick={() => setSelected(index)}><span><b>{dateLabel(item.date)}</b><small>{seriesLabel(item.sets.length)} · {item.sets.slice(0, 3).map(historySetLabel).join(" / ")}{item.sets.length > 3 ? " …" : ""}</small></span>{index === selected ? <Check size={18} /> : <ArrowRight size={18} />}</button>)}</section>}
         {sessions.length === 1 && <p className="muted">Brak wcześniejszych sesji tego ćwiczenia.</p>}
+        <details className="exercise-history-charts"><summary>Wykresy ciężaru i objętości</summary><h3>Największy zapisany ciężar</h3><TrendChart points={exerciseChartPoints(sessions)} unit="kg" ranges/><h3>Objętość z zapisanym ciężarem</h3><TrendChart points={exerciseChartPoints(sessions,"volume")} unit="kg" ranges/></details>
       </> : <div className="empty-state"><p>Nie masz jeszcze zapisanych wyników tego ćwiczenia.</p><p>Zatwierdź serię i zakończ trening, aby pojawiła się tutaj historia.</p></div>}
     </div>
     <footer className="sheet-footer"><button type="button" className="workout-menu-action" onClick={onProgress}>Pełna historia / progres ćwiczenia <ArrowRight size={20} /></button></footer>
