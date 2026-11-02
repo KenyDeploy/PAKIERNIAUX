@@ -64,6 +64,8 @@ export function currentStreak(days, now = new Date()) {
 }
 export function normalizeData(saved = {}, defaults) {
   const data = { ...defaults, ...saved, schemaVersion: 2 };
+  // Only a genuinely empty snapshot is new. Never force setup on legacy accounts.
+  if (Object.keys(saved).length === 0) data.bodySetup = { status: "pending" };
   for (const key of ["plans", "exercises", "measurements", "workouts", "completedDays"]) {
     if (!Array.isArray(data[key])) data[key] = defaults[key] || [];
   }

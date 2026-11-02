@@ -1,5 +1,7 @@
 # Zasoby sylwetki i adapter — stan etapu 6
 
+Aktualizacja 02.11.2026: Pomiary 3.0 podłączają cztery finalne statyczne ilustracje fitness. Pochodzenie, prompty i pliki: [BODY_ASSETS_PROVENANCE.md](docs/BODY_ASSETS_PROVENANCE.md). Wariant neutralny ma panel bez postaci. Deformacja nie jest częścią obecnego zakresu. Poniższy opis zachowuje historyczny stan etapu 6 i ocenę nieużywanego `body.png`.
+
 ## Inspekcja istniejącego body.png
 
 `public/body.png`: PNG 700×700, 383213 bajtów, SHA-256 `4a044ba4e6c247f2cfcc2552210e67a84bba6ad2926e5b378ac53163b8801621`. Wspólny raster przodu i tyłu męskiej anatomii mięśniowej na jasnym tle, widoczne artefakty tła; nie odpowiada docelowemu ciemnemu modelowi z planszy. Historia Git (`4dcabf8`, `0f24f8a`) opisuje jedynie upload plików. Metadane PNG zawierają daty techniczne, bez autora/źródła/licencji. Dokumentacja repozytorium nie potwierdza praw do wykorzystania tego zasobu. Nie ustalono licencji; nie traktujemy dat metadanych jako dowodu autorstwa.

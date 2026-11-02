@@ -7,6 +7,7 @@ function offlineShell() {
     generateBundle(_, bundle) {
       const assets = Object.keys(bundle).filter(name => /\.(js|css)$/.test(name)).map(name => "/" + name);
       const photos = ["/exercise-photos-v1.webp", ...Array.from({length:11}, (_,i) => `/exercise-photos-v1-${i+2}.webp`)];
+      photos.push(...["male-front", "male-back", "female-front", "female-back"].map(name => `/body-models/${name}.webp`));
       const version = "v2|" + assets.join("|");
       this.emitFile({ type: "asset", fileName: "sw.js", source: `
 const CACHE = "pakiernia-shell-" + ${JSON.stringify(version)};
