@@ -3,14 +3,20 @@ import { ArrowRight, CalendarDays, Droplets, Dumbbell, Flame, History, ListPlus,
 import { dashboardMetrics, dashboardPlan } from "./dashboard.js";
 import { planName } from "./training.js";
 import "./HomeDashboard.css";
+import { premiumInsights } from "./motivation.js";
+import { MiniChart } from "./MiniChart";
+import { RewardsPanel } from "./RewardsPanel";
+import "./PremiumDashboard.css";
 
 const format = value => value.toLocaleString("pl-PL", { maximumFractionDigits: 1 });
 const weekdays = ["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"];
-export function HomeDashboard({ plans, selectedPlanId, activeSession, workouts, completedDays, today, water, weekWater, onStart, onPlans, onHistory, onProgress, onWater, calendar }) {
+export function HomeDashboard({ plans, selectedPlanId, activeSession, workouts, completedDays, measurements = [], today, water, weekWater, onStart, onPlans, onHistory, onProgress, onWater, calendar }) {
   useEffect(() => { window.scrollTo?.({ top: 0, left: 0, behavior: "auto" }); }, []);
   const metrics = useMemo(() => dashboardMetrics(workouts, completedDays), [workouts, completedDays, today]);
   const { plan, label } = dashboardPlan(plans, selectedPlanId, activeSession, today);
   const canStart = Boolean(activeSession || plan?.exercises.length);
+  const rewards = useMemo(()=>premiumInsights(workouts,completedDays,measurements),[workouts,completedDays,measurements,today]);
+  const progress = rewards.weeklyRecord || rewards.latestProgress;
   const cards = [
     { title: "Treningi", hint: "łącznie", value: format(metrics.trainingCount), id: "training-count", Icon: CalendarDays, tone: "cyan", action: onHistory },
     { title: "Serie", hint: "ostatnie 7 dni", value: format(metrics.sets), id: "dashboard-set-count", Icon: ListPlus, tone: "magenta", action: onProgress },
@@ -23,9 +29,11 @@ export function HomeDashboard({ plans, selectedPlanId, activeSession, workouts, 
       <button type="button" className="dashboard-plan-link" onClick={onPlans}><span className="dashboard-plan-icon"><Dumbbell size={25} /></span><span><small>{label}</small><b>{plan ? planName(plan.name) : "Wybierz plan treningowy"}</b><span>{plan ? `${activeSession ? activeSession.exercises.length : plan.exercises.length} ćwiczeń${plan.duration ? ` · ${plan.duration} (plan)` : ""}` : "Utwórz plan w zakładce Plany"}</span></span><ArrowRight size={18} /></button>
       <button type="button" className={`primary-cta dashboard-start${activeSession ? " secondary-cta" : ""}`} aria-label={activeSession ? "Wznów rozpoczęty trening" : canStart ? "Rozpocznij trening" : plan ? "Uzupełnij plan" : "Utwórz plan"} onClick={() => canStart ? onStart(plan) : onPlans()}>{activeSession ? "Wznów trening" : canStart ? "Rozpocznij trening" : plan ? "Uzupełnij plan" : "Utwórz plan"}<ArrowRight size={19} /></button>
     </section>
-    <section className="dashboard-metrics" aria-label="Statystyki treningowe">{cards.map(({ title, hint, value, id, Icon, tone, action }) => <button type="button" className="dashboard-metric" key={id} onClick={action} aria-label={`${title}: ${value}, ${hint}`}><span className={`dashboard-metric-icon ${tone}`}><Icon size={19} /></span><span><small>{title}</small><b data-testid={id}>{value}</b><span className="dashboard-metric-period">{hint}</span></span></button>)}</section>
+    <section className="dashboard-metrics" aria-label="Statystyki treningowe">{cards.map(({ title, hint, value, id, Icon, tone, action }) => <button type="button" className="dashboard-metric" key={id} onClick={action} aria-label={`${title}: ${value}, ${hint}`}><span className={`dashboard-metric-icon ${tone}`}><Icon size={19} /></span><span><small>{title}</small><b data-testid={id}>{value}</b><span className="dashboard-metric-period">{hint}</span>{["training-count","dashboard-volume"].includes(id) && <><MiniChart values={rewards.days.map(d=>id==="training-count"?d.trainings:d.volume)} labels={rewards.days.map(d=>d.date)} name={id==="training-count"?"Treningi w 7 dniach":"Objętość w 7 dniach (kg)"}/><span className="dashboard-spark-caption">7 dni</span></>}</span></button>)}</section>
+    <button type="button" className="dashboard-progress-card" onClick={onProgress}><div><small>{rewards.weeklyRecord?"REKORD OSTATNICH 7 DNI":"OSTATNI TREND CIĘŻARU"}</small><h2>{progress?progress.name:"Twój kolejny punkt odniesienia"}</h2>{progress?<><b>{format(progress.weight)} kg × {progress.reps} <span>{progress.delta>0?"+":""}{format(progress.delta)} kg</span></b><p>Ta sama liczba powtórzeń · {new Date(progress.completedAt).toLocaleDateString("pl-PL")}</p></>:<p>Trend pojawi się po dwóch zapisach tego samego ćwiczenia z ciężarem i tą samą liczbą powtórzeń.</p>}</div>{rewards.trend.length>=2 && <MiniChart values={rewards.trend.slice(-7).map(p=>p.weight)} labels={rewards.trend.slice(-7).map(p=>new Date(p.completedAt).toLocaleDateString("pl-PL"))} name="Trend ciężaru przy tych samych powtórzeniach" line/>}<ArrowRight size={18}/></button>
     <section className="dashboard-week" aria-label="Bieżący tydzień"><div className="dashboard-section-heading"><h2>Twój tydzień</h2><button type="button" aria-label="Otwórz postęp" onClick={onProgress}><TrendingUp size={20} /></button></div><div className="dashboard-week-days">{metrics.week.map((day, i) => <div className={`dashboard-weekday${day.today ? " today" : ""}`} key={day.date} data-done={day.attended} aria-label={`${day.date}: ${day.attended ? "trening oznaczony" : "brak treningu"}`}><small>{weekdays[i]}</small><span /><b>{Number(day.date.slice(-2))}</b></div>)}</div><p>Bieżący tydzień · zaznaczone dni treningowe</p></section>
     <nav className="dashboard-links" aria-label="Skróty pulpitu"><button type="button" onClick={onHistory}><History size={18} />Historia</button><button type="button" onClick={onPlans}><Dumbbell size={18} />Plany</button><button type="button" onClick={onProgress}><TrendingUp size={18} />Postęp</button></nav>
+    <RewardsPanel rewards={rewards}/>
     {calendar}
     <details className="dashboard-water"><summary><Droplets size={19} /><span>Nawodnienie</span><b>{format(water)} L</b></summary><div className="dashboard-water-body"><p>Dzisiaj · cel 2 L</p><div className="dashboard-water-actions"><button type="button" aria-label="Odejmij 0,2 litra" onClick={() => onWater(-0.2)}>− 0,2 L</button><button type="button" aria-label="Dodaj 0,2 litra" onClick={() => onWater(0.2)}><Plus size={17} /> 0,2 L</button></div><div className="dashboard-water-week" aria-label="Nawodnienie w bieżącym tygodniu">{weekWater.map((value, i) => <span key={i}><small>{weekdays[i]}</small><b>{format(value)} L</b></span>)}</div></div></details>
   </div>;

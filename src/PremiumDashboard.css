@@ -1,0 +1,39 @@
+.app-shell.is-home,.app-shell.is-catalog{background:#090b0b}
+.app-shell.is-home .dashboard-plan{background:linear-gradient(120deg,#151a17,#101313);border-color:var(--accent-border)}
+.app-shell.is-home .dashboard-metric{background:linear-gradient(130deg,#171b1b,#101313);border-color:var(--line);position:relative;overflow:hidden}
+.app-shell.is-home .dashboard-start{box-shadow:0 3px 10px var(--accent-glow)}
+.dashboard-metric .mini-chart{display:block;width:100%;height:30px;margin-top:7px;color:#66c4ed}
+.dashboard-metric:has([data-testid=dashboard-volume]) .mini-chart{color:#ffb36a}
+.dashboard-spark-caption{font-size:9px;color:var(--muted);display:block;margin-top:2px}
+.dashboard-progress-card{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--line);border-radius:15px;background:#111616;text-align:left;min-width:0}
+.dashboard-progress-card>div{min-width:0;flex:1}
+.dashboard-progress-card small{font-size:9px;letter-spacing:.06em;color:var(--accent)}
+.dashboard-progress-card h2{font-size:14px;line-height:1.4;margin:6px 0}
+.dashboard-progress-card b{font-size:17px;font-variant-numeric:tabular-nums}
+.dashboard-progress-card b span{display:inline-block;color:var(--accent);font-size:12px;margin-left:6px}
+.dashboard-progress-card p{font-size:10px;line-height:1.5;color:var(--muted);margin-top:6px}
+.dashboard-progress-card>.mini-chart{width:75px;height:42px;flex-shrink:0;color:var(--accent)}
+.dashboard-progress-card>svg:last-child{flex-shrink:0;color:var(--muted)}
+.app-shell.is-home .dashboard-links button,.app-shell.is-home .dashboard-water{background:#121616}
+.rewards-panel{padding:16px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(135deg,#171b1c,#101313);min-width:0}
+.rewards-heading{display:flex;gap:10px;align-items:center}
+.rewards-emblem{display:grid;place-items:center;width:40px;height:44px;color:var(--accent);border:1px solid var(--accent-border);border-radius:12px;background:#171f1b}
+.rewards-heading>div{flex:1;min-width:0}
+.rewards-heading small{font-size:9px;letter-spacing:.08em;color:var(--muted)}
+.rewards-heading h2{font-size:20px;margin-top:4px}
+.rewards-heading>b{font-size:14px;font-variant-numeric:tabular-nums}
+.xp-track{height:6px;overflow:hidden;background:#2b3230;border-radius:4px;margin-top:14px}
+.xp-track span{display:block;height:100%;background:var(--accent);border-radius:4px}
+.xp-caption{margin-top:7px;font-size:10px;color:var(--muted)}
+.rewards-panel summary{min-height:44px;cursor:pointer;font-size:13px;padding:14px 0 5px}
+.rewards-panel summary b{float:right;font-size:12px;color:var(--muted)}
+.reward-badges{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.reward-badge{display:flex;gap:9px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:11px;min-width:0;color:var(--muted)}
+.reward-badge>svg{flex-shrink:0;margin-top:2px;color:#7c8581}
+.reward-badge.earned{border-color:var(--accent-border);color:var(--text)}
+.reward-badge.earned>svg{color:var(--accent)}
+.reward-badge b,.reward-badge small,.reward-badge span{display:block;font-size:11px;line-height:1.4}
+.reward-badge small{font-size:10px;color:var(--muted);margin-top:5px}
+.reward-badge span{font-size:9px;margin-top:5px;color:var(--muted)}
+.xp-rules{font-size:10px;line-height:1.6;color:var(--muted);margin-top:12px}
+@media(max-width:350px){.dashboard-progress-card{gap:7px;padding:12px}.dashboard-progress-card>.mini-chart{width:52px}.reward-badges{grid-template-columns:1fr}}

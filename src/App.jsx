@@ -39,6 +39,9 @@ import { themeTokens } from "./preferences.js";
 import "./theme.css";
 import { MeasurementsPage } from "./MeasurementsPage";
 import { HomeDashboard } from "./HomeDashboard";
+import { RewardsPanel } from "./RewardsPanel";
+import { premiumInsights } from "./motivation.js";
+import "./PremiumCatalog.css";
 import { PlanEditor } from "./PlanEditor";
 import { newPlanDraft } from "./formDrafts.js";
 import { ActiveSetEditor } from "./ActiveSetEditor";
@@ -140,6 +143,7 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Wszystkie");
   const [equipment, setEquipment] = useState("Wszystkie");
+  const [compactCatalog, setCompactCatalog] = useState(false);
   const [modal, setModal] = useState(null);
   const [workoutPanel, setWorkoutPanel] = useState(null);
   const [skipOffer, setSkipOffer] = useState(null);
@@ -339,7 +343,7 @@ export default function App() {
   if (supabase && !authUser) return <div className="auth-screen"><form className="auth-card" onSubmit={submitAuth}><span className="brand-mark"><Zap size={20} fill="currentColor" /></span><span className="eyebrow">PAKIERNIA U MATIEGO</span><h1>{authMode === "login" ? "Wróć do swojego progresu" : "Załóż konto"}</h1><p>{authMode === "login" ? "Zaloguj się, aby mieć swoje plany, wyniki i odznaki na każdym urządzeniu." : "Twoje treningi i pomiary będą prywatne i zsynchronizowane."}</p><label>Email<input type="email" value={authForm.email} onChange={(event) => setAuthForm({ ...authForm, email: event.target.value })} required /></label><label>Hasło<input type="password" minLength={6} value={authForm.password} onChange={(event) => setAuthForm({ ...authForm, password: event.target.value })} required /></label>{authError && <div className="auth-error">{authError}</div>}<button className="primary-cta" type="submit">{authMode === "login" ? "Zaloguj się" : "Utwórz konto"}</button><button className="auth-switch" type="button" onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthError(""); }}>{authMode === "login" ? "Nie mam jeszcze konta" : "Mam już konto"}</button></form></div>;
 
   return (
-    <div style={themeTokens(themePreview || data.preferences?.theme)} className={`app-shell${tab === "workout" ? " is-workout" : tab === "home" ? " is-home" : ""}`}>
+    <div style={themeTokens(themePreview || data.preferences?.theme)} className={`app-shell${tab === "workout" ? " is-workout" : tab === "home" ? " is-home" : tab === "exercises" ? " is-catalog" : ""}`}>
       <header className="topbar">
         <button className="brand" onClick={() => setTab("home")}>
           <span className="brand-mark">
@@ -365,7 +369,7 @@ export default function App() {
         {cloudHydrated && activeSession && tab !== "workout" && tab !== "home" && <button className="secondary-cta" onClick={() => setTab("workout")}>Wznów rozpoczęty trening <ArrowRight size={16} /></button>}
         {(!supabase || cloudHydrated) && <>
 
-        {tab === "home" && <HomeDashboard plans={plans} selectedPlanId={selectedPlanId} activeSession={activeSession} workouts={workouts} completedDays={completedDays}
+        {tab === "home" && <HomeDashboard plans={plans} selectedPlanId={selectedPlanId} activeSession={activeSession} workouts={workouts} completedDays={completedDays} measurements={measurements}
           today={today} water={water} weekWater={weekWater} onStart={openWorkout} onPlans={() => setTab("plans")} onHistory={() => setTab("history")} onProgress={() => setTab("stats")} onWater={changeWater}
           calendar={<section className="card workout-calendar">
               <div className="card-head"><div><span className="eyebrow">KALENDARZ TRENINGÓW</span><h2>{calendarMonthName}</h2></div><CalendarDays size={20} /></div>
@@ -454,7 +458,7 @@ export default function App() {
                 onChange={(event) => setQuery(event.target.value)}
               />
             </div>
-            <div className="catalog-filters"><label>Sprzęt<select aria-label="Filtr sprzętu" value={equipment} onChange={event => setEquipment(event.target.value)}><option value="Wszystkie">Każdy sprzęt</option>{[...new Set(exercises.map(e => e.equipment))].sort((a,b) => a.localeCompare(b,"pl")).map(item => <option key={item}>{item}</option>)}</select></label><span>{filteredExercises.length} wyników</span></div>
+            <div className="catalog-filters"><label>Sprzęt<select aria-label="Filtr sprzętu" value={equipment} onChange={event => setEquipment(event.target.value)}><option value="Wszystkie">Każdy sprzęt</option>{[...new Set(exercises.map(e => e.equipment))].sort((a,b) => a.localeCompare(b,"pl")).map(item => <option key={item}>{item}</option>)}</select></label><span>{filteredExercises.length} wyników</span><button type="button" className="catalog-density" aria-pressed={compactCatalog} onClick={()=>setCompactCatalog(value=>!value)}>Kompaktowa lista</button></div>
             <div className="category-scroll" aria-label="Partie mięśniowe">
               {["Wszystkie", ...new Set(exercises.map(e => e.category))].map(
                 (item) => (
@@ -469,7 +473,7 @@ export default function App() {
                 ),
               )}
             </div>
-            <div className="exercise-list">
+            <div className={`exercise-list premium-catalog${compactCatalog?" is-compact":""}`}>
               {[...new Set(filteredExercises.map(e => e.category))].map(group => <section className="exercise-group" key={group}><div className="exercise-group-heading"><h2>{group === "Klatka" ? "Klatka piersiowa" : group}</h2><span>{filteredExercises.filter(e => e.category === group).length} ćwiczeń</span></div>{filteredExercises.filter(e => e.category === group).map((exercise) => (
                 <section
                   className="exercise-row"
@@ -487,7 +491,7 @@ export default function App() {
                     </small>
                   </div>
                   <div className="exercise-actions">
-                    <button type="button" className="exercise-edit-button" aria-label={`Edytuj: ${exercise.name}`} onClick={(event) => { event.stopPropagation(); openExerciseEditor(exercise); }}><Pencil size={15} /><span>Edytuj</span></button>
+                    <button type="button" className="exercise-edit-button" aria-label={`Edytuj: ${exercise.name}`} onClick={(event) => { event.stopPropagation(); openExerciseEditor(exercise); }}><Pencil size={18} /></button>
                   </div>
                 </section>
               ))}</section>)}
@@ -606,39 +610,7 @@ export default function App() {
               <TrendChart points={strengthPoints} unit="kg" />
             </section>
             <section className="card chart-panel"><h2>Największy zapisany ciężar</h2>{!records.length && <p className="empty-state">Wyniki pojawią się po pierwszym treningu.</p>}{records.map(record => <div className="record" key={record.id}><div><span>{record.name}</span><b>{displayNumber(record.weight)} kg</b></div></div>)}</section>
-            <section className="card badges-panel">
-              <div className="card-head">
-                <div>
-                  <span className="eyebrow">
-                    KOLEKCJA · SREBRO / ZŁOTO / PLATYNA
-                  </span>
-                  <h2>Odznaki</h2>
-                </div>
-                <Trophy size={20} />
-              </div>
-              <div className="badges">
-                {[
-                  { icon: Flame, label: "Pierwszy trening", done: trainingCount >= 1 },
-                  { icon: Zap, label: "5 treningów", done: trainingCount >= 5 },
-                  { icon: Target, label: "10 treningów", done: trainingCount >= 10 },
-                  {
-                    icon: Activity,
-                    label: "25 treningów",
-                    done: trainingCount >= 25,
-                  },
-                ].map(({ icon: BadgeIcon, label, done }) => (
-                  <div
-                    className={done ? "badge-item earned" : "badge-item"}
-                    key={label}
-                  >
-                    <span>
-                      <BadgeIcon size={20} />
-                    </span>
-                    <small>{label}</small>
-                  </div>
-                ))}
-              </div>
-            </section>
+            <RewardsPanel rewards={premiumInsights(workouts,completedDays,measurements)} expanded/>
           </>
         )}
         {tab === "settings" && <SettingsPage key={authUser?.id || "local"} data={data} user={authUser} cloud={Boolean(supabase)} syncStatus={syncStatus} onSync={retrySync} onSignOut={signOut} onPersist={updateData} onPreview={setThemePreview} onBack={() => setTab("home")} onProfile={() => setTab("body")} />}

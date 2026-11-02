@@ -38,3 +38,7 @@ Zrzut after odtwarza `tests/workout-polish-a.mjs`; before wykonano `tests/workou
 ## Pomiary 2.0 — etap B
 
 [Mężczyzna — przód](measurements-v2-male-390.png), [kobieta — tył](measurements-v2-female-back-390.png), [porównanie dat](measurements-v2-comparison-390.png): 390 px, izolowane lokalne dane testowe. Autorskie schematy SVG są tymczasowymi ilustracjami statycznymi, a nie finalnymi modelami anatomicznymi. Dokumentacja funkcji, testów, ograniczeń i adaptera: [MEASUREMENTS_V2.md](../MEASUREMENTS_V2.md). Zrzuty odtwarza tests/measurements-v2.mjs. Nie wykonywano fizycznego testu iPhone’a.
+
+## Pulpit, baza i odznaki — etap C
+
+Pulpit [przed](premium-c-home-before-390.png) / [po](premium-c-home-after-390.png), baza [przed](premium-c-catalog-before-390.png) / [po](premium-c-catalog-after-390.png), [lista kompaktowa](premium-c-catalog-compact-390.png), [odznaki](premium-c-rewards-after-390.png). Lokalne fixtures, 390 px Chromium. Raport porównania, zasady punktów i testy: [PREMIUM_C.md](../PREMIUM_C.md). Stan before pochodzi z d598c21, bez generowania nowych grafik.
